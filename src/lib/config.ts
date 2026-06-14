@@ -20,6 +20,16 @@ const envSchema = z.object({
   // AI Assist (OpenRouter). Blank key disables AI features.
   OPENROUTER_API_KEY: z.string().optional().default(""),
   OPENROUTER_MODEL: z.string().min(1).default("openai/gpt-4o"),
+  OPENROUTER_BASE_URL: z
+    .string()
+    .min(1)
+    .default("https://openrouter.ai/api/v1"),
+  // Test-only: return canned AI responses instead of calling OpenRouter.
+  AI_FAKE: z
+    .enum(["0", "1"])
+    .optional()
+    .default("0")
+    .transform((v) => v === "1"),
 
   // Off-site backup. Blank bucket disables scheduled backups.
   S3_ENDPOINT: z.string().optional().default(""),
@@ -58,6 +68,8 @@ export const config = {
   ai: {
     apiKey: parsed.OPENROUTER_API_KEY,
     model: parsed.OPENROUTER_MODEL,
+    baseUrl: parsed.OPENROUTER_BASE_URL,
+    fake: parsed.AI_FAKE,
     get enabled() {
       return parsed.OPENROUTER_API_KEY.length > 0;
     },

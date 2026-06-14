@@ -30,6 +30,13 @@ export default defineConfig({
     url: `${baseURL}/api/health`,
     timeout: 120_000,
     reuseExistingServer: !process.env.CI,
-    env: { DATA_DIR: e2eDataDir, NODE_ENV: "production" },
+    env: {
+      DATA_DIR: e2eDataDir,
+      NODE_ENV: "production",
+      // Enable AI Assist with a deterministic fake provider (no network calls).
+      OPENROUTER_API_KEY: "e2e-fake-key",
+      OPENROUTER_MODEL: "fake/model",
+      AI_FAKE: "1",
+    },
   },
 });

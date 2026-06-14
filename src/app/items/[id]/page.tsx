@@ -12,10 +12,12 @@ import { listDocuments } from "@/lib/queries/documents";
 import { currentValuations } from "@/lib/queries/valuations";
 import { deleteDocumentAction } from "@/lib/actions/documents";
 import { DOCUMENT_KIND_LABELS, type DocumentKind } from "@/lib/document-kinds";
+import { config } from "@/lib/config";
 import { mediaUrl } from "@/lib/media";
 import { ItemEditForm } from "./item-edit-form";
 import { AddPhotos } from "./add-photos";
 import { AddDocument } from "./documents-section";
+import { AiAssist } from "./ai-assist";
 
 export const dynamic = "force-dynamic";
 
@@ -79,6 +81,14 @@ export default async function ItemDetailPage({
             <Lightbulb className="mt-0.5 h-4 w-4 shrink-0" />
             <span>You might still add: {hints.join(", ")}.</span>
           </p>
+        ) : null}
+
+        {config.ai.enabled ? (
+          <AiAssist
+            itemId={itemId}
+            hasPhoto={photos.length > 0}
+            model={config.ai.model}
+          />
         ) : null}
 
         <ItemEditForm
