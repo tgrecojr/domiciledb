@@ -87,3 +87,25 @@ export function computeCoverage(input: CoverageInput): CoverageResult {
     countedCount,
   };
 }
+
+const STATUS_RANK: Record<CoverageStatus, number> = {
+  within: 0,
+  approaching: 1,
+  over: 2,
+};
+
+/**
+ * Decide whether a change ESCALATED coverage risk, for the contextual nudge
+ * (feature-spec §7: alert right after the item that crosses a threshold).
+ * Returns the newly-reached level ("approaching" | "over") only when status
+ * moved up to it; returns null when unchanged, de-escalated, or no policy.
+ */
+export function crossedThreshold(
+  before: CoverageStatus | null,
+  after: CoverageStatus | null,
+): Exclude<CoverageStatus, "within"> | null {
+  if (after === null || after === "within") return null;
+  const beforeRank = before === null ? -1 : STATUS_RANK[before];
+  if (STATUS_RANK[after] > beforeRank) return after;
+  return null;
+}

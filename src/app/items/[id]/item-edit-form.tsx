@@ -3,6 +3,8 @@
 import { useActionState } from "react";
 
 import { updateItemAction, type ItemFormState } from "@/lib/actions/items";
+import { LIFECYCLE_LABELS, LIFECYCLE_STATUSES } from "@/lib/lifecycle";
+import { formatCentsWhole } from "@/lib/money";
 
 const inputClass =
   "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-base " +
@@ -20,6 +22,15 @@ export interface ItemEditValues {
   quantity: number;
   condition: string | null;
   ageEstimate: string | null;
+  lifecycleStatus: string;
+  lifecycleDate: string | null;
+  replacementCostCents: number | null;
+  pricePaidCents: number | null;
+  purchaseDate: string | null;
+}
+
+function dollars(cents: number | null): string {
+  return cents == null ? "" : (cents / 100).toFixed(2);
 }
 
 function Field({
@@ -43,6 +54,68 @@ function Field({
         className={inputClass}
       />
     </label>
+  );
+}
+
+function MoneyField({
+  label,
+  name,
+  defaultCents,
+  hint,
+}: {
+  label: string;
+  name: string;
+  defaultCents: number | null;
+  hint?: string;
+}) {
+  return (
+    <label className="flex flex-col gap-1">
+      <span className="text-sm font-medium">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-neutral-400">$</span>
+        <input
+          name={name}
+          inputMode="decimal"
+          defaultValue={dollars(defaultCents)}
+          placeholder="0.00"
+          className={inputClass}
+        />
+      </div>
+      {hint ? <span className="text-xs text-neutral-500">{hint}</span> : null}
+    </label>
+  );
+}
+
+function CoverageAlertBanner({
+  alert,
+}: {
+  alert: NonNullable<NonNullable<ItemFormState>["coverageAlert"]>;
+}) {
+  const over = alert.level === "over";
+  return (
+    <div
+      className={`rounded-lg border p-3 text-sm ${
+        over
+          ? "border-coverage-over/40 bg-coverage-over/10 text-coverage-over"
+          : "border-coverage-approaching/40 bg-coverage-approaching/10 text-coverage-approaching"
+      }`}
+    >
+      {over ? (
+        <p>
+          You&apos;ve now inventoried {formatCentsWhole(alert.totalCents)}{" "}
+          against a {formatCentsWhole(alert.limitCents)} limit — you appear{" "}
+          <strong>underinsured</strong>. Consider reviewing coverage with your
+          insurer.
+        </p>
+      ) : (
+        <p>
+          You&apos;re approaching your Coverage B limit (
+          {Math.round(alert.pctUsed * 100)}% of{" "}
+          {formatCentsWhole(alert.limitCents)}). Worth a look before it&apos;s a
+          gap.
+        </p>
+      )}
+    </div>
   );
 }
 
@@ -144,6 +217,63 @@ export function ItemEditForm({
         />
       </div>
 
+      {/* Valuation — replacement cost drives the coverage total. */}
+      <fieldset className="flex flex-col gap-3 rounded-xl border border-neutral-200 p-3">
+        <legend className="px-1 text-sm font-semibold">Value</legend>
+        <MoneyField
+          label="Replacement cost (per item, today)"
+          name="replacementCost"
+          defaultCents={item.replacementCostCents}
+          hint="What it costs to buy new now. Counts toward your coverage total (× quantity)."
+        />
+        <div className="grid grid-cols-2 gap-3">
+          <MoneyField
+            label="Price paid"
+            name="pricePaid"
+            defaultCents={item.pricePaidCents}
+          />
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium">Purchase date</span>
+            <input
+              name="purchaseDate"
+              type="date"
+              defaultValue={item.purchaseDate?.slice(0, 10) ?? ""}
+              className={inputClass}
+            />
+          </label>
+        </div>
+      </fieldset>
+
+      {/* Lifecycle — non-active items drop out of the coverage total. */}
+      <fieldset className="flex flex-col gap-3 rounded-xl border border-neutral-200 p-3">
+        <legend className="px-1 text-sm font-semibold">Status</legend>
+        <div className="grid grid-cols-2 gap-3">
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium">Lifecycle</span>
+            <select
+              name="lifecycleStatus"
+              defaultValue={item.lifecycleStatus}
+              className={inputClass}
+            >
+              {LIFECYCLE_STATUSES.map((s) => (
+                <option key={s} value={s}>
+                  {LIFECYCLE_LABELS[s]}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-sm font-medium">Date (if not active)</span>
+            <input
+              name="lifecycleDate"
+              type="date"
+              defaultValue={item.lifecycleDate?.slice(0, 10) ?? ""}
+              className={inputClass}
+            />
+          </label>
+        </div>
+      </fieldset>
+
       <label className="flex flex-col gap-1">
         <span className="text-sm font-medium">Description</span>
         <textarea
@@ -154,8 +284,14 @@ export function ItemEditForm({
         />
       </label>
 
+      {state?.coverageAlert ? (
+        <CoverageAlertBanner alert={state.coverageAlert} />
+      ) : null}
       {state?.error ? (
         <p className="text-sm text-coverage-over">{state.error}</p>
+      ) : null}
+      {state?.saved && !state.coverageAlert ? (
+        <p className="text-sm text-coverage-within">Saved ✓</p>
       ) : null}
 
       <button

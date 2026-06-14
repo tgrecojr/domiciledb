@@ -1,7 +1,9 @@
-import { ClipboardList, MapPin, Package } from "lucide-react";
+import { ClipboardList, MapPin, Package, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
+import { CoverageWidget } from "@/components/coverage-widget";
+import { getCoverageSummary } from "@/lib/queries/coverage";
 import { getHousehold } from "@/lib/queries/household";
 import { listItems } from "@/lib/queries/items";
 import { listLocations } from "@/lib/queries/locations";
@@ -32,10 +34,14 @@ export default async function HomePage() {
   const items = listItems(household.id);
   const drafts = items.filter((i) => i.status === "draft").length;
   const locations = listLocations(household.id);
+  const coverage = getCoverageSummary(household.id);
 
   return (
     <AppShell title={household.name}>
       <div className="flex flex-col gap-6">
+        {/* Ambient coverage status — glanceable, never demanding. */}
+        <CoverageWidget summary={coverage} />
+
         {items.length === 0 ? (
           <section className="flex flex-col gap-3 rounded-xl border border-dashed border-neutral-300 bg-white p-5 text-center">
             <p className="font-medium">Start your inventory</p>
@@ -71,6 +77,7 @@ export default async function HomePage() {
             label="Locations"
             badge={locations.length}
           />
+          <Tile href="/policy" icon={ShieldCheck} label="Insurance coverage" />
         </nav>
       </div>
     </AppShell>

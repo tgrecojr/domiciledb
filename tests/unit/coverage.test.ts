@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { computeCoverage, type CoverageItemInput } from "@/lib/coverage";
+import {
+  computeCoverage,
+  crossedThreshold,
+  type CoverageItemInput,
+} from "@/lib/coverage";
 
 const active = (
   replacementCostCents: number | null,
@@ -112,6 +116,34 @@ describe("computeCoverage", () => {
     expect(r.totalCents).toBe(100_00);
   });
 
+  it("treats a zero/negative limit as 'no limit' (null status)", () => {
+    const r = computeCoverage({
+      items: [active(100_00)],
+      coverageBLimitCents: 0,
+      warnPct: 0.8,
+    });
+    expect(r.status).toBeNull();
+    expect(r.pctUsed).toBeNull();
+  });
+
+  it("treats a non-finite quantity as zero (defensive)", () => {
+    const r = computeCoverage({
+      items: [
+        {
+          replacementCostCents: 100_00,
+          quantity: NaN,
+          lifecycleStatus: "active",
+        },
+        { replacementCostCents: 50_00, quantity: 2, lifecycleStatus: "active" },
+      ],
+      coverageBLimitCents: 1_000_00,
+      warnPct: 0.8,
+    });
+    // NaN-qty item contributes 0; only the 2 × $50 counts.
+    expect(r.totalCents).toBe(100_00);
+    expect(r.countedCount).toBe(2);
+  });
+
   it("uses integer cents with no float drift on the real dec-page limit", () => {
     // Coverage B from declarations.md = $456,750.00
     const r = computeCoverage({
@@ -121,5 +153,33 @@ describe("computeCoverage", () => {
     });
     expect(r.totalCents).toBe(310_000_00);
     expect(r.status).toBe("within");
+  });
+});
+
+describe("crossedThreshold", () => {
+  it("fires when escalating up to a new level", () => {
+    expect(crossedThreshold("within", "approaching")).toBe("approaching");
+    expect(crossedThreshold("within", "over")).toBe("over");
+    expect(crossedThreshold("approaching", "over")).toBe("over");
+  });
+
+  it("fires from a fresh policy/no-prior-status into a risky level", () => {
+    expect(crossedThreshold(null, "approaching")).toBe("approaching");
+    expect(crossedThreshold(null, "over")).toBe("over");
+  });
+
+  it("does not fire when staying at the same level", () => {
+    expect(crossedThreshold("approaching", "approaching")).toBeNull();
+    expect(crossedThreshold("over", "over")).toBeNull();
+  });
+
+  it("does not fire on de-escalation or back to within", () => {
+    expect(crossedThreshold("over", "approaching")).toBeNull();
+    expect(crossedThreshold("approaching", "within")).toBeNull();
+  });
+
+  it("never fires without a policy limit (after is null)", () => {
+    expect(crossedThreshold(null, null)).toBeNull();
+    expect(crossedThreshold("within", null)).toBeNull();
   });
 });

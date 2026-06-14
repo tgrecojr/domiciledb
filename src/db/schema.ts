@@ -7,9 +7,10 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 
+import { LIFECYCLE_STATUSES } from "@/lib/lifecycle";
 import { LOCATION_KINDS } from "@/lib/location-kinds";
 
-export { LOCATION_KINDS };
+export { LIFECYCLE_STATUSES, LOCATION_KINDS };
 
 /**
  * DomicileDB schema — the single source of truth.
@@ -59,15 +60,6 @@ export const tag = sqliteTable("tag", {
 });
 
 // ─── Item / Asset ────────────────────────────────────────────────────────────
-export const LIFECYCLE_STATUSES = [
-  "active",
-  "sold",
-  "disposed",
-  "gifted",
-  "broken",
-  "replaced",
-] as const;
-
 /** Draft = still in the "needs detail" worklist; complete = user-cleared. */
 export const ITEM_STATUSES = ["draft", "complete"] as const;
 

@@ -3,12 +3,13 @@ import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { item, ITEM_STATUSES } from "@/db/schema";
+import { item, ITEM_STATUSES, LIFECYCLE_STATUSES } from "@/db/schema";
 import { firstThumbByItem } from "./photos";
 
 export type ItemStatus = (typeof ITEM_STATUSES)[number];
+export type LifecycleStatus = (typeof LIFECYCLE_STATUSES)[number];
 
-/** Fields a user can edit in Phase 1 (descriptive; valuation comes in Phase 2). */
+/** Descriptive + lifecycle fields a user can edit (valuation is separate). */
 export interface ItemPatch {
   title?: string;
   description?: string | null;
@@ -20,6 +21,8 @@ export interface ItemPatch {
   quantity?: number;
   condition?: string | null;
   ageEstimate?: string | null;
+  lifecycleStatus?: LifecycleStatus;
+  lifecycleDate?: string | null;
 }
 
 export function createDraftItem(input: {

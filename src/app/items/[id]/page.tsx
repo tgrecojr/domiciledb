@@ -8,6 +8,7 @@ import { getItem } from "@/lib/queries/items";
 import { listCategories } from "@/lib/queries/categories";
 import { listLocations } from "@/lib/queries/locations";
 import { listPhotos } from "@/lib/queries/photos";
+import { currentValuations } from "@/lib/queries/valuations";
 import { mediaUrl } from "@/lib/media";
 import { ItemEditForm } from "./item-edit-form";
 import { AddPhotos } from "./add-photos";
@@ -46,6 +47,7 @@ export default async function ItemDetailPage({
   const photos = listPhotos(itemId);
   const categories = listCategories();
   const locations = listLocations(householdId);
+  const values = currentValuations(itemId);
   const hints = missingHints(item, photos.length);
   const isDraft = item.status === "draft";
 
@@ -75,7 +77,24 @@ export default async function ItemDetailPage({
         ) : null}
 
         <ItemEditForm
-          item={item}
+          item={{
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            categoryId: item.categoryId,
+            locationId: item.locationId,
+            manufacturer: item.manufacturer,
+            modelNumber: item.modelNumber,
+            serialNumber: item.serialNumber,
+            quantity: item.quantity,
+            condition: item.condition,
+            ageEstimate: item.ageEstimate,
+            lifecycleStatus: item.lifecycleStatus,
+            lifecycleDate: item.lifecycleDate,
+            replacementCostCents: values.replacementCostCents,
+            pricePaidCents: values.pricePaidCents,
+            purchaseDate: values.purchaseDate,
+          }}
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
           locations={locations.map((l) => ({ id: l.id, name: l.name }))}
         />
