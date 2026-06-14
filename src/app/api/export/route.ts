@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import { Readable } from "node:stream";
-import archiver from "archiver";
+import { ZipArchive } from "archiver";
 
 import { createSnapshot } from "@/lib/backup/snapshot";
 import { config } from "@/lib/config";
@@ -17,7 +17,8 @@ export async function GET() {
   }
 
   const snap = createSnapshot();
-  const archive = archiver("zip", { zlib: { level: 9 } });
+  // archiver v8 removed the factory function; use the ZipArchive class.
+  const archive = new ZipArchive({ zlib: { level: 9 } });
   archive.file(snap.path, { name: "domiciledb-snapshot.db" });
   if (fs.existsSync(config.paths.mediaDir)) {
     archive.directory(config.paths.mediaDir, "media");
