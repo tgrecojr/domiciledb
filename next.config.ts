@@ -1,6 +1,9 @@
 import withSerwistInit from "@serwist/next";
 import type { NextConfig } from "next";
 
+// NOTE: @serwist/next is webpack-only — it injects a webpack config and does
+// not support Turbopack. Next 16 defaults to Turbopack, so `dev`/`build` pass
+// `--webpack` (see package.json) to keep service-worker generation working.
 const withSerwist = withSerwistInit({
   // Source service worker; compiled to /public/sw.js at build time.
   swSrc: "src/app/sw.ts",
