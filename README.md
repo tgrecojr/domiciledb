@@ -47,7 +47,7 @@ use Tailscale / split-DNS with a real cert.
 | Media     | sharp (original + web + thumbnail variants on the filesystem)       |
 | PDF       | @react-pdf/renderer                                                 |
 | AI        | OpenRouter (OpenAI-compatible vision) — opt-in, confirm-before-save |
-| Backup    | S3 / S3-compatible (AWS, MinIO, Backblaze B2, Cloudflare R2)        |
+| Backup    | S3 / S3-compatible (AWS S3, Backblaze B2, Cloudflare R2)            |
 | Container | Multi-stage build → distroless, non-root                            |
 
 ## Quick start (development)
@@ -75,20 +75,20 @@ container runs as a non-root user (uid 65532); the mounted volume must be writab
 
 ## Commands
 
-| Command                    | Purpose                                                   |
-| -------------------------- | --------------------------------------------------------- |
-| `npm run dev`              | Start the development server                              |
-| `npm run build`            | Production build (standalone output)                      |
-| `npm start`                | Run the production build                                  |
-| `npm test`                 | Unit tests (Vitest)                                       |
-| `npm run test:coverage`    | Unit tests with the enforced coverage gate                |
-| `npm run test:integration` | Integration tests (DB + media; S3 round-trip needs MinIO) |
-| `npm run test:e2e`         | End-to-end tests (Playwright)                             |
-| `npm run lint`             | Lint                                                      |
-| `npm run typecheck`        | Type-check (no emit)                                      |
-| `npm run db:generate`      | Generate a Drizzle migration after editing the schema     |
-| `npm run db:migrate`       | Apply migrations (also runs automatically on boot)        |
-| `npm run restore`          | Restore the database + media from S3 (run app stopped)    |
+| Command                    | Purpose                                                    |
+| -------------------------- | ---------------------------------------------------------- |
+| `npm run dev`              | Start the development server                               |
+| `npm run build`            | Production build (standalone output)                       |
+| `npm start`                | Run the production build                                   |
+| `npm test`                 | Unit tests (Vitest)                                        |
+| `npm run test:coverage`    | Unit tests with the enforced coverage gate                 |
+| `npm run test:integration` | Integration tests (DB + media; S3 round-trip needs RustFS) |
+| `npm run test:e2e`         | End-to-end tests (Playwright)                              |
+| `npm run lint`             | Lint                                                       |
+| `npm run typecheck`        | Type-check (no emit)                                       |
+| `npm run db:generate`      | Generate a Drizzle migration after editing the schema      |
+| `npm run db:migrate`       | Apply migrations (also runs automatically on boot)         |
+| `npm run restore`          | Restore the database + media from S3 (run app stopped)     |
 
 ## Configuration
 
@@ -129,7 +129,7 @@ Media is content-addressed, so only new files upload. **Restore** (run with the 
 
 ```bash
 S3_BUCKET=your-bucket S3_ACCESS_KEY_ID=... S3_SECRET_ACCESS_KEY=... \
-  S3_ENDPOINT=...   # only for S3-compatible stores (MinIO/B2/R2) \
+  S3_ENDPOINT=...   # only for S3-compatible stores (Backblaze B2, Cloudflare R2, …) \
   DATA_DIR=/data npm run restore
 ```
 
@@ -138,17 +138,17 @@ snapshot plus all media — for safekeeping and to avoid lock-in.
 
 ## Testing
 
-| Layer       | Tool       | What it covers                                                                                             |
-| ----------- | ---------- | ---------------------------------------------------------------------------------------------------------- |
-| Unit        | Vitest     | Pure logic, **100%-gated** on the insurance spine (`coverage`, `money`, `report`)                          |
-| Integration | Vitest     | Real SQLite (valuations, coverage-with-lifecycle, report filter, media variants) + S3 round-trip via MinIO |
-| E2E         | Playwright | Mobile user journeys (capture, coverage, packet, receipts, AI, security)                                   |
+| Layer       | Tool       | What it covers                                                                                              |
+| ----------- | ---------- | ----------------------------------------------------------------------------------------------------------- |
+| Unit        | Vitest     | Pure logic, **100%-gated** on the insurance spine (`coverage`, `money`, `report`)                           |
+| Integration | Vitest     | Real SQLite (valuations, coverage-with-lifecycle, report filter, media variants) + S3 round-trip via RustFS |
+| E2E         | Playwright | Mobile user journeys (capture, coverage, packet, receipts, AI, security)                                    |
 
 ```bash
 npm run lint && npm run typecheck && npm run test:coverage && npm run build && npm run test:e2e
 ```
 
-CI runs the full gauntlet plus a MinIO backup/restore round-trip, a distroless docker build+boot,
+CI runs the full gauntlet plus a RustFS backup/restore round-trip, a distroless docker build+boot,
 and supply-chain checks (dependency review, CodeQL, Trivy image scan, SBOM). See
 [`docs/architecture.md`](./docs/architecture.md) for the CI shape.
 

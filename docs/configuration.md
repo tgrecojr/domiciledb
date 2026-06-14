@@ -29,16 +29,17 @@ explicitly applied — never auto-saved. Every call is recorded in the `ai_inter
 
 ## Off-site backup (S3 / S3-compatible)
 
-Works with AWS S3, MinIO, Backblaze B2, and Cloudflare R2. **Off unless `S3_BUCKET` is set.**
+Works with AWS S3, Backblaze B2, Cloudflare R2, and any S3-compatible store. **Off unless
+`S3_BUCKET` is set.**
 
-| Variable               | Default     | Notes                                                                                                    |
-| ---------------------- | ----------- | -------------------------------------------------------------------------------------------------------- |
-| `S3_BUCKET`            | _(blank)_   | Blank ⇒ backups are a no-op. Set to enable.                                                              |
-| `S3_REGION`            | `us-east-1` | AWS region (or any value for MinIO).                                                                     |
-| `S3_ENDPOINT`          | _(blank)_   | Set **only** for S3-compatible stores (MinIO/B2/R2); enables path-style addressing. Leave blank for AWS. |
-| `S3_ACCESS_KEY_ID`     | _(blank)_   | Credentials (or rely on the AWS default credential chain).                                               |
-| `S3_SECRET_ACCESS_KEY` | _(blank)_   |                                                                                                          |
-| `BACKUP_CRON`          | `0 3 * * *` | Cron schedule for automatic backups (nightly at 03:00 by default).                                       |
+| Variable               | Default     | Notes                                                                                                                       |
+| ---------------------- | ----------- | --------------------------------------------------------------------------------------------------------------------------- |
+| `S3_BUCKET`            | _(blank)_   | Blank ⇒ backups are a no-op. Set to enable.                                                                                 |
+| `S3_REGION`            | `us-east-1` | AWS region (or any value for S3-compatible stores).                                                                         |
+| `S3_ENDPOINT`          | _(blank)_   | Set **only** for S3-compatible stores (Backblaze B2, Cloudflare R2, …); enables path-style addressing. Leave blank for AWS. |
+| `S3_ACCESS_KEY_ID`     | _(blank)_   | Credentials (or rely on the AWS default credential chain).                                                                  |
+| `S3_SECRET_ACCESS_KEY` | _(blank)_   |                                                                                                                             |
+| `BACKUP_CRON`          | `0 3 * * *` | Cron schedule for automatic backups (nightly at 03:00 by default).                                                          |
 
 What's synced: a consistent `VACUUM INTO` db snapshot, all `media/`, and a current PDF proof packet.
 Restore with `npm run restore` (same `S3_*` env, app stopped) — see the README.

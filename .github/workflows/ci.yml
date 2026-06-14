@@ -60,14 +60,6 @@ jobs:
 
   integration:
     runs-on: ubuntu-latest
-    services:
-      minio:
-        image: bitnami/minio:latest
-        ports:
-          - 9000:9000
-        env:
-          MINIO_ROOT_USER: minioadmin
-          MINIO_ROOT_PASSWORD: minioadmin
     steps:
       - uses: actions/checkout@v4
 
@@ -79,22 +71,41 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Wait for MinIO
+      # RustFS: an Apache-2.0, Rust, S3-compatible store (an OSS-friendly MinIO
+      # alternative). Run as a step (not a service) so it can be env-configured.
+      - name: Start RustFS (S3-compatible)
+        run: |
+          docker run -d --name rustfs -p 9000:9000 \
+            -e RUSTFS_ACCESS_KEY=rustfsadmin \
+            -e RUSTFS_SECRET_KEY=rustfsadmin \
+            -e RUSTFS_VOLUMES=/data \
+            -v rustfs-data:/data \
+            rustfs/rustfs:latest
+
+      - name: Wait for RustFS S3 endpoint
         run: |
           for i in $(seq 1 30); do
-            if curl -fsS http://127.0.0.1:9000/minio/health/ready; then exit 0; fi
+            if curl -s -o /dev/null http://127.0.0.1:9000/; then
+              sleep 2 && exit 0
+            fi
             sleep 2
           done
-          echo "MinIO did not become ready" >&2 && exit 1
+          echo "RustFS did not become ready" >&2
+          docker logs rustfs >&2
+          exit 1
 
-      - name: Backup/restore round-trip (real S3 via MinIO)
+      - name: Backup/restore round-trip (real S3 via RustFS)
         run: npm run test:integration
         env:
           S3_ENDPOINT: http://127.0.0.1:9000
           S3_REGION: us-east-1
           S3_BUCKET: domiciledb-ci
-          S3_ACCESS_KEY_ID: minioadmin
-          S3_SECRET_ACCESS_KEY: minioadmin
+          S3_ACCESS_KEY_ID: rustfsadmin
+          S3_SECRET_ACCESS_KEY: rustfsadmin
+
+      - name: Stop RustFS
+        if: always()
+        run: docker rm -f rustfs || true
 
   docker:
     runs-on: ubuntu-latest

@@ -10,8 +10,8 @@ import {
 import { config } from "@/lib/config";
 
 /**
- * Thin S3 wrapper. Works with AWS S3 and S3-compatible stores (MinIO, Backblaze
- * B2, Cloudflare R2) — a custom endpoint enables path-style addressing.
+ * Thin S3 wrapper. Works with AWS S3 and S3-compatible stores (Backblaze B2,
+ * Cloudflare R2, RustFS) — a custom endpoint enables path-style addressing.
  */
 
 function makeClient(): S3Client {

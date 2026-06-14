@@ -14,7 +14,7 @@ import { SNAPSHOT_KEY } from "@/lib/backup/plan";
 import { runBackup } from "@/lib/backup/run";
 import { config } from "@/lib/config";
 
-// Round-trips against a real S3-compatible store (MinIO). Skipped unless the
+// Round-trips against a real S3-compatible store (RustFS). Skipped unless the
 // operator env is present, so the default unit run never needs S3.
 const ENABLED = Boolean(process.env.S3_BUCKET && process.env.S3_ENDPOINT);
 const MEDIA_REL = "media/items/1/abc-web.webp";

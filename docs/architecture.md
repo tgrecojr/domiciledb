@@ -18,7 +18,7 @@ valuation/coverage model, a claim-ready PDF, and data that survives destruction 
 | UI        | Tailwind + Serwist PWA              | Mobile-first capture is the primary surface                                     |
 | Media     | sharp on the filesystem             | Keeps the DB tiny + snapshots fast; content-addressed S3 sync                   |
 | PDF       | @react-pdf/renderer                 | Pure-JS, no headless Chromium → slim distroless image                           |
-| Backup    | @aws-sdk/client-s3                  | S3-compatible (AWS/MinIO/B2/R2)                                                 |
+| Backup    | @aws-sdk/client-s3                  | S3-compatible (AWS S3 / Backblaze B2 / Cloudflare R2)                           |
 | AI        | OpenRouter via `fetch`              | OpenAI-compatible vision; full control over the "exactly what's sent" payload   |
 
 ## Request / data flow
@@ -125,12 +125,12 @@ changed media, and writes a status file surfaced in the UI; it's a clean no-op w
 - **Unit (Vitest):** pure logic, with an enforced coverage gate (100% lines/fns/stmts, 90% branches)
   on `coverage.ts`, `money.ts`, `report.ts`.
 - **Integration (Vitest):** real temp SQLite for valuation/coverage/report wiring + media variants;
-  a real backup→S3→restore round-trip against MinIO.
+  a real backup→S3→restore round-trip against RustFS (an OSS, S3-compatible store).
 - **E2E (Playwright):** mobile journeys — capture, coverage alerts, proof packet, receipts, AI
   consent/apply, and a security suite firing encoded traversal payloads at the media route.
 
 CI (`.github/workflows/ci.yml`): `lint → typecheck → coverage-gated unit → build → e2e`, plus a
-**MinIO** integration job and a **distroless docker build + boot** job. Supply-chain
+**RustFS** integration job and a **distroless docker build + boot** job. Supply-chain
 (`.github/workflows/security.yml`): dependency review (PR), CodeQL, Trivy image scan, SBOM.
 Dependabot keeps npm / GitHub Actions / Docker dependencies current. The image is published to
 GHCR by `.github/workflows/publish.yml` on push to `main` and on tags.
