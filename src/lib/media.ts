@@ -42,12 +42,28 @@ function extFromMime(mime: string): string {
   return "jpg";
 }
 
-/** Resolve a DATA_DIR-relative path to an absolute one, refusing traversal. */
+/**
+ * Resolve a (possibly user-supplied) path to an absolute one INSIDE the media
+ * root, or null if it would escape. `path.resolve` normalizes `.`/`..`, so this
+ * defeats `../` traversal and absolute-path injection; the trailing separator on
+ * the prefix check defeats the sibling-prefix bypass (e.g. `media-evil`). This
+ * guard is LEXICAL — the route adds a realpath re-check for symlinks.
+ */
 export function resolveMediaPath(relativeUnderMedia: string): string | null {
-  const abs = path.resolve(config.paths.mediaDir, relativeUnderMedia);
+  if (typeof relativeUnderMedia !== "string") return null;
+  // Reject NUL bytes outright (would otherwise truncate the path at the C layer).
+  if (relativeUnderMedia.includes("\0")) return null;
+
   const root = path.resolve(config.paths.mediaDir);
+  const abs = path.resolve(root, relativeUnderMedia);
   if (abs !== root && !abs.startsWith(root + path.sep)) return null;
   return abs;
+}
+
+/** Whether an absolute path is the media root or strictly inside it. */
+export function isInsideMediaRoot(abs: string): boolean {
+  const root = path.resolve(config.paths.mediaDir);
+  return abs === root || abs.startsWith(root + path.sep);
 }
 
 export async function processAndStoreImage(
