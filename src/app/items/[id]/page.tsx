@@ -8,10 +8,14 @@ import { getItem } from "@/lib/queries/items";
 import { listCategories } from "@/lib/queries/categories";
 import { listLocations } from "@/lib/queries/locations";
 import { listPhotos } from "@/lib/queries/photos";
+import { listDocuments } from "@/lib/queries/documents";
 import { currentValuations } from "@/lib/queries/valuations";
+import { deleteDocumentAction } from "@/lib/actions/documents";
+import { DOCUMENT_KIND_LABELS, type DocumentKind } from "@/lib/document-kinds";
 import { mediaUrl } from "@/lib/media";
 import { ItemEditForm } from "./item-edit-form";
 import { AddPhotos } from "./add-photos";
+import { AddDocument } from "./documents-section";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +49,7 @@ export default async function ItemDetailPage({
   if (!item || item.householdId !== householdId) notFound();
 
   const photos = listPhotos(itemId);
+  const documents = listDocuments(itemId);
   const categories = listCategories();
   const locations = listLocations(householdId);
   const values = currentValuations(itemId);
@@ -98,6 +103,49 @@ export default async function ItemDetailPage({
           categories={categories.map((c) => ({ id: c.id, name: c.name }))}
           locations={locations.map((l) => ({ id: l.id, name: l.name }))}
         />
+
+        {/* Proof documents — receipts/warranties/manuals strengthen a claim. */}
+        <section className="flex flex-col gap-2 border-t pt-4">
+          <h2 className="text-sm font-semibold">Documents</h2>
+          {documents.length > 0 ? (
+            <ul className="flex flex-col gap-2">
+              {documents.map((d) => (
+                <li
+                  key={d.id}
+                  className="flex items-center justify-between rounded-lg border border-neutral-200 bg-white px-3 py-2"
+                >
+                  <a
+                    href={mediaUrl(d.path)}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="flex min-w-0 flex-col"
+                  >
+                    <span className="truncate text-sm font-medium">
+                      {d.filename}
+                    </span>
+                    <span className="text-xs text-neutral-500">
+                      {DOCUMENT_KIND_LABELS[d.kind as DocumentKind]}
+                      {d.warrantyExpiresAt
+                        ? ` · expires ${d.warrantyExpiresAt.slice(0, 10)}`
+                        : ""}
+                    </span>
+                  </a>
+                  <form action={deleteDocumentAction}>
+                    <input type="hidden" name="itemId" value={itemId} />
+                    <input type="hidden" name="docId" value={d.id} />
+                    <button
+                      type="submit"
+                      className="text-xs text-neutral-400 hover:text-coverage-over"
+                    >
+                      Remove
+                    </button>
+                  </form>
+                </li>
+              ))}
+            </ul>
+          ) : null}
+          <AddDocument itemId={itemId} />
+        </section>
 
         <form action={setItemStatusAction} className="border-t pt-4">
           <input type="hidden" name="itemId" value={itemId} />

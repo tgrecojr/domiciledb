@@ -7,10 +7,11 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 
+import { DOCUMENT_KINDS } from "@/lib/document-kinds";
 import { LIFECYCLE_STATUSES } from "@/lib/lifecycle";
 import { LOCATION_KINDS } from "@/lib/location-kinds";
 
-export { LIFECYCLE_STATUSES, LOCATION_KINDS };
+export { DOCUMENT_KINDS, LIFECYCLE_STATUSES, LOCATION_KINDS };
 
 /**
  * DomicileDB schema — the single source of truth.
@@ -172,7 +173,6 @@ export const photo = sqliteTable(
 );
 
 // ─── Document ────────────────────────────────────────────────────────────────
-export const DOCUMENT_KINDS = ["receipt", "warranty", "manual"] as const;
 
 export const document = sqliteTable(
   "document",
