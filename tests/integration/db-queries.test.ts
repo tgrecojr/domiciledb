@@ -18,12 +18,15 @@ let recordValuations: typeof import("@/lib/queries/valuations").recordValuations
 let currentValuations: typeof import("@/lib/queries/valuations").currentValuations;
 let getCoverageSummary: typeof import("@/lib/queries/coverage").getCoverageSummary;
 let getReportPacket: typeof import("@/lib/queries/report").getReportPacket;
+let deleteItem: typeof import("@/lib/queries/items").deleteItem;
+let deleteItemMedia: typeof import("@/lib/media").deleteItemMedia;
+let dataDir: string;
 
 let householdId: number;
 
 beforeAll(async () => {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "domicile-dbq-"));
-  process.env.DATA_DIR = dir;
+  dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "domicile-dbq-"));
+  process.env.DATA_DIR = dataDir;
   process.env.COVERAGE_WARN_PCT = "0.8";
 
   const { runMigrations } = await import("@/db/migrate");
@@ -33,6 +36,8 @@ beforeAll(async () => {
     await import("@/lib/queries/valuations"));
   ({ getCoverageSummary } = await import("@/lib/queries/coverage"));
   ({ getReportPacket } = await import("@/lib/queries/report"));
+  ({ deleteItem } = await import("@/lib/queries/items"));
+  ({ deleteItemMedia } = await import("@/lib/media"));
 
   runMigrations();
   householdId = db
@@ -199,5 +204,54 @@ describe("getReportPacket location filter", () => {
     expect(onlyA.rooms).toHaveLength(1);
     expect(onlyA.rooms[0]!.locationName).toBe("Room A");
     expect(onlyA.grandTotalCents).toBe(100_00);
+  });
+});
+
+describe("deleteItem cascades rows and removes on-disk media", () => {
+  it("deletes the item, its photo/valuation rows, and its media files", async () => {
+    const it = newItem();
+    const rel = `media/items/${it.id}/photo-web.webp`;
+    db.insert(schema.photo)
+      .values({
+        itemId: it.id,
+        kind: "general",
+        pathOriginal: rel,
+        pathWeb: rel,
+        pathThumb: rel,
+        contentHash: "hash",
+      })
+      .run();
+    recordValuations(it.id, { replacementCostCents: 100_00 });
+
+    const abs = path.join(dataDir, rel);
+    fs.mkdirSync(path.dirname(abs), { recursive: true });
+    fs.writeFileSync(abs, "bytes");
+
+    deleteItem(it.id);
+    await deleteItemMedia(it.id);
+
+    // Item + cascaded child rows are gone.
+    expect(
+      db.select().from(schema.item).where(eq(schema.item.id, it.id)).all(),
+    ).toHaveLength(0);
+    expect(
+      db
+        .select()
+        .from(schema.photo)
+        .where(eq(schema.photo.itemId, it.id))
+        .all(),
+    ).toHaveLength(0);
+    expect(
+      db
+        .select()
+        .from(schema.valuation)
+        .where(eq(schema.valuation.itemId, it.id))
+        .all(),
+    ).toHaveLength(0);
+
+    // On-disk media directory is removed.
+    expect(
+      fs.existsSync(path.join(dataDir, "media", "items", String(it.id))),
+    ).toBe(false);
   });
 });

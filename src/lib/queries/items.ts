@@ -61,6 +61,11 @@ export function setItemStatus(id: number, status: ItemStatus) {
     .run();
 }
 
+/** Hard-delete an item. FKs cascade to photos/documents/valuations/tags. */
+export function deleteItem(id: number) {
+  db.delete(item).where(eq(item.id, id)).run();
+}
+
 export interface ItemListRow {
   id: number;
   title: string;
