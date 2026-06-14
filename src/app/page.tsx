@@ -1,4 +1,10 @@
-import { ClipboardList, MapPin, Package, ShieldCheck } from "lucide-react";
+import {
+  ClipboardList,
+  FileText,
+  MapPin,
+  Package,
+  ShieldCheck,
+} from "lucide-react";
 import Link from "next/link";
 
 import { AppShell } from "@/components/app-shell";
@@ -78,6 +84,7 @@ export default async function HomePage() {
             badge={locations.length}
           />
           <Tile href="/policy" icon={ShieldCheck} label="Insurance coverage" />
+          <Tile href="/report" icon={FileText} label="Proof packet (PDF)" />
         </nav>
       </div>
     </AppShell>

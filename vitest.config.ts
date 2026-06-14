@@ -2,6 +2,9 @@ import path from "node:path";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
+  // Use the automatic JSX runtime so server-side React (e.g. @react-pdf/renderer
+  // components) can be unit-rendered without importing React explicitly.
+  esbuild: { jsx: "automatic" },
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
@@ -20,7 +23,7 @@ export default defineConfig({
       // by Playwright e2e, which v8 unit coverage doesn't see — so we scope the
       // gate to these modules rather than the whole tree. Add pure modules here
       // (with their tests) as they're created.
-      include: ["src/lib/coverage.ts", "src/lib/money.ts"],
+      include: ["src/lib/coverage.ts", "src/lib/money.ts", "src/lib/report.ts"],
       reporter: ["text-summary", "html"],
       thresholds: {
         statements: 100,
