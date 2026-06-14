@@ -7,6 +7,12 @@ import sharp from "sharp";
 
 import { config } from "@/lib/config";
 
+// Keep sharp's footprint small on a self-hosted box: no operation cache and a
+// single libvips thread per op. Full-size phone photos (up to ~48 MP) can
+// otherwise spike native memory enough to OOM-kill the process.
+sharp.cache(false);
+sharp.concurrency(1);
+
 /**
  * Image processing + storage. Every uploaded photo is stored three ways under
  * DATA_DIR/media/items/<itemId>/:
@@ -83,23 +89,26 @@ export async function processAndStoreImage(
   const webName = `${shortHash}-web.webp`;
   const thumbName = `${shortHash}-thumb.webp`;
 
-  // Auto-rotate via EXIF before reading dimensions / resizing.
-  const base = sharp(buffer, { failOn: "none" }).rotate();
-  const meta = await base.metadata();
+  const meta = await sharp(buffer, { failOn: "none" }).metadata();
 
-  await Promise.all([
-    fs.writeFile(path.join(absDir, originalName), buffer),
-    base
-      .clone()
-      .resize(WEB_MAX, WEB_MAX, { fit: "inside", withoutEnlargement: true })
-      .webp({ quality: 80 })
-      .toFile(path.join(absDir, webName)),
-    base
-      .clone()
-      .resize(THUMB_MAX, THUMB_MAX, { fit: "cover" })
-      .webp({ quality: 70 })
-      .toFile(path.join(absDir, thumbName)),
-  ]);
+  // Store the untouched original (cheap — no decode), then derive the two
+  // variants with FRESH pipelines, SEQUENTIALLY. Fresh pipelines let libvips
+  // shrink-on-load for JPEGs, and one-at-a-time keeps only a single decode in
+  // flight — far lower peak memory than cloning a fully-decoded, rotated base
+  // and resizing twice in parallel (which OOM'd on large photos).
+  await fs.writeFile(path.join(absDir, originalName), buffer);
+
+  await sharp(buffer, { failOn: "none" })
+    .rotate()
+    .resize(WEB_MAX, WEB_MAX, { fit: "inside", withoutEnlargement: true })
+    .webp({ quality: 80 })
+    .toFile(path.join(absDir, webName));
+
+  await sharp(buffer, { failOn: "none" })
+    .rotate()
+    .resize(THUMB_MAX, THUMB_MAX, { fit: "cover" })
+    .webp({ quality: 70 })
+    .toFile(path.join(absDir, thumbName));
 
   return {
     pathOriginal: path.join(relDir, originalName),

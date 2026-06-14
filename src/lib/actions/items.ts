@@ -22,13 +22,25 @@ import { recordValuations } from "@/lib/queries/valuations";
 
 const ACCEPTED = /^image\/(jpe?g|png|webp|heic|heif)$/i;
 
-async function storeFiles(itemId: number, files: File[]) {
+async function storeFiles(itemId: number, files: File[]): Promise<number> {
+  let stored = 0;
   for (const file of files) {
     if (file.size === 0 || !ACCEPTED.test(file.type)) continue;
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const stored = await processAndStoreImage(itemId, buffer, file.type);
-    addPhoto(itemId, stored, "general");
+    try {
+      const buffer = Buffer.from(await file.arrayBuffer());
+      const image = await processAndStoreImage(itemId, buffer, file.type);
+      addPhoto(itemId, image, "general");
+      stored += 1;
+    } catch (err) {
+      // One bad/unsupported photo shouldn't fail the whole save — log it so the
+      // real cause is visible, and keep going.
+      console.error(
+        `[capture] could not process photo "${file.name}" (${file.type}, ${file.size} bytes) for item ${itemId}:`,
+        err,
+      );
+    }
   }
+  return stored;
 }
 
 /** Quick capture: photos (+ optional title/location) -> a new draft item. */
