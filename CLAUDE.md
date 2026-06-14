@@ -11,7 +11,7 @@ grounds the insurance model (Coverage B – Personal Property = $456,750).
 ## Tech Stack
 
 - Language: TypeScript (strict)
-- Framework: Next.js 15 (App Router) + React 19
+- Framework: Next.js 16 (App Router) + React 19
 - Database: SQLite via Drizzle ORM + better-sqlite3
 - UI: Tailwind CSS, mobile-first PWA (Serwist)
 - AI: OpenRouter (remote, opt-in per action, confirm-before-save)

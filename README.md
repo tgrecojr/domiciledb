@@ -41,7 +41,7 @@ use Tailscale / split-DNS with a real cert.
 | Concern   | Choice                                                              |
 | --------- | ------------------------------------------------------------------- |
 | Language  | TypeScript (strict)                                                 |
-| Framework | Next.js 15 (App Router) + React 19                                  |
+| Framework | Next.js 16 (App Router) + React 19                                  |
 | Database  | SQLite via Drizzle ORM + better-sqlite3 (single file, WAL)          |
 | UI        | Tailwind CSS, mobile-first PWA (Serwist)                            |
 | Media     | sharp (original + web + thumbnail variants on the filesystem)       |

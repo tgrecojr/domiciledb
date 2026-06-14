@@ -13,7 +13,7 @@ valuation/coverage model, a claim-ready PDF, and data that survives destruction 
 
 | Layer     | Choice                              | Why                                                                             |
 | --------- | ----------------------------------- | ------------------------------------------------------------------------------- |
-| Framework | Next.js 15 App Router + React 19    | One language end-to-end; server actions for the AI proxy; PWA                   |
+| Framework | Next.js 16 App Router + React 19    | One language end-to-end; server actions for the AI proxy; PWA                   |
 | DB        | SQLite via Drizzle + better-sqlite3 | Single file = trivial S3 backup/restore; no engine binary (distroless-friendly) |
 | UI        | Tailwind + Serwist PWA              | Mobile-first capture is the primary surface                                     |
 | Media     | sharp on the filesystem             | Keeps the DB tiny + snapshots fast; content-addressed S3 sync                   |

@@ -121,8 +121,12 @@ export function ItemEditForm({
   const [dirty, setDirty] = useState(false);
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   // Always save the freshest values, even from a debounced/blur callback.
+  // Sync in an effect (not during render) so we never mutate a ref mid-render;
+  // it settles long before the debounced save fires.
   const latest = useRef(fields);
-  latest.current = fields;
+  useEffect(() => {
+    latest.current = fields;
+  }, [fields]);
 
   function save() {
     if (timer.current) clearTimeout(timer.current);
