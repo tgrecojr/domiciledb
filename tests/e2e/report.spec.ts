@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { captureDraft, ensureOnboarded } from "./helpers";
+import { captureDraft, ensureOnboarded, withAutoSave } from "./helpers";
 
 test("proof packet downloads as a valid, non-empty PDF with item value embedded", async ({
   page,
@@ -11,7 +11,9 @@ test("proof packet downloads as a valid, non-empty PDF with item value embedded"
   const itemUrl = await captureDraft(page, `Report item ${Date.now()}`);
   await page.goto(itemUrl);
   await page.locator('input[name="replacementCost"]').fill("1000");
-  await page.getByRole("button", { name: "Save details" }).click();
+  await withAutoSave(page, () =>
+    page.locator('input[name="replacementCost"]').blur(),
+  );
 
   // The report page offers the whole-household download.
   await page.goto("/report");
