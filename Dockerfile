@@ -2,7 +2,7 @@
 
 # ─── Stage 1: build (compile native better-sqlite3, build Next standalone) ────
 # Debian bookworm = glibc, matching the distroless runtime below.
-FROM node:22-bookworm-slim@sha256:e21fc383b50d5347dc7a9f1cae45b8f4e2f0d39f7ade28e4eef7d2934522b752 AS builder
+FROM node:24-bookworm-slim@sha256:2c87ef9bd3c6a3bd4b472b4bec2ce9d16354b0c574f736c476489d09f560a203 AS builder
 WORKDIR /app
 
 # Toolchain for node-gyp (better-sqlite3 compiles from source).
