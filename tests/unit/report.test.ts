@@ -148,6 +148,22 @@ describe("assembleReport", () => {
     ]);
   });
 
+  it("sorts Unassigned last even when a known room is added before it", () => {
+    // Insertion order [Garage, Unassigned] exercises the a===Unassigned branch
+    // of the sort comparator (Unassigned becomes the element being placed).
+    const data = assembleReport({
+      items: [
+        item({ id: 1, locationId: 2, replacementCostCents: 10_00 }),
+        item({ id: 2, locationId: null, replacementCostCents: 10_00 }),
+      ],
+      locationNames: names,
+    });
+    expect(data.rooms.map((r) => r.locationName)).toEqual([
+      "Garage",
+      "Unassigned",
+    ]);
+  });
+
   it("falls back to Unassigned when a location id has no name", () => {
     const data = assembleReport({
       items: [item({ id: 1, locationId: 99, replacementCostCents: 10_00 })],

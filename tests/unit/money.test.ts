@@ -37,6 +37,11 @@ describe("parseDollarsToCents", () => {
     expect(parseDollarsToCents("-5")).toBeNull();
     expect(parseDollarsToCents("-$1,000")).toBeNull();
   });
+
+  it("rejects a digit string so large it overflows to Infinity", () => {
+    // Passes the digits-only regex but Number(...) -> Infinity (not finite).
+    expect(parseDollarsToCents("9".repeat(400))).toBeNull();
+  });
 });
 
 describe("formatCents", () => {
