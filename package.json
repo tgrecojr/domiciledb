@@ -71,7 +71,7 @@
     "overrides": "Pin @emnapi/* (optional+peer wasm deps from sharp/transitive) to consistent versions; works around an npm bug where the lockfile writer and `npm ci` validator disagree, which otherwise breaks `npm ci` in CI and Docker."
   },
   "overrides": {
-    "@emnapi/wasi-threads": "1.2.2",
+    "@emnapi/wasi-threads": "2.0.0",
     "@emnapi/core": "1.11.0",
     "esbuild": "^0.28.1",
     "postcss": "^8.5.10"
