@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 
-import { captureDraft, ensureOnboarded } from "./helpers";
+import { captureDraft, ensureOnboarded, withAutoSave } from "./helpers";
 
 test("set Coverage B, value an item over the limit → contextual alert + red dashboard widget", async ({
   page,
@@ -21,7 +21,9 @@ test("set Coverage B, value an item over the limit → contextual alert + red da
   const itemUrl = await captureDraft(page, `Coverage item ${Date.now()}`);
   await page.goto(itemUrl);
   await page.locator('input[name="replacementCost"]').fill("2000");
-  await page.getByRole("button", { name: "Save details" }).click();
+  await withAutoSave(page, () =>
+    page.locator('input[name="replacementCost"]').blur(),
+  );
 
   // Contextual nudge appears right where the user crossed the threshold.
   await expect(page.getByText(/underinsured/i)).toBeVisible();
@@ -43,7 +45,9 @@ test("approaching the limit shows the amber status", async ({ page }) => {
   const itemUrl = await captureDraft(page, `Approaching item ${Date.now()}`);
   await page.goto(itemUrl);
   await page.locator('input[name="replacementCost"]').fill("85000");
-  await page.getByRole("button", { name: "Save details" }).click();
+  await withAutoSave(page, () =>
+    page.locator('input[name="replacementCost"]').blur(),
+  );
 
   await page.goto("/");
   await expect(page.getByText("Approaching your limit")).toBeVisible();

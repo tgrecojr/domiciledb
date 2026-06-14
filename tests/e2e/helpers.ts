@@ -40,6 +40,24 @@ export async function ensureOnboarded(page: Page) {
   }
 }
 
+/**
+ * The item edit form auto-saves (debounced on type, flushed on blur) — there is
+ * no Save button. Run `action` (e.g. blur a field, pick a select option) and
+ * wait for the resulting Server Action POST to complete, so a subsequent
+ * navigation can't race the save.
+ */
+export async function withAutoSave(
+  page: Page,
+  action: () => Promise<unknown>,
+): Promise<void> {
+  await Promise.all([
+    page.waitForResponse(
+      (r) => r.request().method() === "POST" && r.status() < 400,
+    ),
+    action(),
+  ]);
+}
+
 /** Quick-capture a draft item with a photo + title; returns its detail URL. */
 export async function captureDraft(page: Page, title: string): Promise<string> {
   await page.goto("/capture");

@@ -19,6 +19,7 @@ import { AddPhotos } from "./add-photos";
 import { AddDocument } from "./documents-section";
 import { AiAssist } from "./ai-assist";
 import { DeleteItem } from "./delete-item";
+import { PhotoGallery } from "./photo-gallery";
 
 export const dynamic = "force-dynamic";
 
@@ -62,17 +63,15 @@ export default async function ItemDetailPage({
   return (
     <AppShell title={item.title} back={{ href: "/items", label: "Items" }}>
       <div className="flex flex-col gap-5">
-        {/* Photo gallery + add. */}
+        {/* Photo gallery (tap to enlarge) + add. */}
         <div className="flex flex-wrap gap-2">
-          {photos.map((p) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              key={p.id}
-              src={mediaUrl(p.pathWeb)}
-              alt=""
-              className="h-20 w-20 rounded-lg object-cover"
-            />
-          ))}
+          <PhotoGallery
+            photos={photos.map((p) => ({
+              id: p.id,
+              web: mediaUrl(p.pathWeb),
+              original: mediaUrl(p.pathOriginal),
+            }))}
+          />
           <AddPhotos itemId={itemId} />
         </div>
 

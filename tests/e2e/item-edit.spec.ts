@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 
-import { captureDraft, ensureOnboarded } from "./helpers";
+import { captureDraft, ensureOnboarded, withAutoSave } from "./helpers";
 
 /** Whole-dollar "$X inventoried of …" total from the dashboard coverage widget. */
 async function inventoriedDollars(page: Page): Promise<number> {
@@ -20,10 +20,12 @@ test("editing rejects an empty title and does not save", async ({ page }) => {
   const itemUrl = await captureDraft(page, `Edit item ${Date.now()}`);
   await page.goto(itemUrl);
 
+  // Clearing the title and blurring triggers an auto-save attempt, which the
+  // form rejects client-side without persisting.
   await page.locator('input[name="title"]').fill("");
-  await page.getByRole("button", { name: "Save details" }).click();
+  await page.locator('input[name="title"]').blur();
 
-  await expect(page.getByText("Title is required")).toBeVisible();
+  await expect(page.getByTestId("save-status")).toHaveText("Title is required");
 });
 
 test("marking an item sold drops it from the coverage total", async ({
@@ -40,14 +42,17 @@ test("marking an item sold drops it from the coverage total", async ({
   const itemUrl = await captureDraft(page, `Sellable ${Date.now()}`);
   await page.goto(itemUrl);
   await page.locator('input[name="replacementCost"]').fill("5000");
-  await page.getByRole("button", { name: "Save details" }).click();
+  await withAutoSave(page, () =>
+    page.locator('input[name="replacementCost"]').blur(),
+  );
 
   const before = await inventoriedDollars(page);
 
   // Mark it sold -> it must leave the active coverage total.
   await page.goto(itemUrl);
-  await page.locator('select[name="lifecycleStatus"]').selectOption("sold");
-  await page.getByRole("button", { name: "Save details" }).click();
+  await withAutoSave(page, () =>
+    page.locator('select[name="lifecycleStatus"]').selectOption("sold"),
+  );
 
   const after = await inventoriedDollars(page);
   expect(before - after).toBe(5000);

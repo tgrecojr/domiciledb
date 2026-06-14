@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 
 import { updateItemAction, type ItemFormState } from "@/lib/actions/items";
 import { LIFECYCLE_LABELS, LIFECYCLE_STATUSES } from "@/lib/lifecycle";
@@ -9,6 +9,8 @@ import { formatCentsWhole } from "@/lib/money";
 const inputClass =
   "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-base " +
   "outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
+
+const SAVE_DEBOUNCE_MS = 800;
 
 export interface ItemEditValues {
   id: number;
@@ -29,61 +31,46 @@ export interface ItemEditValues {
   purchaseDate: string | null;
 }
 
-function dollars(cents: number | null): string {
-  return cents == null ? "" : (cents / 100).toFixed(2);
-}
+type Fields = {
+  title: string;
+  description: string;
+  categoryId: string;
+  locationId: string;
+  manufacturer: string;
+  modelNumber: string;
+  serialNumber: string;
+  quantity: string;
+  condition: string;
+  ageEstimate: string;
+  lifecycleStatus: string;
+  lifecycleDate: string;
+  replacementCost: string;
+  pricePaid: string;
+  purchaseDate: string;
+};
 
-function Field({
-  label,
-  name,
-  defaultValue,
-  placeholder,
-}: {
-  label: string;
-  name: string;
-  defaultValue?: string | null;
-  placeholder?: string;
-}) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="text-sm font-medium">{label}</span>
-      <input
-        name={name}
-        defaultValue={defaultValue ?? ""}
-        placeholder={placeholder}
-        className={inputClass}
-      />
-    </label>
-  );
-}
+const dollars = (c: number | null) => (c == null ? "" : (c / 100).toFixed(2));
+const idStr = (n: number | null) => (n == null ? "" : String(n));
+const day = (iso: string | null) => iso?.slice(0, 10) ?? "";
 
-function MoneyField({
-  label,
-  name,
-  defaultCents,
-  hint,
-}: {
-  label: string;
-  name: string;
-  defaultCents: number | null;
-  hint?: string;
-}) {
-  return (
-    <label className="flex flex-col gap-1">
-      <span className="text-sm font-medium">{label}</span>
-      <div className="flex items-center gap-2">
-        <span className="text-neutral-400">$</span>
-        <input
-          name={name}
-          inputMode="decimal"
-          defaultValue={dollars(defaultCents)}
-          placeholder="0.00"
-          className={inputClass}
-        />
-      </div>
-      {hint ? <span className="text-xs text-neutral-500">{hint}</span> : null}
-    </label>
-  );
+function initial(item: ItemEditValues): Fields {
+  return {
+    title: item.title,
+    description: item.description ?? "",
+    categoryId: idStr(item.categoryId),
+    locationId: idStr(item.locationId),
+    manufacturer: item.manufacturer ?? "",
+    modelNumber: item.modelNumber ?? "",
+    serialNumber: item.serialNumber ?? "",
+    quantity: String(item.quantity),
+    condition: item.condition ?? "",
+    ageEstimate: item.ageEstimate ?? "",
+    lifecycleStatus: item.lifecycleStatus,
+    lifecycleDate: day(item.lifecycleDate),
+    replacementCost: dollars(item.replacementCostCents),
+    pricePaid: dollars(item.pricePaidCents),
+    purchaseDate: day(item.purchaseDate),
+  };
 }
 
 function CoverageAlertBanner({
@@ -128,23 +115,100 @@ export function ItemEditForm({
   categories: { id: number; name: string }[];
   locations: { id: number; name: string }[];
 }) {
-  const [state, formAction, pending] = useActionState<ItemFormState, FormData>(
-    updateItemAction,
-    null,
+  const [fields, setFields] = useState<Fields>(() => initial(item));
+  const [result, setResult] = useState<ItemFormState>(null);
+  const [pending, startTransition] = useTransition();
+  const [dirty, setDirty] = useState(false);
+  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Always save the freshest values, even from a debounced/blur callback.
+  const latest = useRef(fields);
+  latest.current = fields;
+
+  function save() {
+    if (timer.current) clearTimeout(timer.current);
+    const v = latest.current;
+    if (v.title.trim().length === 0) {
+      setResult({ error: "Title is required" });
+      return;
+    }
+    const fd = new FormData();
+    fd.set("itemId", String(item.id));
+    for (const [k, val] of Object.entries(v)) fd.set(k, val);
+    startTransition(async () => {
+      setResult(await updateItemAction(null, fd));
+      setDirty(false);
+    });
+  }
+
+  function set<K extends keyof Fields>(key: K, value: string) {
+    setFields((f) => ({ ...f, [key]: value }));
+    setDirty(true);
+    if (timer.current) clearTimeout(timer.current);
+    timer.current = setTimeout(save, SAVE_DEBOUNCE_MS);
+  }
+
+  // Flush a pending save on unmount (e.g. navigating away mid-debounce).
+  useEffect(() => {
+    return () => {
+      if (timer.current) clearTimeout(timer.current);
+    };
+  }, []);
+
+  const text = (key: keyof Fields, label: string, placeholder?: string) => (
+    <label className="flex flex-col gap-1">
+      <span className="text-sm font-medium">{label}</span>
+      <input
+        name={key}
+        value={fields[key]}
+        placeholder={placeholder}
+        onChange={(e) => set(key, e.target.value)}
+        onBlur={save}
+        className={inputClass}
+      />
+    </label>
   );
 
-  return (
-    <form action={formAction} className="flex flex-col gap-4">
-      <input type="hidden" name="itemId" value={item.id} />
+  const money = (key: keyof Fields, label: string, hint?: string) => (
+    <label className="flex flex-col gap-1">
+      <span className="text-sm font-medium">{label}</span>
+      <div className="flex items-center gap-2">
+        <span className="text-neutral-400">$</span>
+        <input
+          name={key}
+          inputMode="decimal"
+          value={fields[key]}
+          placeholder="0.00"
+          onChange={(e) => set(key, e.target.value)}
+          onBlur={save}
+          className={inputClass}
+        />
+      </div>
+      {hint ? <span className="text-xs text-neutral-500">{hint}</span> : null}
+    </label>
+  );
 
-      <Field label="Title" name="title" defaultValue={item.title} />
+  const status = pending
+    ? "Saving…"
+    : result?.error
+      ? result.error
+      : dirty
+        ? "Saving…"
+        : result?.saved
+          ? "Saved ✓"
+          : "";
+
+  return (
+    <div className="flex flex-col gap-4">
+      {text("title", "Title")}
 
       <div className="grid grid-cols-2 gap-3">
         <label className="flex flex-col gap-1">
           <span className="text-sm font-medium">Category</span>
           <select
             name="categoryId"
-            defaultValue={item.categoryId ?? ""}
+            value={fields.categoryId}
+            onChange={(e) => set("categoryId", e.target.value)}
+            onBlur={save}
             className={inputClass}
           >
             <option value="">— None —</option>
@@ -160,7 +224,9 @@ export function ItemEditForm({
           <span className="text-sm font-medium">Location</span>
           <select
             name="locationId"
-            defaultValue={item.locationId ?? ""}
+            value={fields.locationId}
+            onChange={(e) => set("locationId", e.target.value)}
+            onBlur={save}
             className={inputClass}
           >
             <option value="">— Unassigned —</option>
@@ -173,23 +239,10 @@ export function ItemEditForm({
         </label>
       </div>
 
-      <Field
-        label="Manufacturer"
-        name="manufacturer"
-        defaultValue={item.manufacturer}
-        placeholder="e.g. Sony"
-      />
+      {text("manufacturer", "Manufacturer", "e.g. Sony")}
       <div className="grid grid-cols-2 gap-3">
-        <Field
-          label="Model number"
-          name="modelNumber"
-          defaultValue={item.modelNumber}
-        />
-        <Field
-          label="Serial number"
-          name="serialNumber"
-          defaultValue={item.serialNumber}
-        />
+        {text("modelNumber", "Model number")}
+        {text("serialNumber", "Serial number")}
       </div>
 
       <div className="grid grid-cols-3 gap-3">
@@ -199,52 +252,39 @@ export function ItemEditForm({
             name="quantity"
             type="number"
             min={1}
-            defaultValue={item.quantity}
+            value={fields.quantity}
+            onChange={(e) => set("quantity", e.target.value)}
+            onBlur={save}
             className={inputClass}
           />
         </label>
-        <Field
-          label="Condition"
-          name="condition"
-          defaultValue={item.condition}
-          placeholder="e.g. Good"
-        />
-        <Field
-          label="Age"
-          name="ageEstimate"
-          defaultValue={item.ageEstimate}
-          placeholder="e.g. ~3 yrs"
-        />
+        {text("condition", "Condition", "e.g. Good")}
+        {text("ageEstimate", "Age", "e.g. ~3 yrs")}
       </div>
 
-      {/* Valuation — replacement cost drives the coverage total. */}
       <fieldset className="flex flex-col gap-3 rounded-xl border border-neutral-200 p-3">
         <legend className="px-1 text-sm font-semibold">Value</legend>
-        <MoneyField
-          label="Replacement cost (per item, today)"
-          name="replacementCost"
-          defaultCents={item.replacementCostCents}
-          hint="What it costs to buy new now. Counts toward your coverage total (× quantity)."
-        />
+        {money(
+          "replacementCost",
+          "Replacement cost (per item, today)",
+          "What it costs to buy new now. Counts toward your coverage total (× quantity).",
+        )}
         <div className="grid grid-cols-2 gap-3">
-          <MoneyField
-            label="Price paid"
-            name="pricePaid"
-            defaultCents={item.pricePaidCents}
-          />
+          {money("pricePaid", "Price paid")}
           <label className="flex flex-col gap-1">
             <span className="text-sm font-medium">Purchase date</span>
             <input
               name="purchaseDate"
               type="date"
-              defaultValue={item.purchaseDate?.slice(0, 10) ?? ""}
+              value={fields.purchaseDate}
+              onChange={(e) => set("purchaseDate", e.target.value)}
+              onBlur={save}
               className={inputClass}
             />
           </label>
         </div>
       </fieldset>
 
-      {/* Lifecycle — non-active items drop out of the coverage total. */}
       <fieldset className="flex flex-col gap-3 rounded-xl border border-neutral-200 p-3">
         <legend className="px-1 text-sm font-semibold">Status</legend>
         <div className="grid grid-cols-2 gap-3">
@@ -252,7 +292,9 @@ export function ItemEditForm({
             <span className="text-sm font-medium">Lifecycle</span>
             <select
               name="lifecycleStatus"
-              defaultValue={item.lifecycleStatus}
+              value={fields.lifecycleStatus}
+              onChange={(e) => set("lifecycleStatus", e.target.value)}
+              onBlur={save}
               className={inputClass}
             >
               {LIFECYCLE_STATUSES.map((s) => (
@@ -267,7 +309,9 @@ export function ItemEditForm({
             <input
               name="lifecycleDate"
               type="date"
-              defaultValue={item.lifecycleDate?.slice(0, 10) ?? ""}
+              value={fields.lifecycleDate}
+              onChange={(e) => set("lifecycleDate", e.target.value)}
+              onBlur={save}
               className={inputClass}
             />
           </label>
@@ -279,28 +323,24 @@ export function ItemEditForm({
         <textarea
           name="description"
           rows={3}
-          defaultValue={item.description ?? ""}
+          value={fields.description}
+          onChange={(e) => set("description", e.target.value)}
+          onBlur={save}
           className={inputClass}
         />
       </label>
 
-      {state?.coverageAlert ? (
-        <CoverageAlertBanner alert={state.coverageAlert} />
-      ) : null}
-      {state?.error ? (
-        <p className="text-sm text-coverage-over">{state.error}</p>
-      ) : null}
-      {state?.saved && !state.coverageAlert ? (
-        <p className="text-sm text-coverage-within">Saved ✓</p>
+      {result?.coverageAlert ? (
+        <CoverageAlertBanner alert={result.coverageAlert} />
       ) : null}
 
-      <button
-        type="submit"
-        disabled={pending}
-        className="rounded-lg bg-neutral-900 px-4 py-2.5 text-base font-medium text-white disabled:opacity-60"
+      {/* Auto-saves as you type — no button to forget. */}
+      <p
+        data-testid="save-status"
+        className={`text-sm ${result?.error ? "text-coverage-over" : "text-neutral-500"}`}
       >
-        {pending ? "Saving…" : "Save details"}
-      </button>
-    </form>
+        {status}
+      </p>
+    </div>
   );
 }
