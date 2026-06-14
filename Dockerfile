@@ -1,0 +1,52 @@
+# syntax=docker/dockerfile:1
+
+# ─── Stage 1: build (compile native better-sqlite3, build Next standalone) ────
+# Debian bookworm = glibc, matching the distroless runtime below.
+FROM node:22-bookworm-slim AS builder
+WORKDIR /app
+
+# Toolchain for node-gyp (better-sqlite3 compiles from source).
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends python3 make g++ ca-certificates \
+  && rm -rf /var/lib/apt/lists/*
+
+# Install deps against the lockfile for reproducibility.
+COPY package.json package-lock.json ./
+RUN npm ci
+
+# Build the app (also compiles the Serwist service worker).
+COPY . .
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN npm run build
+
+# Pre-create the data dir owned by the distroless nonroot uid (65532).
+RUN mkdir -p /data && chown 65532:65532 /data
+
+# ─── Stage 2: runtime (distroless, non-root) ──────────────────────────────────
+FROM gcr.io/distroless/nodejs22-debian12 AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production \
+    NEXT_TELEMETRY_DISABLED=1 \
+    HOSTNAME=0.0.0.0 \
+    PORT=3000 \
+    DATA_DIR=/data
+
+# Next standalone server + traced node_modules (includes native better-sqlite3).
+COPY --from=builder --chown=65532:65532 /app/.next/standalone ./
+COPY --from=builder --chown=65532:65532 /app/.next/static ./.next/static
+COPY --from=builder --chown=65532:65532 /app/public ./public
+# Migrations must be present at runtime cwd (instrumentation.ts applies them).
+COPY --from=builder --chown=65532:65532 /app/drizzle ./drizzle
+# Writable data volume, owned by the nonroot user.
+COPY --from=builder --chown=65532:65532 /data /data
+
+USER 65532:65532
+VOLUME ["/data"]
+EXPOSE 3000
+
+HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+  CMD ["/nodejs/bin/node", "-e", "fetch('http://127.0.0.1:3000/api/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+
+# Distroless entrypoint is `node`; run the standalone server.
+CMD ["server.js"]

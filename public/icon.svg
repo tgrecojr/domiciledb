@@ -1,0 +1,4 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="DomicileDB">
+  <rect width="512" height="512" rx="96" fill="#16a34a" />
+  <path d="M256 104 120 216v192h96V300h80v108h96V216z" fill="#ffffff" />
+</svg>
