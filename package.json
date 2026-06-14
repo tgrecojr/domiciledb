@@ -14,15 +14,18 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
     "test:watch": "vitest",
     "test:e2e": "playwright test",
     "db:generate": "drizzle-kit generate",
-    "db:migrate": "tsx scripts/migrate.ts"
+    "db:migrate": "tsx scripts/migrate.ts",
+    "restore": "tsx scripts/restore.ts"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.700.0",
     "@aws-sdk/lib-storage": "^3.700.0",
     "@react-pdf/renderer": "^4.1.5",
+    "archiver": "^7.0.1",
     "better-sqlite3": "^12.2.0",
     "drizzle-orm": "^0.38.3",
     "lucide-react": "^0.468.0",
@@ -39,6 +42,7 @@
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
     "@playwright/test": "^1.49.1",
+    "@types/archiver": "^6.0.3",
     "@serwist/next": "^9.0.11",
     "@types/better-sqlite3": "^7.6.12",
     "@types/node": "^22.10.5",

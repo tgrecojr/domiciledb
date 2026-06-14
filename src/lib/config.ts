@@ -49,6 +49,9 @@ export const config = {
     dataDir,
     dbFile: path.join(dataDir, "domiciledb.db"),
     backupDir: path.join(dataDir, "backup"),
+    backupSnapshot: path.join(dataDir, "backup", "domiciledb-snapshot.db"),
+    latestPdf: path.join(dataDir, "backup", "proof-packet-latest.pdf"),
+    backupStatus: path.join(dataDir, "backup", "status.json"),
     mediaDir: path.join(dataDir, "media"),
   },
 

@@ -25,10 +25,12 @@ export function startScheduler() {
 
   if (config.backup.enabled && cron.validate(config.backup.cron)) {
     cron.schedule(config.backup.cron, () => {
-      // Phase 4: run S3 backup (VACUUM INTO snapshot + media + latest PDF).
+      void import("@/lib/backup/run").then(({ runBackup }) =>
+        runBackup(new Date().toISOString()),
+      );
     });
   }
 
-  // Phase 2: daily staleness + warranty-expiry reminder scans.
+  // Phase 5: daily staleness + warranty-expiry reminder scans.
   // cron.schedule("0 2 * * *", () => { ... });
 }

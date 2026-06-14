@@ -1,5 +1,6 @@
 import {
   ClipboardList,
+  DatabaseBackup,
   FileText,
   MapPin,
   Package,
@@ -85,6 +86,11 @@ export default async function HomePage() {
           />
           <Tile href="/policy" icon={ShieldCheck} label="Insurance coverage" />
           <Tile href="/report" icon={FileText} label="Proof packet (PDF)" />
+          <Tile
+            href="/resilience"
+            icon={DatabaseBackup}
+            label="Backup & export"
+          />
         </nav>
       </div>
     </AppShell>

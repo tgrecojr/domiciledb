@@ -63,15 +63,29 @@ The mounted `DATA_DIR` holds everything:
 
 ```
 $DATA_DIR/
-  domiciledb.db                 live SQLite database
-  backup/domicile-snapshot.db   consistent snapshot (VACUUM INTO) -> S3
-  backup/proof-packet-latest.pdf last full export -> S3
-  media/                        item photos + document attachments -> S3
+  domiciledb.db                  live SQLite database
+  backup/domiciledb-snapshot.db  consistent snapshot (VACUUM INTO) -> S3
+  backup/proof-packet-latest.pdf current PDF proof packet -> S3
+  media/                         item photos + document attachments -> S3
 ```
 
-Backup syncs the db snapshot, media, and a current PDF proof packet off-site, so even with no
-running app you still have a human-readable inventory. Restore pulls the snapshot + media back and
-starts the app. (Backup/restore implemented in a later phase — see the plan.)
+**Backup** (set `S3_BUCKET` + credentials to enable; otherwise it's a no-op) syncs the db snapshot,
+media, and a current PDF proof packet off-site — so even with no running app you still have a
+human-readable inventory. It runs on `BACKUP_CRON` and can be triggered from the Backup & export
+screen. Media is content-addressed, so only new files upload.
+
+**Restore** (run with the app stopped) pulls the snapshot + media back into `DATA_DIR`:
+
+```bash
+S3_BUCKET=your-bucket \
+S3_ACCESS_KEY_ID=... S3_SECRET_ACCESS_KEY=... \
+S3_ENDPOINT=...            # only for S3-compatible stores (MinIO/B2/R2) \
+DATA_DIR=/data \
+npm run restore
+```
+
+Then start the app. **Export** (Backup & export screen, or `GET /api/export`) downloads a ZIP of a
+consistent db snapshot plus all media, for safekeeping and to avoid lock-in.
 
 ## Development status
 
