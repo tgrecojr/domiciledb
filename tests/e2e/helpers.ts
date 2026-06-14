@@ -1,3 +1,4 @@
+import { randomBytes } from "node:crypto";
 import { expect, type Page } from "@playwright/test";
 import sharp from "sharp";
 
@@ -12,6 +13,18 @@ export async function sampleJpeg(): Promise<Buffer> {
     },
   })
     .jpeg()
+    .toBuffer();
+}
+
+/**
+ * A random-noise JPEG comfortably larger than 1 MB (noise can't be compressed
+ * away), to exercise the Server Action body-size limit like a real phone photo.
+ */
+export async function largeJpeg(): Promise<Buffer> {
+  const size = 2200;
+  const raw = randomBytes(size * size * 3);
+  return sharp(raw, { raw: { width: size, height: size, channels: 3 } })
+    .jpeg({ quality: 92 })
     .toBuffer();
 }
 

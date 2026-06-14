@@ -17,6 +17,13 @@ const nextConfig: NextConfig = {
   // better-sqlite3 / sharp are native; keep them external to the server bundle.
   // instrumentation.ts (migrations + scheduler) is enabled by default in Next 15.
   serverExternalPackages: ["better-sqlite3", "sharp", "@react-pdf/renderer"],
+  experimental: {
+    serverActions: {
+      // Photo capture posts full-size phone images (often several at once)
+      // through a Server Action; the default 1 MB cap rejects them.
+      bodySizeLimit: "50mb",
+    },
+  },
 };
 
 export default withSerwist(nextConfig);
