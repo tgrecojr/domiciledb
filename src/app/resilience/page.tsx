@@ -27,7 +27,7 @@ export default async function ResiliencePage() {
         <section className="flex flex-col gap-3 rounded-xl border border-neutral-200 bg-white p-4">
           <div className="flex items-center gap-2">
             {enabled ? (
-              <CloudUpload className="h-5 w-5 text-coverage-within" />
+              <CloudUpload className="text-coverage-within h-5 w-5" />
             ) : (
               <CloudOff className="h-5 w-5 text-neutral-400" />
             )}

@@ -6,7 +6,7 @@ import { savePolicyAction, type PolicyFormState } from "@/lib/actions/policy";
 
 const inputClass =
   "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-base " +
-  "outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
+  "outline-hidden focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
 
 function dollars(cents: number | null): string {
   return cents == null ? "" : (cents / 100).toFixed(2);
@@ -112,10 +112,10 @@ export function PolicyForm({ initial }: { initial: Initial }) {
       </details>
 
       {state?.error ? (
-        <p className="text-sm text-coverage-over">{state.error}</p>
+        <p className="text-coverage-over text-sm">{state.error}</p>
       ) : null}
       {state?.saved ? (
-        <p className="text-sm text-coverage-within">Coverage saved ✓</p>
+        <p className="text-coverage-within text-sm">Coverage saved ✓</p>
       ) : null}
 
       <button

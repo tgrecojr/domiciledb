@@ -21,7 +21,7 @@ const ITEM_TASKS: AiTaskKey[] = [
 
 const inputClass =
   "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-base " +
-  "outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
+  "outline-hidden focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
 
 type ReviewField = { name: string; label: string; value: string };
 
@@ -137,7 +137,7 @@ export function AiAssist({
       {phase.step === "idle" || phase.step === "error" ? (
         <>
           {phase.step === "error" ? (
-            <p className="text-sm text-coverage-over">{phase.message}</p>
+            <p className="text-coverage-over text-sm">{phase.message}</p>
           ) : null}
           <div className="flex flex-wrap gap-2">
             {ITEM_TASKS.map((key) => (
@@ -171,7 +171,7 @@ export function AiAssist({
                   <p className="mt-1">• Prompt: “{m.prompt}”</p>
                 </div>
                 {m.sendsImage && !hasPhoto ? (
-                  <p className="text-xs text-coverage-over">
+                  <p className="text-coverage-over text-xs">
                     This item has no photo to send.
                   </p>
                 ) : null}

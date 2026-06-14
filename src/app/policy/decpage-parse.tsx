@@ -10,7 +10,7 @@ import { TASKS } from "@/lib/ai/tasks";
 
 const inputClass =
   "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-base " +
-  "outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
+  "outline-hidden focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
 
 type Phase =
   | { step: "idle" }
@@ -96,7 +96,7 @@ export function DecPageParse({ model }: { model: string }) {
       {phase.step === "idle" || phase.step === "error" ? (
         <>
           {phase.step === "error" ? (
-            <p className="text-sm text-coverage-over">{phase.message}</p>
+            <p className="text-coverage-over text-sm">{phase.message}</p>
           ) : null}
           <input
             type="file"

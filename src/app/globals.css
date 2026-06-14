@@ -1,6 +1,11 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Coverage status palette (within / approaching / over). */
+  --color-coverage-within: #16a34a;
+  --color-coverage-approaching: #d97706;
+  --color-coverage-over: #dc2626;
+}
 
 :root {
   color-scheme: light dark;

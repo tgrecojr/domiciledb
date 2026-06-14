@@ -145,7 +145,7 @@ export default async function ItemDetailPage({
                     <input type="hidden" name="docId" value={d.id} />
                     <button
                       type="submit"
-                      className="text-xs text-neutral-400 hover:text-coverage-over"
+                      className="hover:text-coverage-over text-xs text-neutral-400"
                     >
                       Remove
                     </button>

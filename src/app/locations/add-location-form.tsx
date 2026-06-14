@@ -10,7 +10,7 @@ import { LOCATION_KIND_LABELS } from "@/lib/location-kinds";
 
 const inputClass =
   "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-base " +
-  "outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
+  "outline-hidden focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
 
 export function AddLocationForm() {
   const [state, formAction, pending] = useActionState<
@@ -43,7 +43,7 @@ export function AddLocationForm() {
         </select>
       </div>
       {state?.error ? (
-        <p className="text-sm text-coverage-over">{state.error}</p>
+        <p className="text-coverage-over text-sm">{state.error}</p>
       ) : null}
       <button
         type="submit"

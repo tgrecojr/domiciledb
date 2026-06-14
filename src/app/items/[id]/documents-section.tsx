@@ -8,7 +8,7 @@ import { DOCUMENT_KIND_LABELS } from "@/lib/document-kinds";
 
 const inputClass =
   "rounded-lg border border-neutral-300 bg-white px-3 py-2 text-sm " +
-  "outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
+  "outline-hidden focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
 
 function SubmitButton() {
   const { pending } = useFormStatus();

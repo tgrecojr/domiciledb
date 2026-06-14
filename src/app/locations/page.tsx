@@ -44,7 +44,7 @@ export default async function LocationsPage() {
                   <input type="hidden" name="id" value={l.id} />
                   <button
                     type="submit"
-                    className="text-sm text-neutral-400 hover:text-coverage-over"
+                    className="hover:text-coverage-over text-sm text-neutral-400"
                   >
                     Delete
                   </button>
