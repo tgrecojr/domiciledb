@@ -9,6 +9,12 @@ export async function getHousehold() {
   return rows[0] ?? null;
 }
 
+/** The single household's id, or null if onboarding hasn't happened yet. */
+export async function getHouseholdId(): Promise<number | null> {
+  const rows = db.select({ id: household.id }).from(household).limit(1).all();
+  return rows[0]?.id ?? null;
+}
+
 export async function createHousehold(input: {
   name: string;
   description?: string;

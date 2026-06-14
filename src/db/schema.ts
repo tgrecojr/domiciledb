@@ -7,6 +7,10 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 
+import { LOCATION_KINDS } from "@/lib/location-kinds";
+
+export { LOCATION_KINDS };
+
 /**
  * DomicileDB schema — the single source of truth.
  *
@@ -29,16 +33,6 @@ export const household = sqliteTable("household", {
 });
 
 // ─── Location ────────────────────────────────────────────────────────────────
-export const LOCATION_KINDS = [
-  "room",
-  "garage",
-  "shed",
-  "storage",
-  "vehicle",
-  "safe_deposit",
-  "on_loan",
-] as const;
-
 export const location = sqliteTable(
   "location",
   {

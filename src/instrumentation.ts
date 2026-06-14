@@ -12,6 +12,9 @@ export async function register() {
   const { runMigrations } = await import("@/db/migrate");
   runMigrations();
 
+  const { seedCategories } = await import("@/db/seed");
+  seedCategories();
+
   const { startScheduler } = await import("@/lib/scheduler");
   startScheduler();
 }
