@@ -8,7 +8,7 @@ import { captureItemAction } from "@/lib/actions/items";
 
 const inputClass =
   "w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-base " +
-  "outline-none focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
+  "outline-hidden focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
 
 export function CaptureForm({
   locations,
@@ -30,12 +30,12 @@ export function CaptureForm({
   return (
     <form action={captureItemAction} className="flex flex-col gap-4">
       {justSaved ? (
-        <p className="rounded-lg bg-coverage-within/10 px-3 py-2 text-sm text-coverage-within">
+        <p className="bg-coverage-within/10 text-coverage-within rounded-lg px-3 py-2 text-sm">
           Saved ✓ — capture the next item, or finish details later.
         </p>
       ) : null}
       {emptyError ? (
-        <p className="rounded-lg bg-coverage-over/10 px-3 py-2 text-sm text-coverage-over">
+        <p className="bg-coverage-over/10 text-coverage-over rounded-lg px-3 py-2 text-sm">
           Add at least one photo or a title.
         </p>
       ) : null}

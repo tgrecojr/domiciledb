@@ -28,7 +28,7 @@ export default async function WorklistPage() {
 
       {items.length === 0 ? (
         <div className="flex flex-1 flex-col items-center justify-center gap-3 py-16 text-center text-neutral-500">
-          <CheckCircle2 className="h-10 w-10 text-coverage-within" />
+          <CheckCircle2 className="text-coverage-within h-10 w-10" />
           <p>All caught up — nothing waiting for detail.</p>
           <Link
             href="/capture"

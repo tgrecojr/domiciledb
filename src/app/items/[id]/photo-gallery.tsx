@@ -43,7 +43,7 @@ export function PhotoGallery({ photos }: { photos: Photo[] }) {
             type="button"
             onClick={() => setOpen(null)}
             aria-label="Close"
-            className="absolute right-4 top-4 rounded-full bg-white/10 p-2 text-white"
+            className="absolute top-4 right-4 rounded-full bg-white/10 p-2 text-white"
           >
             <X className="h-5 w-5" />
           </button>

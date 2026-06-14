@@ -13,7 +13,7 @@ export function DeleteItem({ itemId }: { itemId: number }) {
       <button
         type="button"
         onClick={() => setConfirming(true)}
-        className="flex items-center justify-center gap-2 rounded-lg border border-coverage-over/40 px-4 py-2.5 text-sm font-medium text-coverage-over"
+        className="border-coverage-over/40 text-coverage-over flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium"
       >
         <Trash2 className="h-4 w-4" />
         Delete item
@@ -22,8 +22,8 @@ export function DeleteItem({ itemId }: { itemId: number }) {
   }
 
   return (
-    <div className="flex flex-col gap-2 rounded-lg border border-coverage-over/40 bg-coverage-over/5 p-3">
-      <p className="text-sm text-coverage-over">
+    <div className="border-coverage-over/40 bg-coverage-over/5 flex flex-col gap-2 rounded-lg border p-3">
+      <p className="text-coverage-over text-sm">
         Permanently delete this item, including its photos and documents? This
         can&apos;t be undone.
       </p>
@@ -32,7 +32,7 @@ export function DeleteItem({ itemId }: { itemId: number }) {
           <input type="hidden" name="itemId" value={itemId} />
           <button
             type="submit"
-            className="rounded-lg bg-coverage-over px-3 py-1.5 text-sm font-medium text-white"
+            className="bg-coverage-over rounded-lg px-3 py-1.5 text-sm font-medium text-white"
           >
             Yes, delete
           </button>
