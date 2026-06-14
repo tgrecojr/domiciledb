@@ -18,6 +18,7 @@ import { ItemEditForm } from "./item-edit-form";
 import { AddPhotos } from "./add-photos";
 import { AddDocument } from "./documents-section";
 import { AiAssist } from "./ai-assist";
+import { DeleteItem } from "./delete-item";
 
 export const dynamic = "force-dynamic";
 
@@ -175,6 +176,10 @@ export default async function ItemDetailPage({
             {isDraft ? "Mark complete" : "Move back to drafts"}
           </button>
         </form>
+
+        {/* Hard delete (for items created by accident) — distinct from the
+            lifecycle "sold/disposed" statuses, which keep the item on record. */}
+        <DeleteItem itemId={itemId} />
       </div>
     </AppShell>
   );

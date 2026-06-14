@@ -30,6 +30,23 @@ test("capture → draft → worklist → mark complete clears it", async ({
   await expect(page.getByText(title)).toHaveCount(0);
 });
 
+test("deletes an item (created by accident) and removes it from the inventory", async ({
+  page,
+}) => {
+  await ensureOnboarded(page);
+  const title = `Delete me ${Date.now()}`;
+  const itemUrl = await captureDraft(page, title);
+
+  await page.goto(itemUrl);
+  // Two-step confirm guards against accidental deletion.
+  await page.getByRole("button", { name: "Delete item" }).click();
+  await page.getByRole("button", { name: "Yes, delete" }).click();
+
+  // Redirected to the items list, and the item is gone.
+  await expect(page).toHaveURL(/\/items$/);
+  await expect(page.getByText(title)).toHaveCount(0);
+});
+
 test("captures a large (>1MB) photo without hitting the Server Action body limit", async ({
   page,
 }) => {

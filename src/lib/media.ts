@@ -66,6 +66,26 @@ export function isInsideMediaRoot(abs: string): boolean {
   return abs === root || abs.startsWith(root + path.sep);
 }
 
+/**
+ * Remove an item's on-disk media (photos + documents). The DB cascades delete
+ * the rows, but the files live on the filesystem and must be removed too.
+ */
+export async function deleteItemMedia(itemId: number): Promise<void> {
+  const dirs = [
+    path.join(config.paths.dataDir, "media", "items", String(itemId)),
+    path.join(
+      config.paths.dataDir,
+      "media",
+      "documents",
+      "items",
+      String(itemId),
+    ),
+  ];
+  for (const dir of dirs) {
+    await fs.rm(dir, { recursive: true, force: true });
+  }
+}
+
 export async function processAndStoreImage(
   itemId: number,
   buffer: Buffer,

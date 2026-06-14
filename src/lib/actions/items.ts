@@ -6,12 +6,13 @@ import { z } from "zod";
 
 import { LIFECYCLE_STATUSES } from "@/db/schema";
 import { crossedThreshold } from "@/lib/coverage";
-import { processAndStoreImage } from "@/lib/media";
+import { deleteItemMedia, processAndStoreImage } from "@/lib/media";
 import { parseDollarsToCents } from "@/lib/money";
 import { getCoverageSummary } from "@/lib/queries/coverage";
 import { getHouseholdId } from "@/lib/queries/household";
 import {
   createDraftItem,
+  deleteItem,
   getItem,
   setItemStatus,
   updateItem,
@@ -176,6 +177,25 @@ export async function updateItemAction(
   revalidatePath("/worklist");
   revalidatePath("/");
   return { saved: true, coverageAlert };
+}
+
+/** Permanently delete an item (e.g. created by accident) and its media. */
+export async function deleteItemAction(formData: FormData) {
+  const householdId = await getHouseholdId();
+  const itemId = Number(formData.get("itemId"));
+  if (!Number.isInteger(itemId)) redirect("/items");
+
+  const existing = getItem(itemId);
+  // Only delete an item that belongs to this household.
+  if (existing && existing.householdId === householdId) {
+    deleteItem(itemId);
+    await deleteItemMedia(itemId);
+  }
+
+  revalidatePath("/items");
+  revalidatePath("/worklist");
+  revalidatePath("/");
+  redirect("/items");
 }
 
 /** Toggle completeness: marking complete clears it from the worklist. */
