@@ -17,11 +17,12 @@ validates it with Zod. Copy [`../env.example`](../env.example) to `.env` for loc
 
 Remote AI is **opt-in per action** and **off unless a key is set**.
 
-| Variable              | Default                        | Notes                                                             |
-| --------------------- | ------------------------------ | ----------------------------------------------------------------- |
-| `OPENROUTER_API_KEY`  | _(blank)_                      | Blank ⇒ all AI features hidden. Set to enable.                    |
-| `OPENROUTER_MODEL`    | `openai/gpt-4o`                | Any vision-capable model id available to your OpenRouter account. |
-| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | Override only to point at another OpenAI-compatible gateway.      |
+| Variable              | Default                        | Notes                                                                                                                                                                |
+| --------------------- | ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `OPENROUTER_API_KEY`  | _(blank)_                      | Blank ⇒ all AI features hidden. Set to enable.                                                                                                                       |
+| `OPENROUTER_MODEL`    | `openai/gpt-4o`                | Any vision-capable model id available to your OpenRouter account.                                                                                                    |
+| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | Override only to point at another OpenAI-compatible gateway.                                                                                                         |
+| `OPENROUTER_REFERER`  | _(blank)_                      | Your site URL, sent as `HTTP-Referer` so OpenRouter attributes usage to this app. Required to pair with `X-OpenRouter-Title: DomicileDB` for an OpenRouter app page. |
 
 Privacy: AI requests leave your infrastructure. The user sees exactly what will be sent (model,
 literal prompt, the resized photo) and confirms before each call; results are reviewed and

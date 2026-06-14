@@ -24,6 +24,8 @@ const envSchema = z.object({
     .string()
     .min(1)
     .default("https://openrouter.ai/api/v1"),
+  // Site URL sent as HTTP-Referer so OpenRouter attributes usage to this app.
+  OPENROUTER_REFERER: z.string().optional().default(""),
   // Test-only: return canned AI responses instead of calling OpenRouter.
   AI_FAKE: z
     .enum(["0", "1"])
@@ -69,6 +71,9 @@ export const config = {
     apiKey: parsed.OPENROUTER_API_KEY,
     model: parsed.OPENROUTER_MODEL,
     baseUrl: parsed.OPENROUTER_BASE_URL,
+    referer: parsed.OPENROUTER_REFERER,
+    /** App name reported to OpenRouter (X-OpenRouter-Title) for attribution. */
+    title: "DomicileDB",
     fake: parsed.AI_FAKE,
     get enabled() {
       return parsed.OPENROUTER_API_KEY.length > 0;

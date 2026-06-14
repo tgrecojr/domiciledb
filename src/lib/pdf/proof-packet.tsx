@@ -3,41 +3,12 @@ import { Document, Image, Page, Text, View } from "@react-pdf/renderer";
 
 import { formatCents } from "@/lib/money";
 import type { ReportPacket } from "@/lib/queries/report";
-import {
-  itemAggregateCents,
-  type ReportItem,
-  type ReportRoom,
-} from "@/lib/report";
+import { itemAggregateCents, type ReportItem } from "@/lib/report";
 import type { PdfImage } from "./images";
+import { paginateRooms } from "./paginate";
 import { COLORS, styles } from "./styles";
 
 type ImageMap = Map<number, PdfImage[]>;
-
-// react-pdf's auto-pagination of a single Page with hundreds of children is
-// O(n²) and overflows yoga past ~80 items. We bound each physical page to a
-// fixed number of item blocks so render time stays linear and never crashes.
-const ITEMS_PER_PAGE = 10;
-
-interface PageChunk {
-  room: ReportRoom;
-  items: ReportItem[];
-  continued: boolean;
-}
-
-function paginateRooms(rooms: ReportRoom[]): PageChunk[] {
-  const chunks: PageChunk[] = [];
-  for (const room of rooms) {
-    if (room.items.length === 0) continue;
-    for (let i = 0; i < room.items.length; i += ITEMS_PER_PAGE) {
-      chunks.push({
-        room,
-        items: room.items.slice(i, i + ITEMS_PER_PAGE),
-        continued: i > 0,
-      });
-    }
-  }
-  return chunks;
-}
 
 function fmtDate(iso: string | null): string {
   if (!iso) return "—";

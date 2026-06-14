@@ -1,10 +1,11 @@
 import path from "node:path";
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
-// Integration tests (real S3/MinIO round-trip). Run with `npm run test:integration`
-// after providing S3_* env. Kept separate from the fast unit suite.
+// Integration tests (real S3 round-trip via RustFS). Run with
+// `npm run test:integration` after providing S3_* env. Separate from the unit suite.
 export default defineConfig({
-  esbuild: { jsx: "automatic" },
+  plugins: [react()], // transform JSX reached transitively (backup -> PDF render)
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

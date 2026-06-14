@@ -129,11 +129,13 @@ changed media, and writes a status file surfaced in the UI; it's a clean no-op w
 - **E2E (Playwright):** mobile journeys — capture, coverage alerts, proof packet, receipts, AI
   consent/apply, and a security suite firing encoded traversal payloads at the media route.
 
-CI (`.github/workflows/ci.yml`): `lint → typecheck → coverage-gated unit → build → e2e`, plus a
-**RustFS** integration job and a **distroless docker build + boot** job. Supply-chain
-(`.github/workflows/security.yml`): dependency review (PR), CodeQL, Trivy image scan, SBOM.
-Dependabot keeps npm / GitHub Actions / Docker dependencies current. The image is published to
-GHCR by `.github/workflows/publish.yml` on push to `main` and on tags.
+CI (`.github/workflows/ci.yml`): an `app` job (`lint → format → typecheck → coverage-gated unit →
+build → e2e`), a **RustFS** S3 integration job, and a reusable **supply-chain** scan. The supply
+chain (`supply-chain.yml`) runs **OSV-Scanner**, **Socket**, and `npm audit signatures`.
+`docker-publish.yml` builds the image (validate on PRs; on `main`/tags it pushes to GHCR, signs it
+with **cosign** keyless, and attaches **SBOM + build-provenance attestations**); `ghcr-retention.yml`
+prunes old versions. **Renovate** (`renovate.json`) keeps dependencies current. This mirrors the
+org-standard CI shape.
 
 ## Build phases (history)
 

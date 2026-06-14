@@ -54,14 +54,24 @@ export async function runTask(
     });
   }
 
+  // OpenRouter usage-attribution headers (shown in OpenRouter's rankings /
+  // analytics). X-OpenRouter-Title is the current header; it only creates an app
+  // page when paired with HTTP-Referer, so the title is sent only when a referer
+  // is configured.
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${config.ai.apiKey}`,
+    "Content-Type": "application/json",
+  };
+  if (config.ai.referer) {
+    headers["HTTP-Referer"] = config.ai.referer;
+    headers["X-OpenRouter-Title"] = config.ai.title;
+  }
+
   let res: Response;
   try {
     res = await fetch(`${config.ai.baseUrl}/chat/completions`, {
       method: "POST",
-      headers: {
-        Authorization: `Bearer ${config.ai.apiKey}`,
-        "Content-Type": "application/json",
-      },
+      headers,
       body: JSON.stringify({
         model: config.ai.model,
         messages: [{ role: "user", content }],

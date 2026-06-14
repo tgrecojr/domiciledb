@@ -1,10 +1,12 @@
 import path from "node:path";
+import react from "@vitejs/plugin-react";
 import { defineConfig } from "vitest/config";
 
 export default defineConfig({
-  // Use the automatic JSX runtime so server-side React (e.g. @react-pdf/renderer
-  // components) can be unit-rendered without importing React explicitly.
-  esbuild: { jsx: "automatic" },
+  // Transform JSX (e.g. @react-pdf/renderer components) — Vitest 4's default
+  // oxc transform otherwise preserves JSX (our tsconfig is jsx:preserve for Next)
+  // and rolldown then fails to parse it.
+  plugins: [react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

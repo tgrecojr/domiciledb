@@ -1,0 +1,49 @@
+name: Supply chain scan
+
+on:
+  workflow_call:
+    secrets:
+      SOCKET_SECURITY_API_KEY:
+        required: true
+
+jobs:
+  scan:
+    name: Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install deps (no scripts)
+        run: npm ci --ignore-scripts
+
+      - name: Verify npm package signatures
+        run: npm audit signatures
+
+      - name: Socket Security scan
+        env:
+          SOCKET_SECURITY_API_KEY: ${{ secrets.SOCKET_SECURITY_API_KEY }}
+        run: |
+          # Socket repo slug must not contain a slash; strip the owner prefix.
+          # On pull_request, GITHUB_REF_NAME is "<pr>/merge"; prefer the head ref.
+          repo_slug="${GITHUB_REPOSITORY##*/}"
+          branch_name="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          npx -y @socketsecurity/cli@latest scan create \
+            --org grecolabs \
+            --repo "${repo_slug}" \
+            --branch "${branch_name}" \
+            --report \
+            ./
+
+      - name: OSV scan (npm lockfile)
+        uses: google/osv-scanner-action/osv-scanner-action@v2.3.8
+        with:
+          scan-args: |-
+            --recursive
+            ./

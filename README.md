@@ -148,8 +148,9 @@ snapshot plus all media — for safekeeping and to avoid lock-in.
 npm run lint && npm run typecheck && npm run test:coverage && npm run build && npm run test:e2e
 ```
 
-CI runs the full gauntlet plus a RustFS backup/restore round-trip, a distroless docker build+boot,
-and supply-chain checks (dependency review, CodeQL, Trivy image scan, SBOM). See
+CI runs the full gauntlet plus a RustFS backup/restore round-trip and a supply-chain scan (OSV +
+Socket + `npm audit signatures`). A cosign-signed image with SBOM + build-provenance attestations is
+published to GHCR; Renovate keeps dependencies current. See
 [`docs/architecture.md`](./docs/architecture.md) for the CI shape.
 
 ## License
