@@ -24,9 +24,7 @@
       "customType": "regex",
       "description": "Track the distroless runtime's Node major (encoded in the image name) as a Node version so Renovate can bump it; without this it only ever updates the digest, which silently desyncs it from the builder's node:<major> and breaks native-module ABI (better-sqlite3) at runtime.",
       "managerFilePatterns": ["/(^|/)Dockerfile$/"],
-      "matchStrings": [
-        "distroless/nodejs(?<currentValue>\\d+)-debian12"
-      ],
+      "matchStrings": ["distroless/nodejs(?<currentValue>\\d+)-debian12"],
       "depNameTemplate": "node",
       "datasourceTemplate": "node-version",
       "versioningTemplate": "node"
