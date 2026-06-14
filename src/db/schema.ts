@@ -7,6 +7,12 @@ import {
   text,
 } from "drizzle-orm/sqlite-core";
 
+import { DOCUMENT_KINDS } from "@/lib/document-kinds";
+import { LIFECYCLE_STATUSES } from "@/lib/lifecycle";
+import { LOCATION_KINDS } from "@/lib/location-kinds";
+
+export { DOCUMENT_KINDS, LIFECYCLE_STATUSES, LOCATION_KINDS };
+
 /**
  * DomicileDB schema — the single source of truth.
  *
@@ -29,16 +35,6 @@ export const household = sqliteTable("household", {
 });
 
 // ─── Location ────────────────────────────────────────────────────────────────
-export const LOCATION_KINDS = [
-  "room",
-  "garage",
-  "shed",
-  "storage",
-  "vehicle",
-  "safe_deposit",
-  "on_loan",
-] as const;
-
 export const location = sqliteTable(
   "location",
   {
@@ -65,15 +61,6 @@ export const tag = sqliteTable("tag", {
 });
 
 // ─── Item / Asset ────────────────────────────────────────────────────────────
-export const LIFECYCLE_STATUSES = [
-  "active",
-  "sold",
-  "disposed",
-  "gifted",
-  "broken",
-  "replaced",
-] as const;
-
 /** Draft = still in the "needs detail" worklist; complete = user-cleared. */
 export const ITEM_STATUSES = ["draft", "complete"] as const;
 
@@ -186,7 +173,6 @@ export const photo = sqliteTable(
 );
 
 // ─── Document ────────────────────────────────────────────────────────────────
-export const DOCUMENT_KINDS = ["receipt", "warranty", "manual"] as const;
 
 export const document = sqliteTable(
   "document",

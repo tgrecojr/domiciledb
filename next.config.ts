@@ -16,7 +16,7 @@ const nextConfig: NextConfig = {
   output: "standalone",
   // better-sqlite3 / sharp are native; keep them external to the server bundle.
   // instrumentation.ts (migrations + scheduler) is enabled by default in Next 15.
-  serverExternalPackages: ["better-sqlite3", "sharp"],
+  serverExternalPackages: ["better-sqlite3", "sharp", "@react-pdf/renderer"],
 };
 
 export default withSerwist(nextConfig);

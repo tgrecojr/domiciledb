@@ -20,6 +20,18 @@ const envSchema = z.object({
   // AI Assist (OpenRouter). Blank key disables AI features.
   OPENROUTER_API_KEY: z.string().optional().default(""),
   OPENROUTER_MODEL: z.string().min(1).default("openai/gpt-4o"),
+  OPENROUTER_BASE_URL: z
+    .string()
+    .min(1)
+    .default("https://openrouter.ai/api/v1"),
+  // Site URL sent as HTTP-Referer so OpenRouter attributes usage to this app.
+  OPENROUTER_REFERER: z.string().optional().default(""),
+  // Test-only: return canned AI responses instead of calling OpenRouter.
+  AI_FAKE: z
+    .enum(["0", "1"])
+    .optional()
+    .default("0")
+    .transform((v) => v === "1"),
 
   // Off-site backup. Blank bucket disables scheduled backups.
   S3_ENDPOINT: z.string().optional().default(""),
@@ -49,12 +61,20 @@ export const config = {
     dataDir,
     dbFile: path.join(dataDir, "domiciledb.db"),
     backupDir: path.join(dataDir, "backup"),
+    backupSnapshot: path.join(dataDir, "backup", "domiciledb-snapshot.db"),
+    latestPdf: path.join(dataDir, "backup", "proof-packet-latest.pdf"),
+    backupStatus: path.join(dataDir, "backup", "status.json"),
     mediaDir: path.join(dataDir, "media"),
   },
 
   ai: {
     apiKey: parsed.OPENROUTER_API_KEY,
     model: parsed.OPENROUTER_MODEL,
+    baseUrl: parsed.OPENROUTER_BASE_URL,
+    referer: parsed.OPENROUTER_REFERER,
+    /** App name reported to OpenRouter (X-OpenRouter-Title) for attribution. */
+    title: "DomicileDB",
+    fake: parsed.AI_FAKE,
     get enabled() {
       return parsed.OPENROUTER_API_KEY.length > 0;
     },

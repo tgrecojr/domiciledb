@@ -61,6 +61,11 @@ grounds the insurance model (Coverage B – Personal Property = $456,750).
 - Store **relative** media paths in the DB (mount-independent restore).
 - Files < 300 lines, functions < 50 lines. TS strict; lint + format clean before commit.
 - No secrets in git. `.env` is ignored; `env.example` is the committed template.
+- **After changing dependencies**, regenerate the lockfile cleanly:
+  `rm -rf node_modules package-lock.json && npm install`. An incremental
+  `npm install` on macOS leaves the lock linux-incomplete for sharp's optional
+  `@emnapi/*` peer deps, which then breaks `npm ci` in Docker/CI. (CI's `npm ci`
+  is the safety net — a bad lock fails the build before it can reach prod.)
 
 ## Environment Variables
 
