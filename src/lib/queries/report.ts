@@ -13,6 +13,7 @@ import {
 } from "@/db/schema";
 import { assembleReport, type ReportData, type ReportItem } from "@/lib/report";
 import { getCoverageSummary, type CoverageSummary } from "./coverage";
+import { locationPhotosByLocation } from "./location-photos";
 import { listLocations } from "./locations";
 
 export interface ReportFilter {
@@ -134,7 +135,14 @@ export function getReportPacket(
 
   const locations = listLocations(householdId);
   const locationNames = new Map(locations.map((l) => [l.id, l.name]));
-  const data = assembleReport({ items, locationNames });
+  // Only fetch room photos for locations actually present in this packet.
+  const presentLocationIds = [
+    ...new Set(
+      items.map((i) => i.locationId).filter((id): id is number => id !== null),
+    ),
+  ];
+  const locationPhotos = locationPhotosByLocation(presentLocationIds);
+  const data = assembleReport({ items, locationNames, locationPhotos });
 
   let filterLabel = "Entire household";
   if (filter.locationId) {

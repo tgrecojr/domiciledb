@@ -145,9 +145,11 @@ function CoverageLine({ coverage }: { coverage: ReportPacket["coverage"] }) {
 export function ProofPacketDocument({
   packet,
   imagesByItem,
+  imagesByRoom,
 }: {
   packet: ReportPacket;
   imagesByItem: ImageMap;
+  imagesByRoom: ImageMap;
 }) {
   const chunks = paginateRooms(packet.rooms);
   return (
@@ -211,31 +213,44 @@ export function ProofPacketDocument({
           <Footer />
         </Page>
       ) : (
-        chunks.map((chunk, idx) => (
-          <Page key={idx} size="LETTER" style={styles.page}>
-            <RunningHeader name={packet.householdName} />
-            {idx === 0 ? (
-              <Text style={styles.h2}>Inventory by location</Text>
-            ) : null}
-            <View style={styles.roomHeader}>
-              <Text style={styles.roomTitle}>
-                {chunk.room.locationName}
-                {chunk.continued ? " (cont.)" : ""}
-              </Text>
-              <Text style={styles.bold}>
-                {formatCents(chunk.room.totalCents)}
-              </Text>
-            </View>
-            {chunk.items.map((it) => (
-              <ItemBlock
-                key={it.id}
-                item={it}
-                images={imagesByItem.get(it.id) ?? []}
-              />
-            ))}
-            <Footer />
-          </Page>
-        ))
+        chunks.map((chunk, idx) => {
+          const roomImages =
+            chunk.room.locationId !== null
+              ? (imagesByRoom.get(chunk.room.locationId) ?? [])
+              : [];
+          return (
+            <Page key={idx} size="LETTER" style={styles.page}>
+              <RunningHeader name={packet.householdName} />
+              {idx === 0 ? (
+                <Text style={styles.h2}>Inventory by location</Text>
+              ) : null}
+              <View style={styles.roomHeader}>
+                <Text style={styles.roomTitle}>
+                  {chunk.room.locationName}
+                  {chunk.continued ? " (cont.)" : ""}
+                </Text>
+                <Text style={styles.bold}>
+                  {formatCents(chunk.room.totalCents)}
+                </Text>
+              </View>
+              {!chunk.continued && roomImages.length > 0 ? (
+                <View style={styles.photoRow}>
+                  {roomImages.map((img, i) => (
+                    <Image key={i} src={img} style={styles.roomPhoto} />
+                  ))}
+                </View>
+              ) : null}
+              {chunk.items.map((it) => (
+                <ItemBlock
+                  key={it.id}
+                  item={it}
+                  images={imagesByItem.get(it.id) ?? []}
+                />
+              ))}
+              <Footer />
+            </Page>
+          );
+        })
       )}
     </Document>
   );

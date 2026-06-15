@@ -28,6 +28,7 @@ function room(locationId: number, name: string, n: number): ReportRoom {
   return {
     locationId,
     locationName: name,
+    photos: [],
     items: Array.from({ length: n }, (_, i) => item(locationId * 1000 + i)),
     totalCents: n * 100_00,
   };

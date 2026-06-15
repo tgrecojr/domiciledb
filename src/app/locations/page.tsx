@@ -1,9 +1,11 @@
+import Link from "next/link";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
 import { deleteLocationAction } from "@/lib/actions/locations";
 import { getHouseholdId } from "@/lib/queries/household";
 import { LOCATION_KIND_LABELS } from "@/lib/location-kinds";
+import { locationPhotoCounts } from "@/lib/queries/location-photos";
 import { listLocations, locationItemCounts } from "@/lib/queries/locations";
 import { AddLocationForm } from "./add-location-form";
 
@@ -15,6 +17,7 @@ export default async function LocationsPage() {
 
   const locations = listLocations(householdId);
   const counts = locationItemCounts(householdId);
+  const photoCounts = locationPhotoCounts(locations.map((l) => l.id));
 
   return (
     <AppShell title="Locations" back={{ href: "/", label: "Home" }}>
@@ -37,18 +40,26 @@ export default async function LocationsPage() {
                   <span className="font-medium">{l.name}</span>
                   <span className="text-xs text-neutral-500">
                     {LOCATION_KIND_LABELS[l.kind]} · {counts.get(l.id) ?? 0}{" "}
-                    items
+                    items · {photoCounts.get(l.id) ?? 0} photos
                   </span>
                 </div>
-                <form action={deleteLocationAction}>
-                  <input type="hidden" name="id" value={l.id} />
-                  <button
-                    type="submit"
-                    className="hover:text-coverage-over text-sm text-neutral-400"
+                <div className="flex items-center gap-4">
+                  <Link
+                    href={`/locations/${l.id}/edit`}
+                    className="text-sm text-neutral-600 hover:text-neutral-900"
                   >
-                    Delete
-                  </button>
-                </form>
+                    Edit
+                  </Link>
+                  <form action={deleteLocationAction}>
+                    <input type="hidden" name="id" value={l.id} />
+                    <button
+                      type="submit"
+                      className="hover:text-coverage-over text-sm text-neutral-400"
+                    >
+                      Delete
+                    </button>
+                  </form>
+                </div>
               </li>
             ))}
           </ul>

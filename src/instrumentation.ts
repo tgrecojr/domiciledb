@@ -9,6 +9,12 @@
 export async function register() {
   if (process.env.NEXT_RUNTIME !== "nodejs") return;
 
+  // During `next build`, Next evaluates this hook while collecting page data
+  // across many parallel workers. Running migrations/seed there is pointless
+  // (the build DB is throwaway) and the workers race on SQLite's write lock
+  // ("database is locked"). Migrations belong to runtime server start only.
+  if (process.env.NEXT_PHASE === "phase-production-build") return;
+
   const { runMigrations } = await import("@/db/migrate");
   runMigrations();
 

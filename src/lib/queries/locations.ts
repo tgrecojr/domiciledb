@@ -15,6 +15,10 @@ export function listLocations(householdId: number) {
     .all();
 }
 
+export function getLocation(id: number) {
+  return db.select().from(location).where(eq(location.id, id)).get() ?? null;
+}
+
 export function createLocation(
   householdId: number,
   name: string,
@@ -28,8 +32,11 @@ export function createLocation(
   return rows[0]!;
 }
 
-export function renameLocation(id: number, name: string, kind: LocationKind) {
-  db.update(location).set({ name, kind }).where(eq(location.id, id)).run();
+export function updateLocation(
+  id: number,
+  fields: { name: string; kind: LocationKind; description: string | null },
+) {
+  db.update(location).set(fields).where(eq(location.id, id)).run();
 }
 
 /** Items reference location with onDelete:set null, so deletion is safe. */

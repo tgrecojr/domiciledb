@@ -171,4 +171,33 @@ describe("assembleReport", () => {
     });
     expect(data.rooms[0]!.locationName).toBe("Unassigned");
   });
+
+  it("attaches location photos to their room and leaves others empty", () => {
+    const livingShots = [
+      { pathOriginal: "media/locations/1/a-original.jpg", pathWeb: "a-web" },
+    ];
+    const data = assembleReport({
+      items: [
+        item({ id: 1, locationId: 1, replacementCostCents: 10_00 }),
+        item({ id: 2, locationId: 2, replacementCostCents: 10_00 }),
+      ],
+      locationNames: names,
+      locationPhotos: new Map([[1, livingShots]]),
+    });
+    const living = data.rooms.find((r) => r.locationId === 1)!;
+    const garage = data.rooms.find((r) => r.locationId === 2)!;
+    expect(living.photos).toEqual(livingShots);
+    expect(garage.photos).toEqual([]);
+  });
+
+  it("never attaches photos to the Unassigned room", () => {
+    const data = assembleReport({
+      items: [item({ id: 1, locationId: null, replacementCostCents: 10_00 })],
+      locationNames: names,
+      // A stray null-keyed entry must not leak into Unassigned.
+      locationPhotos: new Map([[1, [{ pathOriginal: "x", pathWeb: "x" }]]]),
+    });
+    expect(data.rooms[0]!.locationName).toBe("Unassigned");
+    expect(data.rooms[0]!.photos).toEqual([]);
+  });
 });

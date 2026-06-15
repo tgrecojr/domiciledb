@@ -110,6 +110,8 @@ export const styles = StyleSheet.create({
   specLabel: { fontSize: 7, color: COLORS.faint, textTransform: "uppercase" },
   photoRow: { flexDirection: "row", marginTop: 6, gap: 4 },
   photo: { width: 70, height: 70, objectFit: "cover", borderRadius: 2 },
+  // Wider room/area shots: larger than item thumbnails to convey context.
+  roomPhoto: { width: 120, height: 90, objectFit: "cover", borderRadius: 2 },
   pill: {
     fontSize: 8,
     paddingVertical: 2,

@@ -39,6 +39,8 @@ export interface ReportItem {
 export interface ReportRoom {
   locationId: number | null;
   locationName: string;
+  /** Wider room/area shots (location-level, not item photos). */
+  photos: ReportPhoto[];
   items: ReportItem[];
   totalCents: number;
 }
@@ -69,6 +71,8 @@ export function itemAggregateCents(item: ReportItem): number | null {
 export function assembleReport(input: {
   items: ReportItem[];
   locationNames: Map<number, string>;
+  /** Wider room shots keyed by locationId (optional). */
+  locationPhotos?: Map<number, ReportPhoto[]>;
 }): ReportData {
   const active = input.items.filter((i) => i.lifecycleStatus === "active");
 
@@ -85,6 +89,10 @@ export function assembleReport(input: {
         item.locationId === null
           ? UNASSIGNED
           : (input.locationNames.get(item.locationId) ?? UNASSIGNED),
+      photos:
+        item.locationId === null
+          ? []
+          : (input.locationPhotos?.get(item.locationId) ?? []),
       items: [],
       totalCents: 0,
     };

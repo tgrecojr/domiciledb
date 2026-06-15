@@ -44,9 +44,36 @@ export const location = sqliteTable(
       .references(() => household.id, { onDelete: "cascade" }),
     name: text("name").notNull(),
     kind: text("kind", { enum: LOCATION_KINDS }).notNull().default("room"),
+    description: text("description"),
     createdAt: text("created_at").notNull().default(now),
   },
   (t) => [index("location_household_idx").on(t.householdId)],
+);
+
+// ─── Location photo ──────────────────────────────────────────────────────────
+/**
+ * Wider room/area shots tied to a LOCATION (not an item). They give the proof
+ * packet context — the whole room — alongside the item close-ups, and are kept
+ * deliberately separate from `photo` so the "a photo belongs to an item"
+ * invariant stays intact. Files live under media/locations/<locationId>/.
+ */
+export const locationPhoto = sqliteTable(
+  "location_photo",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    locationId: integer("location_id")
+      .notNull()
+      .references(() => location.id, { onDelete: "cascade" }),
+    pathOriginal: text("path_original").notNull(),
+    pathWeb: text("path_web").notNull(),
+    pathThumb: text("path_thumb").notNull(),
+    contentHash: text("content_hash").notNull(),
+    width: integer("width"),
+    height: integer("height"),
+    sortOrder: integer("sort_order").notNull().default(0),
+    createdAt: text("created_at").notNull().default(now),
+  },
+  (t) => [index("location_photo_location_idx").on(t.locationId)],
 );
 
 // ─── Category & Tags ─────────────────────────────────────────────────────────
@@ -248,6 +275,7 @@ export const reminder = sqliteTable(
 // Convenience type exports.
 export type Household = typeof household.$inferSelect;
 export type Location = typeof location.$inferSelect;
+export type LocationPhoto = typeof locationPhoto.$inferSelect;
 export type Item = typeof item.$inferSelect;
 export type Valuation = typeof valuation.$inferSelect;
 export type Photo = typeof photo.$inferSelect;
