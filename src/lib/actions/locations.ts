@@ -142,11 +142,7 @@ export async function deleteLocationPhotoAction(formData: FormData) {
     ph.locationId === locationId
   ) {
     deleteLocationPhoto(photoId);
-    await deleteStoredImageFiles([
-      ph.pathOriginal,
-      ph.pathWeb,
-      ph.pathThumb,
-    ]);
+    await deleteStoredImageFiles([ph.pathOriginal, ph.pathWeb, ph.pathThumb]);
   }
   revalidatePath(`/locations/${locationId}/edit`);
   redirect(`/locations/${locationId}/edit`);

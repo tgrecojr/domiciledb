@@ -138,9 +138,7 @@ export function getReportPacket(
   // Only fetch room photos for locations actually present in this packet.
   const presentLocationIds = [
     ...new Set(
-      items
-        .map((i) => i.locationId)
-        .filter((id): id is number => id !== null),
+      items.map((i) => i.locationId).filter((id): id is number => id !== null),
     ),
   ];
   const locationPhotos = locationPhotosByLocation(presentLocationIds);

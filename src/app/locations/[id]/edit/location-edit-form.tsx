@@ -44,11 +44,7 @@ export function LocationEditForm({
       </label>
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-neutral-600">Kind</span>
-        <select
-          name="kind"
-          defaultValue={location.kind}
-          className={inputClass}
-        >
+        <select name="kind" defaultValue={location.kind} className={inputClass}>
           {Object.entries(LOCATION_KIND_LABELS).map(([value, label]) => (
             <option key={value} value={value}>
               {label}
@@ -69,9 +65,7 @@ export function LocationEditForm({
       {state?.error ? (
         <p className="text-coverage-over text-sm">{state.error}</p>
       ) : null}
-      {state?.saved ? (
-        <p className="text-sm text-emerald-600">Saved.</p>
-      ) : null}
+      {state?.saved ? <p className="text-sm text-emerald-600">Saved.</p> : null}
       <button
         type="submit"
         disabled={pending}

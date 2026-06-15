@@ -195,9 +195,7 @@ describe("assembleReport", () => {
       items: [item({ id: 1, locationId: null, replacementCostCents: 10_00 })],
       locationNames: names,
       // A stray null-keyed entry must not leak into Unassigned.
-      locationPhotos: new Map([
-        [1, [{ pathOriginal: "x", pathWeb: "x" }]],
-      ]),
+      locationPhotos: new Map([[1, [{ pathOriginal: "x", pathWeb: "x" }]]]),
     });
     expect(data.rooms[0]!.locationName).toBe("Unassigned");
     expect(data.rooms[0]!.photos).toEqual([]);

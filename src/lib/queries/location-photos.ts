@@ -34,7 +34,8 @@ export function listLocationPhotos(locationId: number) {
 
 export function getLocationPhoto(id: number) {
   return (
-    db.select().from(locationPhoto).where(eq(locationPhoto.id, id)).get() ?? null
+    db.select().from(locationPhoto).where(eq(locationPhoto.id, id)).get() ??
+    null
   );
 }
 
@@ -59,10 +60,7 @@ export function locationPhotoCounts(locationIds: number[]) {
 
 /** Photos grouped by locationId, for the proof packet. */
 export function locationPhotosByLocation(locationIds: number[]) {
-  const map = new Map<
-    number,
-    { pathOriginal: string; pathWeb: string }[]
-  >();
+  const map = new Map<number, { pathOriginal: string; pathWeb: string }[]>();
   if (locationIds.length === 0) return map;
   const rows = db
     .select({
