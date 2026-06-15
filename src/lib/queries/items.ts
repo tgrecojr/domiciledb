@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, isNull } from "drizzle-orm";
 
 import { db } from "@/db";
 import { item, ITEM_STATUSES, LIFECYCLE_STATUSES } from "@/db/schema";
@@ -74,14 +74,26 @@ export interface ItemListRow {
   thumbPath: string | null;
 }
 
-/** Items for a list view, newest first, each with its first photo thumb. */
+/**
+ * Items for a list view, newest first, each with its first photo thumb.
+ *
+ * `location` filters by location: a numeric id, `null` for unassigned items,
+ * or omitted for all locations.
+ */
 export function listItems(
   householdId: number,
-  opts: { status?: ItemStatus } = {},
+  opts: { status?: ItemStatus; location?: number | null } = {},
 ): ItemListRow[] {
-  const where = opts.status
-    ? and(eq(item.householdId, householdId), eq(item.status, opts.status))
-    : eq(item.householdId, householdId);
+  const conditions = [eq(item.householdId, householdId)];
+  if (opts.status) conditions.push(eq(item.status, opts.status));
+  if (opts.location !== undefined) {
+    conditions.push(
+      opts.location === null
+        ? isNull(item.locationId)
+        : eq(item.locationId, opts.location),
+    );
+  }
+  const where = and(...conditions);
 
   const rows = db
     .select({
