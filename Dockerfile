@@ -36,6 +36,13 @@ ENV NODE_ENV=production \
 COPY --from=builder --chown=65532:65532 /app/.next/standalone ./
 COPY --from=builder --chown=65532:65532 /app/.next/static ./.next/static
 COPY --from=builder --chown=65532:65532 /app/public ./public
+# Next's standalone tracer copies sharp's JS + sharp.node but misses the
+# sibling libvips shared object (@img/sharp-libvips-linux-x64/lib/*.so) that the
+# addon dlopen()s at runtime — yielding ERR_DLOPEN_FAILED for libvips-cpp.so.
+# Copy the full sharp + @img trees so the addon and its libvips lib travel
+# together. (Builder is glibc x64, matching the distroless runtime ABI.)
+COPY --from=builder --chown=65532:65532 /app/node_modules/sharp ./node_modules/sharp
+COPY --from=builder --chown=65532:65532 /app/node_modules/@img ./node_modules/@img
 # Migrations must be present at runtime cwd (instrumentation.ts applies them).
 COPY --from=builder --chown=65532:65532 /app/drizzle ./drizzle
 # Writable data volume, owned by the nonroot user.
