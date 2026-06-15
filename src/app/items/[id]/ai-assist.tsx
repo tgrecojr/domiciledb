@@ -9,7 +9,7 @@ import {
   applyItemSuggestion,
   type AiSuggestResult,
 } from "@/lib/actions/ai";
-import { buildManifest } from "@/lib/ai/manifest";
+import { AI_MAX_PHOTOS, buildManifest } from "@/lib/ai/manifest";
 import { TASKS, type AiTaskKey } from "@/lib/ai/tasks";
 
 const ITEM_TASKS: AiTaskKey[] = [
@@ -84,13 +84,15 @@ type Phase =
 
 export function AiAssist({
   itemId,
-  hasPhoto,
+  photoCount,
   model,
 }: {
   itemId: number;
-  hasPhoto: boolean;
+  photoCount: number;
   model: string;
 }) {
+  const hasPhoto = photoCount > 0;
+  const photosSent = Math.min(photoCount, AI_MAX_PHOTOS);
   const [phase, setPhase] = useState<Phase>({ step: "idle" });
   const [values, setValues] = useState<Record<string, string>>({});
   const [pending, startTransition] = useTransition();
@@ -165,7 +167,7 @@ export function AiAssist({
                   <p className="font-medium">Will be sent to {m.model}:</p>
                   <p className="mt-1">
                     {m.sendsImage
-                      ? "• This item's photo (resized to ≤1024px)"
+                      ? `• ${photosSent === 1 ? "This item's photo" : `All ${photosSent} of this item's photos`} (each resized to ≤1024px)`
                       : "• No image"}
                   </p>
                   <p className="mt-1">• Prompt: “{m.prompt}”</p>
