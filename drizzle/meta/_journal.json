@@ -8,6 +8,13 @@
       "when": 1781456994704,
       "tag": "0000_panoramic_stellaris",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1781527633892,
+      "tag": "0001_hard_vindicator",
+      "breakpoints": true
     }
   ]
 }

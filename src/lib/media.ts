@@ -92,15 +92,39 @@ export async function deleteItemMedia(itemId: number): Promise<void> {
   }
 }
 
-export async function processAndStoreImage(
-  itemId: number,
+/** Remove the on-disk files for a single stored image, ignoring escapes/misses. */
+export async function deleteStoredImageFiles(
+  relativePaths: string[],
+): Promise<void> {
+  for (const rel of relativePaths) {
+    const abs = resolveMediaPath(rel);
+    if (abs) await fs.rm(abs, { force: true });
+  }
+}
+
+/** Remove a location's on-disk photos. The DB cascades the rows; files don't. */
+export async function deleteLocationMedia(locationId: number): Promise<void> {
+  const dir = path.join(
+    config.paths.dataDir,
+    "media",
+    "locations",
+    String(locationId),
+  );
+  await fs.rm(dir, { recursive: true, force: true });
+}
+
+/**
+ * Process + store an image into a DATA_DIR-relative subdir (e.g.
+ * "media/items/1" or "media/locations/3"), producing the three variants.
+ */
+export async function processAndStoreImageInDir(
+  relDir: string,
   buffer: Buffer,
   mimeType: string,
 ): Promise<StoredImage> {
   const contentHash = createHash("sha256").update(buffer).digest("hex");
   const shortHash = contentHash.slice(0, 16);
 
-  const relDir = path.join("media", "items", String(itemId));
   const absDir = path.join(config.paths.dataDir, relDir);
   await fs.mkdir(absDir, { recursive: true });
 
@@ -138,4 +162,30 @@ export async function processAndStoreImage(
     width: meta.width ?? null,
     height: meta.height ?? null,
   };
+}
+
+/** Store an item photo under media/items/<itemId>/. */
+export function processAndStoreImage(
+  itemId: number,
+  buffer: Buffer,
+  mimeType: string,
+): Promise<StoredImage> {
+  return processAndStoreImageInDir(
+    path.join("media", "items", String(itemId)),
+    buffer,
+    mimeType,
+  );
+}
+
+/** Store a location photo under media/locations/<locationId>/. */
+export function processAndStoreLocationImage(
+  locationId: number,
+  buffer: Buffer,
+  mimeType: string,
+): Promise<StoredImage> {
+  return processAndStoreImageInDir(
+    path.join("media", "locations", String(locationId)),
+    buffer,
+    mimeType,
+  );
 }
