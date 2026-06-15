@@ -19,6 +19,7 @@ let currentValuations: typeof import("@/lib/queries/valuations").currentValuatio
 let getCoverageSummary: typeof import("@/lib/queries/coverage").getCoverageSummary;
 let getReportPacket: typeof import("@/lib/queries/report").getReportPacket;
 let deleteItem: typeof import("@/lib/queries/items").deleteItem;
+let listItems: typeof import("@/lib/queries/items").listItems;
 let deleteItemMedia: typeof import("@/lib/media").deleteItemMedia;
 let dataDir: string;
 
@@ -36,7 +37,7 @@ beforeAll(async () => {
     await import("@/lib/queries/valuations"));
   ({ getCoverageSummary } = await import("@/lib/queries/coverage"));
   ({ getReportPacket } = await import("@/lib/queries/report"));
-  ({ deleteItem } = await import("@/lib/queries/items"));
+  ({ deleteItem, listItems } = await import("@/lib/queries/items"));
   ({ deleteItemMedia } = await import("@/lib/media"));
 
   runMigrations();
@@ -204,6 +205,39 @@ describe("getReportPacket location filter", () => {
     expect(onlyA.rooms).toHaveLength(1);
     expect(onlyA.rooms[0]!.locationName).toBe("Room A");
     expect(onlyA.grandTotalCents).toBe(100_00);
+  });
+});
+
+describe("listItems location filter", () => {
+  it("filters by location id, by unassigned, and returns all when omitted", () => {
+    const hh = db
+      .insert(schema.household)
+      .values({ name: "List Hh" })
+      .returning()
+      .all()[0]!;
+    const kitchen = db
+      .insert(schema.location)
+      .values({ householdId: hh.id, name: "Kitchen", kind: "room" })
+      .returning()
+      .all()[0]!;
+    db.insert(schema.item)
+      .values({ householdId: hh.id, locationId: kitchen.id, title: "Fridge" })
+      .run();
+    db.insert(schema.item)
+      .values({ householdId: hh.id, locationId: kitchen.id, title: "Oven" })
+      .run();
+    db.insert(schema.item)
+      .values({ householdId: hh.id, locationId: null, title: "Floating lamp" })
+      .run();
+
+    expect(listItems(hh.id)).toHaveLength(3);
+
+    const inKitchen = listItems(hh.id, { location: kitchen.id });
+    expect(inKitchen.map((r) => r.title).sort()).toEqual(["Fridge", "Oven"]);
+
+    const unassigned = listItems(hh.id, { location: null });
+    expect(unassigned).toHaveLength(1);
+    expect(unassigned[0]!.title).toBe("Floating lamp");
   });
 });
 
