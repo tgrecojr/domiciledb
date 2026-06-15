@@ -36,7 +36,7 @@ const FAKE_RESPONSES: Record<AiTaskKey, unknown> = {
 
 export async function runTask(
   taskKey: AiTaskKey,
-  input: { imageBase64Jpeg?: string },
+  input: { imagesBase64Jpeg?: string[] },
 ): Promise<ParseResult<unknown>> {
   if (config.ai.fake) {
     const data = TASKS[taskKey] ? FAKE_RESPONSES[taskKey] : undefined;
@@ -46,11 +46,13 @@ export async function runTask(
     return { ok: false, error: "AI is not configured." };
   }
 
+  // Send every supplied photo in one message so the model can pick the legible
+  // one (e.g. a close-up of the serial/model plate alongside a wide shot).
   const content: unknown[] = [{ type: "text", text: TASKS[taskKey].prompt }];
-  if (input.imageBase64Jpeg) {
+  for (const base64 of input.imagesBase64Jpeg ?? []) {
     content.push({
       type: "image_url",
-      image_url: { url: `data:image/jpeg;base64,${input.imageBase64Jpeg}` },
+      image_url: { url: `data:image/jpeg;base64,${base64}` },
     });
   }
 

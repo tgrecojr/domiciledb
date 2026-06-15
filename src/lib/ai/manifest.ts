@@ -1,6 +1,14 @@
 import { TASKS, type AiTaskKey } from "./tasks";
 
 /**
+ * Cap on how many of an item's photos are sent in one AI call. Sending all of
+ * them lets the model find the legible plate/serial close-up among wider shots;
+ * the cap bounds token cost and latency for items with many photos. Lives here
+ * (client-safe) so both the server action and the consent UI share one value.
+ */
+export const AI_MAX_PHOTOS = 6;
+
+/**
  * The transparency manifest: exactly what will be transmitted to the remote AI,
  * shown to the user BEFORE anything is sent (feature-spec §6 trust model). Pure
  * + client-safe so the consent UI and tests share one source of truth.

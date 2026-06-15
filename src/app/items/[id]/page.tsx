@@ -86,7 +86,7 @@ export default async function ItemDetailPage({
         {config.ai.enabled ? (
           <AiAssist
             itemId={itemId}
-            hasPhoto={photos.length > 0}
+            photoCount={photos.length}
             model={config.ai.model}
           />
         ) : null}

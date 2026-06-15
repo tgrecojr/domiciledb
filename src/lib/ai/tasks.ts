@@ -67,20 +67,22 @@ export const TASKS: Record<AiTaskKey, AiTaskDef> = {
   identify: {
     key: "identify",
     label: "Identify item",
-    blurb: "Guess the manufacturer, model, and category from the photo.",
+    blurb: "Guess the manufacturer, model, and category from the photos.",
     needsPhoto: true,
     prompt:
-      "You are identifying a household item from a photo for an insurance inventory. " +
+      "You are identifying a household item from one or more photos of it for an insurance inventory. " +
       'Respond ONLY with JSON: {"manufacturer": string|null, "model": string|null, "category": string|null}. ' +
       "Use null for anything you cannot determine. Do not guess serial numbers.",
   },
   ocr_plate: {
     key: "ocr_plate",
     label: "Read serial / model plate",
-    blurb: "Read the serial and model numbers from a close-up of the plate.",
+    blurb: "Read the serial and model numbers from the item's photos.",
     needsPhoto: true,
     prompt:
-      "Read the serial number and model number from this photo of a product label/plate. " +
+      "These are one or more photos of the same item; one of them may be a close-up of its " +
+      "product label/plate. Read the serial number and model number from whichever photo shows " +
+      "them most clearly. " +
       'Respond ONLY with JSON: {"serialNumber": string|null, "modelNumber": string|null}. ' +
       "Transcribe characters exactly. Use null if a value is not clearly legible — never guess.",
   },

@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 
 import { bufferToBase64Jpeg, imageToBase64Jpeg } from "@/lib/ai/image";
+import { AI_MAX_PHOTOS } from "@/lib/ai/manifest";
 import { runTask } from "@/lib/ai/openrouter";
 import { TASKS, type AiTaskKey } from "@/lib/ai/tasks";
 import { config } from "@/lib/config";
@@ -42,20 +43,29 @@ export async function aiSuggestForItem(
   if (!item) return { ok: false, error: "Unknown item." };
 
   const task = TASKS[taskKey];
-  let imageBase64: string | undefined;
+  const imagesBase64: string[] = [];
   const imageRefs: string[] = [];
 
   if (task.needsPhoto) {
     const photos = listPhotos(itemId);
-    const photo = photoId ? photos.find((p) => p.id === photoId) : photos[0];
-    if (!photo) return { ok: false, error: "Add a photo to this item first." };
-    const encoded = await imageToBase64Jpeg(photo.pathWeb);
-    if (!encoded) return { ok: false, error: "Could not read the photo." };
-    imageBase64 = encoded.base64;
-    imageRefs.push(photo.pathWeb);
+    const selected = photoId
+      ? photos.filter((p) => p.id === photoId)
+      : photos.slice(0, AI_MAX_PHOTOS);
+    if (selected.length === 0) {
+      return { ok: false, error: "Add a photo to this item first." };
+    }
+    for (const photo of selected) {
+      const encoded = await imageToBase64Jpeg(photo.pathWeb);
+      if (!encoded) continue;
+      imagesBase64.push(encoded.base64);
+      imageRefs.push(photo.pathWeb);
+    }
+    if (imagesBase64.length === 0) {
+      return { ok: false, error: "Could not read the photo." };
+    }
   }
 
-  const result = await runTask(taskKey, { imageBase64Jpeg: imageBase64 });
+  const result = await runTask(taskKey, { imagesBase64Jpeg: imagesBase64 });
 
   const interactionId = logInteraction({
     itemId,
@@ -100,7 +110,7 @@ export async function aiParseDecPageAction(
   if (!encoded) return { ok: false, error: "Could not read the image." };
 
   const result = await runTask("parse_decpage", {
-    imageBase64Jpeg: encoded.base64,
+    imagesBase64Jpeg: [encoded.base64],
   });
 
   const interactionId = logInteraction({
