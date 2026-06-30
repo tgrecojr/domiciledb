@@ -3,7 +3,7 @@ name: GHCR retention
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 6 * * 1' # Mondays 06:00 UTC
+    - cron: "0 6 * * 1" # Mondays 06:00 UTC
 
 permissions:
   packages: write
