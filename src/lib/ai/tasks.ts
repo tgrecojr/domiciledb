@@ -8,11 +8,7 @@ import { z } from "zod";
  */
 
 export type AiTaskKey =
-  | "identify"
-  | "ocr_plate"
-  | "describe"
-  | "suggest_cost"
-  | "parse_decpage";
+  "identify" | "ocr_plate" | "describe" | "suggest_cost" | "parse_decpage";
 
 const nullableStr = z
   .string()
