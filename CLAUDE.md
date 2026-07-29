@@ -66,6 +66,19 @@ grounds the insurance model (Coverage B – Personal Property = $456,750).
   `npm install` on macOS leaves the lock linux-incomplete for sharp's optional
   `@emnapi/*` peer deps, which then breaks `npm ci` in Docker/CI. (CI's `npm ci`
   is the safety net — a bad lock fails the build before it can reach prod.)
+- **Then always run `npm ci` locally before pushing.** A clean regen is necessary
+  but not sufficient: npm's lockfile writer and its `npm ci` validator can
+  disagree about **optional peer dependencies**, so `npm install` will happily
+  write a lock that `npm ci` then rejects. Renovate hits this too — its
+  `renovate/artifacts` step fails and it opens the PR with a stale lock anyway,
+  which surfaces as `EUSAGE ... does not satisfy` in CI rather than as anything
+  that looks lock-related. When it happens, find the package contributing the
+  unused optional peer and drop it; prefer that over adding another pin.
+- Run npm through the real binary (`$(nvm which current)`/`~/.nvm/.../bin/npm`),
+  not the `socket npm` shell alias. The alias 429s under load, and it puts Node's
+  permission model in front of spawned workers, which makes `npm run build` die
+  with a bogus `ERR_MISSING_OPTION: --permission is required` from the Next.js
+  build worker.
 
 ## Environment Variables
 
