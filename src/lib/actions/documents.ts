@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { DOCUMENT_KINDS } from "@/lib/document-kinds";
 import { storeDocument } from "@/lib/documents-store";
 import { sniffDocumentMime } from "@/lib/image-format";
+import { parseId } from "@/lib/parse-id";
 import { addDocument, deleteDocument } from "@/lib/queries/documents";
 
 function isDocKind(v: string): v is (typeof DOCUMENT_KINDS)[number] {
@@ -13,8 +14,8 @@ function isDocKind(v: string): v is (typeof DOCUMENT_KINDS)[number] {
 }
 
 export async function addDocumentAction(formData: FormData) {
-  const itemId = Number(formData.get("itemId"));
-  if (!Number.isInteger(itemId)) redirect("/items");
+  const itemId = parseId(formData.get("itemId"));
+  if (itemId === null) redirect("/items");
 
   const kindRaw = String(formData.get("kind") ?? "receipt");
   const kind = isDocKind(kindRaw) ? kindRaw : "receipt";

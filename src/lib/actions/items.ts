@@ -8,6 +8,7 @@ import { LIFECYCLE_STATUSES } from "@/db/schema";
 import { crossedThreshold } from "@/lib/coverage";
 import { deleteItemMedia, processAndStoreImage } from "@/lib/media";
 import { parseDollarsToCents } from "@/lib/money";
+import { parseId } from "@/lib/parse-id";
 import { getCoverageSummary } from "@/lib/queries/coverage";
 import { getHouseholdId } from "@/lib/queries/household";
 import {
@@ -64,8 +65,8 @@ export async function captureItemAction(formData: FormData) {
 
 /** Add more photos to an existing item (from the detail page). */
 export async function addPhotosAction(formData: FormData) {
-  const itemId = Number(formData.get("itemId"));
-  if (!Number.isInteger(itemId)) redirect("/items");
+  const itemId = parseId(formData.get("itemId"));
+  if (itemId === null) redirect("/items");
   const files = formData
     .getAll("photos")
     .filter((f): f is File => f instanceof File && f.size > 0);
