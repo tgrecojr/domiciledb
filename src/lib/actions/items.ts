@@ -88,7 +88,10 @@ const patchSchema = z.object({
   manufacturer: z.string().trim().optional(),
   modelNumber: z.string().trim().optional(),
   serialNumber: z.string().trim().optional(),
-  quantity: z.coerce.number().int().positive().default(1),
+  // Bounded positive integer: an unbounded quantity flows into the coverage
+  // spine (replacementCostCents * qty) and overflows the safe-integer range.
+  // One million of any single line item is far beyond any real home inventory.
+  quantity: z.coerce.number().int().positive().max(1_000_000).default(1),
   condition: z.string().trim().optional(),
   ageEstimate: z.string().trim().optional(),
   lifecycleStatus: z.enum(LIFECYCLE_STATUSES).default("active"),

@@ -144,6 +144,25 @@ describe("computeCoverage", () => {
     expect(r.countedCount).toBe(2);
   });
 
+  // VULN-021: an out-of-range quantity must not overflow the running total past
+  // Number.MAX_SAFE_INTEGER, which would silently lose integer precision and
+  // corrupt pctUsed/status. The total is clamped to the safe-integer range.
+  it("keeps the running total a safe integer despite a huge quantity", () => {
+    const r = computeCoverage({
+      items: [
+        {
+          replacementCostCents: 100_00,
+          quantity: 1e15,
+          lifecycleStatus: "active",
+        },
+      ],
+      coverageBLimitCents: 456_750_00,
+      warnPct: 0.8,
+    });
+    expect(Number.isSafeInteger(r.totalCents)).toBe(true);
+    expect(Number.isFinite(r.pctUsed ?? 0)).toBe(true);
+  });
+
   it("uses integer cents with no float drift on the real dec-page limit", () => {
     // Coverage B from declarations.md = $456,750.00
     const r = computeCoverage({
