@@ -8,15 +8,7 @@
  */
 
 export type DetectedType =
-  | "jpeg"
-  | "png"
-  | "webp"
-  | "heic"
-  | "gif"
-  | "tiff"
-  | "bmp"
-  | "svg"
-  | "pdf";
+  "jpeg" | "png" | "webp" | "heic" | "gif" | "tiff" | "bmp" | "svg" | "pdf";
 
 const ALLOWED_IMAGE = new Set<DetectedType>(["jpeg", "png", "webp", "heic"]);
 
@@ -80,7 +72,10 @@ export function detectFileType(buffer: Buffer): DetectedType | null {
     .toString("utf8", 0, Math.min(b.length, 256))
     .trimStart()
     .toLowerCase();
-  if (head.startsWith("<svg") || (head.startsWith("<?xml") && head.includes("<svg")))
+  if (
+    head.startsWith("<svg") ||
+    (head.startsWith("<?xml") && head.includes("<svg"))
+  )
     return "svg";
   return null;
 }

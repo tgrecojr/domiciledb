@@ -7,7 +7,9 @@ const DATA = path.resolve("/data");
 
 describe("resolveWithinDataDir containment (VULN-005)", () => {
   it("rejects zip-slip keys that escape DATA_DIR", () => {
-    expect(resolveWithinDataDir(DATA, "media/../../../../tmp/pwned")).toBeNull();
+    expect(
+      resolveWithinDataDir(DATA, "media/../../../../tmp/pwned"),
+    ).toBeNull();
     expect(resolveWithinDataDir(DATA, "../etc/passwd")).toBeNull();
     expect(resolveWithinDataDir(DATA, "/etc/passwd")).toBeNull();
   });
