@@ -112,6 +112,32 @@ export function isInsideMediaRoot(abs: string): boolean {
 }
 
 /**
+ * Read-back integrity check: re-hash the stored file at a DATA_DIR-relative
+ * media path and confirm it matches the full sha256 digest recorded in the DB.
+ * Catches silent byte substitution/corruption that the write-time content
+ * address alone can't (the recorded digest is otherwise never re-verified).
+ * Returns false on any escape/miss/mismatch.
+ */
+export async function verifyStoredContent(
+  dataDirRelativePath: string,
+  expectedSha256: string,
+): Promise<boolean> {
+  if (typeof dataDirRelativePath !== "string") return false;
+  if (dataDirRelativePath.includes("\0")) return false;
+  // DB paths are DATA_DIR-relative (e.g. "media/items/1/<hash>-web.webp");
+  // resolve there and require the result to stay inside the media root.
+  const abs = path.resolve(config.paths.dataDir, dataDirRelativePath);
+  if (!isInsideMediaRoot(abs)) return false;
+  try {
+    const bytes = await fs.readFile(abs);
+    const actual = createHash("sha256").update(bytes).digest("hex");
+    return actual === expectedSha256;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Remove an item's on-disk media (photos + documents). The DB cascades delete
  * the rows, but the files live on the filesystem and must be removed too.
  */
@@ -131,13 +157,23 @@ export async function deleteItemMedia(itemId: number): Promise<void> {
   }
 }
 
-/** Remove the on-disk files for a single stored image, ignoring escapes/misses. */
+/**
+ * Remove the on-disk files for stored images, ignoring escapes/misses. Inputs
+ * are DATA_DIR-relative paths as stored in the DB (e.g.
+ * "media/locations/3/<hash>-web.webp"); resolve them under DATA_DIR and require
+ * the result to stay inside the media root before unlinking.
+ *
+ * Callers MUST refcount content-addressed media first (see
+ * unreferencedLocationPhotoPaths): only pass paths no other row references, so
+ * deleting one photo can't destroy a still-referenced duplicate.
+ */
 export async function deleteStoredImageFiles(
   relativePaths: string[],
 ): Promise<void> {
   for (const rel of relativePaths) {
-    const abs = resolveMediaPath(rel);
-    if (abs) await fs.rm(abs, { force: true });
+    if (typeof rel !== "string" || rel.includes("\0")) continue;
+    const abs = path.resolve(config.paths.dataDir, rel);
+    if (isInsideMediaRoot(abs)) await fs.rm(abs, { force: true });
   }
 }
 
@@ -181,16 +217,18 @@ export async function processAndStoreImageInDir(
     throw new Error("Unsupported image content — refusing to decode.");
   }
 
+  // Use the FULL sha256 digest as the content identity: a 64-bit prefix has a
+  // feasible (2^32) collision bound, so two distinct images could share a name
+  // and silently overwrite/dedup each other, corrupting the proof.
   const contentHash = createHash("sha256").update(buffer).digest("hex");
-  const shortHash = contentHash.slice(0, 16);
 
   const absDir = path.join(config.paths.dataDir, relDir);
   await fs.mkdir(absDir, { recursive: true });
 
   const ext = extFromMime(mimeType);
-  const originalName = `${shortHash}-original.${ext}`;
-  const webName = `${shortHash}-web.webp`;
-  const thumbName = `${shortHash}-thumb.webp`;
+  const originalName = `${contentHash}-original.${ext}`;
+  const webName = `${contentHash}-web.webp`;
+  const thumbName = `${contentHash}-thumb.webp`;
 
   const meta = await sharp(buffer, { failOn: "none" }).metadata();
 

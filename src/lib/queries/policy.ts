@@ -21,9 +21,12 @@ export function getPolicy(householdId: number) {
   );
 }
 
-/** Single policy per household: update in place if present, else insert. */
+/**
+ * Single policy per household. Atomic upsert keyed on the household_id unique
+ * constraint — a real INSERT ... ON CONFLICT DO UPDATE, so a concurrent save
+ * can't slip between a check and an insert and create a duplicate row.
+ */
 export function upsertPolicy(householdId: number, input: PolicyInput) {
-  const existing = getPolicy(householdId);
   const values = {
     householdId,
     coverageBPersonalProperty: input.coverageBPersonalProperty,
@@ -36,9 +39,20 @@ export function upsertPolicy(householdId: number, input: PolicyInput) {
     updatedAt: new Date().toISOString(),
   };
 
-  if (existing) {
-    db.update(policy).set(values).where(eq(policy.id, existing.id)).run();
-  } else {
-    db.insert(policy).values(values).run();
-  }
+  db.insert(policy)
+    .values(values)
+    .onConflictDoUpdate({
+      target: policy.householdId,
+      set: {
+        coverageBPersonalProperty: values.coverageBPersonalProperty,
+        coverageADwelling: values.coverageADwelling,
+        coverageCLossOfUse: values.coverageCLossOfUse,
+        deductible: values.deductible,
+        policyNumber: values.policyNumber,
+        insurer: values.insurer,
+        source: values.source,
+        updatedAt: values.updatedAt,
+      },
+    })
+    .run();
 }

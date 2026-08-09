@@ -42,6 +42,28 @@ describe("parseDollarsToCents", () => {
     // Passes the digits-only regex but Number(...) -> Infinity (not finite).
     expect(parseDollarsToCents("9".repeat(400))).toBeNull();
   });
+
+  // VULN-004: finiteness must be validated AFTER scaling by 100. A
+  // huge-but-finite dollar amount scales to Infinity cents, and a merely-large
+  // one lands past Number.MAX_SAFE_INTEGER where cents lose integer precision;
+  // either would be stored verbatim and corrupt the coverage spine.
+  describe("overflow after scaling (VULN-004)", () => {
+    it("rejects a value that scales to Infinity cents", () => {
+      const huge = "17976931348623157" + "0".repeat(292);
+      expect(parseDollarsToCents(huge)).toBeNull();
+    });
+
+    it("rejects a finite value whose cents exceed the safe-integer range", () => {
+      expect(parseDollarsToCents("1" + "0".repeat(20))).toBeNull();
+    });
+
+    it("never returns a non-safe-integer cents value", () => {
+      for (const s of ["1e0", "99999999999999", "1" + "0".repeat(16)]) {
+        const r = parseDollarsToCents(s);
+        if (r !== null) expect(Number.isSafeInteger(r)).toBe(true);
+      }
+    });
+  });
 });
 
 describe("formatCents", () => {

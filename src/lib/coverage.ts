@@ -58,7 +58,15 @@ export function computeCoverage(input: CoverageInput): CoverageResult {
       continue;
     }
     const qty = Number.isFinite(it.quantity) ? Math.max(0, it.quantity) : 0;
-    totalCents += it.replacementCostCents * qty;
+    // Clamp the running total to the safe-integer range. An out-of-range
+    // quantity or value (should be rejected at the write boundary, but this is
+    // the spine — stay defensive) would otherwise overflow past
+    // Number.MAX_SAFE_INTEGER, silently losing integer precision and corrupting
+    // pctUsed/status. A clamped total still reads honestly as "over".
+    totalCents = Math.min(
+      Number.MAX_SAFE_INTEGER,
+      totalCents + it.replacementCostCents * qty,
+    );
     countedCount += 1;
   }
 

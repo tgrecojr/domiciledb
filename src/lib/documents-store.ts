@@ -29,15 +29,17 @@ export async function storeDocument(
   buffer: Buffer,
   filename: string,
 ): Promise<StoredDocument> {
+  // Use the FULL sha256 digest as the content identity: a 64-bit prefix has a
+  // feasible (2^32) collision bound, so two distinct files could share a name
+  // and silently overwrite/dedup each other, corrupting the proof.
   const contentHash = createHash("sha256").update(buffer).digest("hex");
-  const shortHash = contentHash.slice(0, 16);
   const safe = sanitizeFilename(filename);
 
   const relDir = path.join("media", "documents", "items", String(itemId));
   const absDir = path.join(config.paths.dataDir, relDir);
   await fs.mkdir(absDir, { recursive: true });
 
-  const storedName = `${shortHash}-${safe}`;
+  const storedName = `${contentHash}-${safe}`;
   await fs.writeFile(path.join(absDir, storedName), buffer);
 
   return {

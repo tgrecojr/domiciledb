@@ -116,14 +116,13 @@ describe("recordValuations integrity", () => {
 
 describe("getCoverageSummary wired to the database", () => {
   it("counts active valued items, drops sold ones, and excludes unvalued ones", () => {
-    const localHh = db
-      .insert(schema.household)
-      .values({ name: "Coverage Hh" })
-      .returning()
-      .all()[0]!;
+    // Updated for VULN-020: household is a DB-enforced singleton, so reuse the
+    // shared household and reset its rows instead of inserting a second one.
+    db.delete(schema.item).run();
+    db.delete(schema.policy).run();
     db.insert(schema.policy)
       .values({
-        householdId: localHh.id,
+        householdId,
         coverageBPersonalProperty: 1_000_00,
         source: "user",
         updatedAt: new Date().toISOString(),
@@ -133,7 +132,7 @@ describe("getCoverageSummary wired to the database", () => {
     const valued = db
       .insert(schema.item)
       .values({
-        householdId: localHh.id,
+        householdId,
         title: "Valued",
         currentReplacementCost: 500_00,
         quantity: 1,
@@ -141,7 +140,7 @@ describe("getCoverageSummary wired to the database", () => {
       .returning()
       .all()[0]!;
 
-    let s = getCoverageSummary(localHh.id);
+    let s = getCoverageSummary(householdId);
     expect(s.totalCents).toBe(500_00);
     expect(s.status).toBe("within");
 
@@ -150,14 +149,12 @@ describe("getCoverageSummary wired to the database", () => {
       .set({ lifecycleStatus: "sold" })
       .where(eq(schema.item.id, valued.id))
       .run();
-    s = getCoverageSummary(localHh.id);
+    s = getCoverageSummary(householdId);
     expect(s.totalCents).toBe(0);
 
     // An active item with no replacement cost is excluded, not counted.
-    db.insert(schema.item)
-      .values({ householdId: localHh.id, title: "Unvalued" })
-      .run();
-    s = getCoverageSummary(localHh.id);
+    db.insert(schema.item).values({ householdId, title: "Unvalued" }).run();
+    s = getCoverageSummary(householdId);
     expect(s.totalCents).toBe(0);
     expect(s.excludedCount).toBe(1);
   });
@@ -165,24 +162,23 @@ describe("getCoverageSummary wired to the database", () => {
 
 describe("getReportPacket location filter", () => {
   it("returns only items in the requested location", () => {
-    const hh = db
-      .insert(schema.household)
-      .values({ name: "Report Hh" })
-      .returning()
-      .all()[0]!;
+    // Updated for VULN-020: household is a DB-enforced singleton, so reuse the
+    // shared household and reset its rows instead of inserting a second one.
+    db.delete(schema.item).run();
+    db.delete(schema.location).run();
     const roomA = db
       .insert(schema.location)
-      .values({ householdId: hh.id, name: "Room A", kind: "room" })
+      .values({ householdId, name: "Room A", kind: "room" })
       .returning()
       .all()[0]!;
     const roomB = db
       .insert(schema.location)
-      .values({ householdId: hh.id, name: "Room B", kind: "room" })
+      .values({ householdId, name: "Room B", kind: "room" })
       .returning()
       .all()[0]!;
     db.insert(schema.item)
       .values({
-        householdId: hh.id,
+        householdId,
         locationId: roomA.id,
         title: "A1",
         currentReplacementCost: 100_00,
@@ -190,17 +186,17 @@ describe("getReportPacket location filter", () => {
       .run();
     db.insert(schema.item)
       .values({
-        householdId: hh.id,
+        householdId,
         locationId: roomB.id,
         title: "B1",
         currentReplacementCost: 200_00,
       })
       .run();
 
-    const all = getReportPacket(hh.id)!;
+    const all = getReportPacket(householdId)!;
     expect(all.itemCount).toBe(2);
 
-    const onlyA = getReportPacket(hh.id, { locationId: roomA.id })!;
+    const onlyA = getReportPacket(householdId, { locationId: roomA.id })!;
     expect(onlyA.itemCount).toBe(1);
     expect(onlyA.rooms).toHaveLength(1);
     expect(onlyA.rooms[0]!.locationName).toBe("Room A");
@@ -210,32 +206,31 @@ describe("getReportPacket location filter", () => {
 
 describe("listItems location filter", () => {
   it("filters by location id, by unassigned, and returns all when omitted", () => {
-    const hh = db
-      .insert(schema.household)
-      .values({ name: "List Hh" })
-      .returning()
-      .all()[0]!;
+    // Updated for VULN-020: household is a DB-enforced singleton, so reuse the
+    // shared household and reset its rows instead of inserting a second one.
+    db.delete(schema.item).run();
+    db.delete(schema.location).run();
     const kitchen = db
       .insert(schema.location)
-      .values({ householdId: hh.id, name: "Kitchen", kind: "room" })
+      .values({ householdId, name: "Kitchen", kind: "room" })
       .returning()
       .all()[0]!;
     db.insert(schema.item)
-      .values({ householdId: hh.id, locationId: kitchen.id, title: "Fridge" })
+      .values({ householdId, locationId: kitchen.id, title: "Fridge" })
       .run();
     db.insert(schema.item)
-      .values({ householdId: hh.id, locationId: kitchen.id, title: "Oven" })
+      .values({ householdId, locationId: kitchen.id, title: "Oven" })
       .run();
     db.insert(schema.item)
-      .values({ householdId: hh.id, locationId: null, title: "Floating lamp" })
+      .values({ householdId, locationId: null, title: "Floating lamp" })
       .run();
 
-    expect(listItems(hh.id)).toHaveLength(3);
+    expect(listItems(householdId)).toHaveLength(3);
 
-    const inKitchen = listItems(hh.id, { location: kitchen.id });
+    const inKitchen = listItems(householdId, { location: kitchen.id });
     expect(inKitchen.map((r) => r.title).sort()).toEqual(["Fridge", "Oven"]);
 
-    const unassigned = listItems(hh.id, { location: null });
+    const unassigned = listItems(householdId, { location: null });
     expect(unassigned).toHaveLength(1);
     expect(unassigned[0]!.title).toBe("Floating lamp");
   });

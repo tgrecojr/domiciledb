@@ -19,7 +19,13 @@ export function parseDollarsToCents(
   if (!/^\d+(\.\d+)?$/.test(cleaned)) return null;
   const dollars = Number(cleaned);
   if (!Number.isFinite(dollars) || dollars < 0) return null;
-  return Math.round(dollars * 100);
+  // Validate finiteness AFTER scaling: a huge-but-finite dollar amount can
+  // overflow to Infinity cents, and a merely-large one can land past
+  // Number.MAX_SAFE_INTEGER where cents lose integer precision. Either would be
+  // stored verbatim and corrupt the coverage spine, so reject both.
+  const cents = Math.round(dollars * 100);
+  if (!Number.isSafeInteger(cents)) return null;
+  return cents;
 }
 
 const USD = new Intl.NumberFormat("en-US", {
