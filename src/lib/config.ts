@@ -47,6 +47,8 @@ const envSchema = z.object({
   UPLOAD_MAX_FILE_MB: z.coerce.number().positive().default(25),
   UPLOAD_MAX_FILES_PER_REQUEST: z.coerce.number().int().positive().default(20),
   MEDIA_MAX_TOTAL_MB: z.coerce.number().min(0).default(20480),
+  // Largest single file /api/media will serve.
+  MEDIA_MAX_SERVE_MB: z.coerce.number().positive().default(100),
 
   // Minimum seconds between full /api/export runs (a VACUUM + whole-tree zip).
   EXPORT_MIN_INTERVAL_SECONDS: z.coerce.number().int().min(0).default(60),
@@ -111,6 +113,8 @@ export const config = {
     maxFilesPerRequest: parsed.UPLOAD_MAX_FILES_PER_REQUEST,
     /** Ceiling on total bytes stored under DATA_DIR/media. */
     maxMediaTotalBytes: Math.floor(parsed.MEDIA_MAX_TOTAL_MB * 1024 * 1024),
+    /** Largest single file the media route will serve. */
+    maxServeBytes: Math.floor(parsed.MEDIA_MAX_SERVE_MB * 1024 * 1024),
   },
 
   export: {
