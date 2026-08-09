@@ -54,6 +54,8 @@ const envSchema = z.object({
   EXPORT_MIN_INTERVAL_SECONDS: z.coerce.number().int().min(0).default(60),
   // Most items one proof-packet PDF will render before the request is refused.
   PROOF_PACKET_MAX_ITEMS: z.coerce.number().int().positive().default(2000),
+  // Ceiling on distinct categories (free-form AI suggestions create these).
+  MAX_CATEGORIES: z.coerce.number().int().positive().default(500),
 
   // Coverage + valuation tuning.
   COVERAGE_WARN_PCT: z.coerce.number().gt(0).lte(1).default(0.8),
@@ -124,6 +126,11 @@ export const config = {
     minIntervalMs: parsed.EXPORT_MIN_INTERVAL_SECONDS * 1000,
     /** Item ceiling for one rendered proof packet; bigger asks must filter. */
     maxPacketItems: parsed.PROOF_PACKET_MAX_ITEMS,
+  },
+
+  categories: {
+    /** Most distinct categories that may exist; past this, none are created. */
+    max: parsed.MAX_CATEGORIES,
   },
 
   coverage: {

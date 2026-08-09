@@ -77,10 +77,16 @@ export const locationPhoto = sqliteTable(
 );
 
 // ─── Category & Tags ─────────────────────────────────────────────────────────
-export const category = sqliteTable("category", {
-  id: integer("id").primaryKey({ autoIncrement: true }),
-  name: text("name").notNull().unique(),
-});
+export const category = sqliteTable(
+  "category",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    name: text("name").notNull().unique(),
+  },
+  // The unique index is BINARY, so it can't serve the case-insensitive lookup
+  // findOrCreateCategory does; this one makes that a point lookup, not a scan.
+  (t) => [index("category_name_nocase_idx").on(sql`${t.name} COLLATE NOCASE`)],
+);
 
 export const tag = sqliteTable("tag", {
   id: integer("id").primaryKey({ autoIncrement: true }),
