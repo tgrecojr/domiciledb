@@ -1,6 +1,8 @@
 import "server-only";
 
 import { config } from "@/lib/config";
+import { createRateLimiter } from "@/lib/rate-limit";
+import { AI_MAX_PHOTOS } from "./manifest";
 import {
   parseTaskResponse,
   TASKS,
@@ -34,6 +36,15 @@ const FAKE_RESPONSES: Record<AiTaskKey, unknown> = {
   },
 };
 
+// Process-wide spend guard. The AI actions are reachable by anyone who can
+// reach the app (there is no auth), and every call bills the operator's
+// OpenRouter balance — so the ceiling lives here, at the last point before the
+// paid request, rather than in any one caller.
+const paidCallLimiter = createRateLimiter(
+  config.ai.maxCallsPerHour,
+  60 * 60 * 1000,
+);
+
 export async function runTask(
   taskKey: AiTaskKey,
   input: { imagesBase64Jpeg?: string[] },
@@ -46,10 +57,26 @@ export async function runTask(
     return { ok: false, error: "AI is not configured." };
   }
 
+  const images = input.imagesBase64Jpeg ?? [];
+  if (images.length > AI_MAX_PHOTOS) {
+    return {
+      ok: false,
+      error: `Too many images for one AI request (max ${AI_MAX_PHOTOS}).`,
+    };
+  }
+
+  const allowed = paidCallLimiter.take();
+  if (!allowed.ok) {
+    return {
+      ok: false,
+      error: `AI request limit reached. Try again in ${allowed.retryAfterSec}s.`,
+    };
+  }
+
   // Send every supplied photo in one message so the model can pick the legible
   // one (e.g. a close-up of the serial/model plate alongside a wide shot).
   const content: unknown[] = [{ type: "text", text: TASKS[taskKey].prompt }];
-  for (const base64 of input.imagesBase64Jpeg ?? []) {
+  for (const base64 of images) {
     content.push({
       type: "image_url",
       image_url: { url: `data:image/jpeg;base64,${base64}` },

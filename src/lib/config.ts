@@ -26,6 +26,8 @@ const envSchema = z.object({
     .default("https://openrouter.ai/api/v1"),
   // Site URL sent as HTTP-Referer so OpenRouter attributes usage to this app.
   OPENROUTER_REFERER: z.string().optional().default(""),
+  // Ceiling on paid AI calls per hour across the whole process (spend guard).
+  AI_MAX_CALLS_PER_HOUR: z.coerce.number().int().min(0).default(60),
   // Test-only: return canned AI responses instead of calling OpenRouter.
   AI_FAKE: z
     .enum(["0", "1"])
@@ -78,6 +80,8 @@ export const config = {
     /** App name reported to OpenRouter (X-OpenRouter-Title) for attribution. */
     title: "DomicileDB",
     fake: parsed.AI_FAKE,
+    /** Paid calls allowed per rolling hour; extra calls are refused unsent. */
+    maxCallsPerHour: parsed.AI_MAX_CALLS_PER_HOUR,
     get enabled() {
       return parsed.OPENROUTER_API_KEY.length > 0;
     },

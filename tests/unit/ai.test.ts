@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { buildManifest } from "@/lib/ai/manifest";
+import { AI_MAX_PHOTOS, buildManifest } from "@/lib/ai/manifest";
 import { parseTaskResponse, TASKS } from "@/lib/ai/tasks";
 
 describe("buildManifest", () => {
@@ -97,5 +97,55 @@ describe("config.ai gating (opt-in)", () => {
     vi.stubEnv("OPENROUTER_API_KEY", "sk-test-123");
     const { config: enabled } = await import("@/lib/config");
     expect(enabled.ai.enabled).toBe(true);
+  });
+});
+
+const fetchMock = vi.fn(async () => {
+  return new Response(
+    JSON.stringify({
+      choices: [{ message: { content: '{"description":"a mug"}' } }],
+    }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
+  );
+});
+
+async function loadRunTask() {
+  vi.resetModules();
+  vi.stubEnv("OPENROUTER_API_KEY", "sk-test-key");
+  vi.stubEnv("AI_FAKE", "0");
+  const { runTask } = await import("@/lib/ai/openrouter");
+  return runTask;
+}
+
+describe("AI spend caps (VULN-003)", () => {
+  beforeEach(() => {
+    fetchMock.mockClear();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it("rate limits the paid provider call instead of billing every request", async () => {
+    const runTask = await loadRunTask();
+    const attempts = 200;
+    let refused = 0;
+    for (let i = 0; i < attempts; i += 1) {
+      const r = await runTask("describe", { imagesBase64Jpeg: ["AAAA"] });
+      if (!r.ok) refused += 1;
+    }
+    expect(fetchMock.mock.calls.length).toBeLessThan(attempts);
+    expect(refused).toBeGreaterThan(0);
+  });
+
+  it("refuses more images than the manifest cap, before any paid call", async () => {
+    const runTask = await loadRunTask();
+    const images = Array.from({ length: AI_MAX_PHOTOS + 10 }, () => "AAAA");
+    const r = await runTask("describe", { imagesBase64Jpeg: images });
+    expect(r.ok).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });
