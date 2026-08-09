@@ -109,10 +109,13 @@ const fetchMock = vi.fn(async () => {
   );
 });
 
-async function loadRunTask() {
+async function loadRunTask(maxCallsPerHour?: number) {
   vi.resetModules();
   vi.stubEnv("OPENROUTER_API_KEY", "sk-test-key");
   vi.stubEnv("AI_FAKE", "0");
+  if (maxCallsPerHour !== undefined) {
+    vi.stubEnv("AI_MAX_CALLS_PER_HOUR", String(maxCallsPerHour));
+  }
   const { runTask } = await import("@/lib/ai/openrouter");
   return runTask;
 }
@@ -130,13 +133,25 @@ describe("AI spend caps (VULN-003)", () => {
   });
 
   it("rate limits the paid provider call instead of billing every request", async () => {
-    const runTask = await loadRunTask();
+    // Pin the ceiling to a small deterministic value via the real env knob so
+    // the assertion targets the EXACT configured bound, not just "fewer than
+    // attempts". A limiter that honoured any other cap would fail here.
+    const limit = 5;
+    const runTask = await loadRunTask(limit);
+    // Prove the stubbed env actually flowed through the config module the
+    // limiter reads (same fresh module registry as the runTask import).
+    const { config } = await import("@/lib/config");
+    expect(config.ai.maxCallsPerHour).toBe(limit);
+
     const attempts = 200;
     let refused = 0;
     for (let i = 0; i < attempts; i += 1) {
       const r = await runTask("describe", { imagesBase64Jpeg: ["AAAA"] });
       if (!r.ok) refused += 1;
     }
+    // Exactly `limit` paid calls go out; every remaining attempt is refused.
+    expect(fetchMock.mock.calls.length).toBe(limit);
+    expect(refused).toBe(attempts - limit);
     expect(fetchMock.mock.calls.length).toBeLessThan(attempts);
     expect(refused).toBeGreaterThan(0);
   });

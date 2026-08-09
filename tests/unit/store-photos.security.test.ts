@@ -24,8 +24,15 @@ describe("storePhotoFiles resource caps (VULN-008)", () => {
 
   it("stores at most the per-request file-count cap", async () => {
     const storePhotoFiles = await load();
+    // Same fresh module registry as the store-photos import, so this is the
+    // exact config instance the production code read its cap from.
+    const { config } = await import("@/lib/config");
+    expect(config.uploads.maxFilesPerRequest).toBeLessThan(500);
+
     const files = Array.from({ length: 500 }, () => fakeFile(1024));
     const stored = await storePhotoFiles(files, "item 1", async () => {});
+    // Exactly the configured cap is honoured — no more, no fewer.
+    expect(stored).toBe(config.uploads.maxFilesPerRequest);
     expect(stored).toBeLessThan(500);
     expect(stored).toBeGreaterThan(0);
   });
