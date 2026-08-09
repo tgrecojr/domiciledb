@@ -66,6 +66,44 @@ export function resolveMediaPath(relativeUnderMedia: string): string | null {
   return abs;
 }
 
+/**
+ * Bytes currently stored under DATA_DIR/media. Cheap enough for an upload
+ * pre-check on a self-hosted single-user box (a few thousand files at most).
+ */
+export async function mediaUsageBytes(
+  dir = config.paths.mediaDir,
+): Promise<number> {
+  let total = 0;
+  let entries;
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch {
+    return 0;
+  }
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      total += await mediaUsageBytes(full);
+    } else if (entry.isFile()) {
+      try {
+        total += (await fs.stat(full)).size;
+      } catch {
+        // Raced with a delete; it contributes nothing.
+      }
+    }
+  }
+  return total;
+}
+
+/**
+ * Bytes still allowed under the media quota. Shared by every upload path so a
+ * single request (or a flood of them) can't fill the operator's volume.
+ */
+export async function remainingMediaQuotaBytes(): Promise<number> {
+  const used = await mediaUsageBytes();
+  return Math.max(0, config.uploads.maxMediaTotalBytes - used);
+}
+
 /** Whether an absolute path is the media root or strictly inside it. */
 export function isInsideMediaRoot(abs: string): boolean {
   const root = path.resolve(config.paths.mediaDir);

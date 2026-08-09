@@ -43,6 +43,11 @@ const envSchema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().optional().default(""),
   BACKUP_CRON: z.string().min(1).default("0 3 * * *"),
 
+  // Upload + media-storage ceilings (no auth in front of the capture forms).
+  UPLOAD_MAX_FILE_MB: z.coerce.number().positive().default(25),
+  UPLOAD_MAX_FILES_PER_REQUEST: z.coerce.number().int().positive().default(20),
+  MEDIA_MAX_TOTAL_MB: z.coerce.number().min(0).default(20480),
+
   // Minimum seconds between full /api/export runs (a VACUUM + whole-tree zip).
   EXPORT_MIN_INTERVAL_SECONDS: z.coerce.number().int().min(0).default(60),
 
@@ -97,6 +102,15 @@ export const config = {
     get enabled() {
       return parsed.S3_BUCKET.length > 0;
     },
+  },
+
+  uploads: {
+    /** Largest single accepted upload. */
+    maxFileBytes: Math.floor(parsed.UPLOAD_MAX_FILE_MB * 1024 * 1024),
+    /** Most files honoured from one multipart request. */
+    maxFilesPerRequest: parsed.UPLOAD_MAX_FILES_PER_REQUEST,
+    /** Ceiling on total bytes stored under DATA_DIR/media. */
+    maxMediaTotalBytes: Math.floor(parsed.MEDIA_MAX_TOTAL_MB * 1024 * 1024),
   },
 
   export: {
