@@ -65,17 +65,17 @@
     "node": ">=22"
   },
   "comments": {
-    "overrides": "Pin @emnapi/* (optional+peer wasm deps from sharp/transitive) to consistent versions; works around an npm bug where the lockfile writer and `npm ci` validator disagree, which otherwise breaks `npm ci` in CI and Docker. brace-expansion@1/@5 and sharp are pinned to their fixed releases for GHSA-3jxr-9vmj-r5cp (ReDoS) and GHSA-f88m-g3jw-g9cj (libvips runtime CVEs); the sharp override also lifts next's bundled 0.34.x copy past the vuln. brace-expansion@5 is additionally held at 5.0.8 for GHSA-mh99-v99m-4gvg (unbounded expand() output -> uncatchable OOM); that advisory covers everything <=5.0.7 with no backport to the 1.x line, so brace-expansion@1 stays at 1.1.16 and is suppressed in osv-scanner.toml -- it is dev-only (ESLint 9's minimatch@3) and cannot be lifted, because brace-expansion 5 replaced the callable CommonJS default export with a named `expand`, which makes minimatch@3 throw at require time.",
-    "typescript": "Held on the 6.x line (^6.0.3, not pinned) because typescript-eslint hard-errors at require time on TS 7.0 -- 'typescript-eslint does not support TS 7.0' -- which takes ESLint down entirely, not just the type-aware rules. typescript-eslint's peer range is >=4.8.4 <6.1.0 and TS >=7.1 support is tracked in typescript-eslint/typescript-eslint#10940. Move to 7.x only once typescript-eslint ships support; Renovate's TS 7 PR is intentionally left open until then."
+    "overrides": "Security floors are RANGES (^), never exact pins: npm applies an override verbatim, so an exact version is a ceiling that holds the tree on a known-vulnerable release (brace-expansion@5 sat on 5.0.8 after 5.0.9 shipped for exactly this reason). The @emnapi/* entries below are the one exception and stay exact on purpose. Pin @emnapi/* (optional+peer wasm deps from sharp/transitive) to consistent versions; works around an npm bug where the lockfile writer and `npm ci` validator disagree, which otherwise breaks `npm ci` in CI and Docker. brace-expansion@1/@5 and sharp are pinned to their fixed releases for GHSA-3jxr-9vmj-r5cp (ReDoS) and GHSA-f88m-g3jw-g9cj (libvips runtime CVEs); the sharp override also lifts next's bundled 0.34.x copy past the vuln. brace-expansion@5 floors at ^5.0.9 for GHSA-mh99-v99m-4gvg (unbounded expand() output -> uncatchable OOM); that advisory covers everything <=5.0.7 with no backport to the 1.x line, so brace-expansion@1 floors at ^1.1.16 (resolving 1.1.18) and stays on the 1.x line, suppressed in osv-scanner.toml -- it is dev-only (ESLint 9's minimatch@3) and cannot be lifted, because brace-expansion 5 replaced the callable CommonJS default export with a named `expand`, which makes minimatch@3 throw at require time.",
+    "typescript": "Held on the 6.x line (^6.0.3, a range not a pin) because typescript-eslint hard-errors at require time on TS 7.0 -- 'typescript-eslint does not support TS 7.0' -- which takes ESLint down entirely, not just the type-aware rules. typescript-eslint's peer range is >=4.8.4 <6.1.0; TS >=7.1 support is tracked in typescript-eslint/typescript-eslint#10940. Move to 7.x once typescript-eslint ships support; Renovate's TS 7 PR is left open until then."
   },
   "overrides": {
     "@emnapi/wasi-threads": "2.0.1",
     "@emnapi/core": "1.11.3",
     "esbuild": "^0.28.1",
     "postcss": "^8.5.10",
-    "brace-expansion@1": "1.1.16",
-    "brace-expansion@5": "5.0.9",
+    "brace-expansion@1": "^1.1.16",
+    "brace-expansion@5": "^5.0.9",
     "sharp": "$sharp",
-    "nanoid": "6.0.1"
+    "nanoid": "^6.0.1"
   }
 }
