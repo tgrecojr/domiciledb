@@ -1,9 +1,10 @@
 /**
  * Pure backup-planning logic (no I/O), so the upload-decision is testable.
  *
- * Media filenames are content-addressed (sha256 prefix), so a key already
- * present in S3 means identical bytes — we only upload keys that are missing.
- * The db snapshot and latest-PDF keys are always re-uploaded (they change).
+ * Media filenames are content-addressed by the FULL sha256 digest, so a key
+ * already present in S3 means identical bytes (collision-resistant — a 64-bit
+ * prefix would not have been) — we only upload keys that are missing. The db
+ * snapshot and latest-PDF keys are always re-uploaded (they change).
  */
 
 export const SNAPSHOT_KEY = "backup/domiciledb-snapshot.db";

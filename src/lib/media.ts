@@ -73,6 +73,32 @@ export function isInsideMediaRoot(abs: string): boolean {
 }
 
 /**
+ * Read-back integrity check: re-hash the stored file at a DATA_DIR-relative
+ * media path and confirm it matches the full sha256 digest recorded in the DB.
+ * Catches silent byte substitution/corruption that the write-time content
+ * address alone can't (the recorded digest is otherwise never re-verified).
+ * Returns false on any escape/miss/mismatch.
+ */
+export async function verifyStoredContent(
+  dataDirRelativePath: string,
+  expectedSha256: string,
+): Promise<boolean> {
+  if (typeof dataDirRelativePath !== "string") return false;
+  if (dataDirRelativePath.includes("\0")) return false;
+  // DB paths are DATA_DIR-relative (e.g. "media/items/1/<hash>-web.webp");
+  // resolve there and require the result to stay inside the media root.
+  const abs = path.resolve(config.paths.dataDir, dataDirRelativePath);
+  if (!isInsideMediaRoot(abs)) return false;
+  try {
+    const bytes = await fs.readFile(abs);
+    const actual = createHash("sha256").update(bytes).digest("hex");
+    return actual === expectedSha256;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Remove an item's on-disk media (photos + documents). The DB cascades delete
  * the rows, but the files live on the filesystem and must be removed too.
  */
@@ -122,16 +148,18 @@ export async function processAndStoreImageInDir(
   buffer: Buffer,
   mimeType: string,
 ): Promise<StoredImage> {
+  // Use the FULL sha256 digest as the content identity: a 64-bit prefix has a
+  // feasible (2^32) collision bound, so two distinct images could share a name
+  // and silently overwrite/dedup each other, corrupting the proof.
   const contentHash = createHash("sha256").update(buffer).digest("hex");
-  const shortHash = contentHash.slice(0, 16);
 
   const absDir = path.join(config.paths.dataDir, relDir);
   await fs.mkdir(absDir, { recursive: true });
 
   const ext = extFromMime(mimeType);
-  const originalName = `${shortHash}-original.${ext}`;
-  const webName = `${shortHash}-web.webp`;
-  const thumbName = `${shortHash}-thumb.webp`;
+  const originalName = `${contentHash}-original.${ext}`;
+  const webName = `${contentHash}-web.webp`;
+  const thumbName = `${contentHash}-thumb.webp`;
 
   const meta = await sharp(buffer, { failOn: "none" }).metadata();
 
