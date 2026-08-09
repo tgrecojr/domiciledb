@@ -52,6 +52,8 @@ const envSchema = z.object({
 
   // Minimum seconds between full /api/export runs (a VACUUM + whole-tree zip).
   EXPORT_MIN_INTERVAL_SECONDS: z.coerce.number().int().min(0).default(60),
+  // Most items one proof-packet PDF will render before the request is refused.
+  PROOF_PACKET_MAX_ITEMS: z.coerce.number().int().positive().default(2000),
 
   // Coverage + valuation tuning.
   COVERAGE_WARN_PCT: z.coerce.number().gt(0).lte(1).default(0.8),
@@ -120,6 +122,8 @@ export const config = {
   export: {
     /** Minimum gap between full exports; extra requests get 429 (no auth here). */
     minIntervalMs: parsed.EXPORT_MIN_INTERVAL_SECONDS * 1000,
+    /** Item ceiling for one rendered proof packet; bigger asks must filter. */
+    maxPacketItems: parsed.PROOF_PACKET_MAX_ITEMS,
   },
 
   coverage: {
