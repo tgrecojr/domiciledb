@@ -118,13 +118,23 @@ export async function deleteItemMedia(itemId: number): Promise<void> {
   }
 }
 
-/** Remove the on-disk files for a single stored image, ignoring escapes/misses. */
+/**
+ * Remove the on-disk files for stored images, ignoring escapes/misses. Inputs
+ * are DATA_DIR-relative paths as stored in the DB (e.g.
+ * "media/locations/3/<hash>-web.webp"); resolve them under DATA_DIR and require
+ * the result to stay inside the media root before unlinking.
+ *
+ * Callers MUST refcount content-addressed media first (see
+ * unreferencedLocationPhotoPaths): only pass paths no other row references, so
+ * deleting one photo can't destroy a still-referenced duplicate.
+ */
 export async function deleteStoredImageFiles(
   relativePaths: string[],
 ): Promise<void> {
   for (const rel of relativePaths) {
-    const abs = resolveMediaPath(rel);
-    if (abs) await fs.rm(abs, { force: true });
+    if (typeof rel !== "string" || rel.includes("\0")) continue;
+    const abs = path.resolve(config.paths.dataDir, rel);
+    if (isInsideMediaRoot(abs)) await fs.rm(abs, { force: true });
   }
 }
 

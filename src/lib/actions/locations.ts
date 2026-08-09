@@ -15,6 +15,7 @@ import {
   addLocationPhoto,
   deleteLocationPhoto,
   getLocationPhoto,
+  unreferencedLocationPhotoPaths,
 } from "@/lib/queries/location-photos";
 import {
   createLocation,
@@ -142,7 +143,14 @@ export async function deleteLocationPhotoAction(formData: FormData) {
     ph.locationId === locationId
   ) {
     deleteLocationPhoto(photoId);
-    await deleteStoredImageFiles([ph.pathOriginal, ph.pathWeb, ph.pathThumb]);
+    // Refcount content-addressed media: only unlink files no OTHER row still
+    // references (a duplicate re-upload shares the same files).
+    const orphaned = unreferencedLocationPhotoPaths([
+      ph.pathOriginal,
+      ph.pathWeb,
+      ph.pathThumb,
+    ]);
+    await deleteStoredImageFiles(orphaned);
   }
   revalidatePath(`/locations/${locationId}/edit`);
   redirect(`/locations/${locationId}/edit`);
