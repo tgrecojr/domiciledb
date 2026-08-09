@@ -4,6 +4,7 @@ import path from "node:path";
 import sharp from "sharp";
 
 import { config } from "@/lib/config";
+import { sniffImageMime } from "@/lib/image-format";
 
 /**
  * Encode a stored photo as a base64 JPEG for the AI request, downscaled to keep
@@ -52,5 +53,7 @@ export async function bufferToBase64Jpeg(
   buffer: Buffer,
   maxPx = 1280,
 ): Promise<EncodedImage | null> {
+  // Only feed sharp bytes whose actual content is an allowed image (VULN-012).
+  if (!sniffImageMime(buffer)) return null;
   return encode(buffer, maxPx);
 }
