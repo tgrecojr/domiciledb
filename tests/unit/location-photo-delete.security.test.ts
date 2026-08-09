@@ -73,11 +73,7 @@ describe("location photo delete refcount (VULN-017)", () => {
 
     await callDelete(id, locationId);
 
-    for (const rel of [
-      stored.pathOriginal,
-      stored.pathWeb,
-      stored.pathThumb,
-    ]) {
+    for (const rel of [stored.pathOriginal, stored.pathWeb, stored.pathThumb]) {
       expect(fs.existsSync(path.join(dataDir, rel))).toBe(false);
     }
   });
@@ -90,11 +86,7 @@ describe("location photo delete refcount (VULN-017)", () => {
 
     await callDelete(firstId, locationId);
 
-    for (const rel of [
-      stored.pathOriginal,
-      stored.pathWeb,
-      stored.pathThumb,
-    ]) {
+    for (const rel of [stored.pathOriginal, stored.pathWeb, stored.pathThumb]) {
       expect(fs.existsSync(path.join(dataDir, rel))).toBe(true);
     }
   });

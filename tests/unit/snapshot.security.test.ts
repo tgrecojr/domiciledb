@@ -39,15 +39,13 @@ describe("createSnapshot atomicity (VULN-001)", () => {
     const origExec = sqlite.exec.bind(sqlite);
     let existedDuringVacuum: boolean | null = null;
     let sizeDuringVacuum = 0;
-    const spy = vi
-      .spyOn(sqlite, "exec")
-      .mockImplementation((sql: string) => {
-        if (String(sql).includes("VACUUM INTO")) {
-          existedDuringVacuum = fs.existsSync(target);
-          sizeDuringVacuum = existedDuringVacuum ? fs.statSync(target).size : 0;
-        }
-        return origExec(sql);
-      });
+    const spy = vi.spyOn(sqlite, "exec").mockImplementation((sql: string) => {
+      if (String(sql).includes("VACUUM INTO")) {
+        existedDuringVacuum = fs.existsSync(target);
+        sizeDuringVacuum = existedDuringVacuum ? fs.statSync(target).size : 0;
+      }
+      return origExec(sql);
+    });
 
     createSnapshot();
     spy.mockRestore();
