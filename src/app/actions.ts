@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 
-import { createHousehold } from "@/lib/queries/household";
+import { createHousehold, getHouseholdId } from "@/lib/queries/household";
 
 const householdSchema = z.object({
   name: z.string().trim().min(1, "Give your household a name"),
@@ -25,6 +25,11 @@ export async function setupHouseholdAction(
 
   if (!parsed.success) {
     return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+
+  // Single-household invariant: don't create a second one if setup already ran.
+  if ((await getHouseholdId()) !== null) {
+    return { error: "A household is already set up" };
   }
 
   await createHousehold(parsed.data);

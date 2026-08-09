@@ -27,6 +27,9 @@ const now = sql`(strftime('%Y-%m-%dT%H:%M:%fZ', 'now'))`;
 // ─── Household / Property ────────────────────────────────────────────────────
 export const household = sqliteTable("household", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  // Singleton guard: the app manages exactly one household. Every row takes the
+  // same constant value, so the DB's unique constraint rejects a second insert.
+  singleton: integer("singleton").notNull().default(1).unique(),
   name: text("name").notNull(),
   description: text("description"),
   address: text("address"),

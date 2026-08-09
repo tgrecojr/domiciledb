@@ -20,6 +20,12 @@ export async function createHousehold(input: {
   description?: string;
   address?: string;
 }) {
+  // Single-household invariant: reject a second setup up front (the DB's
+  // singleton unique constraint is the backstop against a race).
+  const existing = await getHouseholdId();
+  if (existing !== null) {
+    throw new Error("A household is already set up");
+  }
   const rows = db
     .insert(household)
     .values({

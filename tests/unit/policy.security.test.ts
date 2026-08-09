@@ -43,20 +43,18 @@ describe("policy uniqueness invariant (VULN-022)", () => {
     expect(count.c).toBe(1);
   });
 
+  // Updated for VULN-020: the single-household invariant forbids a second
+  // household, so this reuses the one household. The previous test left it with
+  // one policy row; upsert must keep it at one and update in place.
   it("upsertPolicy keeps a single row and updates it in place", () => {
-    const hh = db
-      .insert(schema.household)
-      .values({ name: "H2" })
-      .returning()
-      .all()[0]!.id;
-    upsertPolicy(hh, { coverageBPersonalProperty: 100 });
-    upsertPolicy(hh, { coverageBPersonalProperty: 200 });
+    upsertPolicy(householdId, { coverageBPersonalProperty: 100 });
+    upsertPolicy(householdId, { coverageBPersonalProperty: 200 });
     const rows = db
       .select()
       .from(schema.policy)
-      .where(eq(schema.policy.householdId, hh))
+      .where(eq(schema.policy.householdId, householdId))
       .all();
     expect(rows).toHaveLength(1);
-    expect(getPolicy(hh)?.coverageBPersonalProperty).toBe(200);
+    expect(getPolicy(householdId)?.coverageBPersonalProperty).toBe(200);
   });
 });
