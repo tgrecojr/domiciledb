@@ -116,6 +116,16 @@ export const TASKS: Record<AiTaskKey, AiTaskDef> = {
   },
 };
 
+/**
+ * Type guard: whether `v` is a real, defined AI task key. Uses an own-property
+ * check (never `in`, which walks the prototype chain and would admit
+ * "toString"/"constructor"/"__proto__" — bypassing the needsPhoto gate and
+ * crashing at TASK_SCHEMAS[k].safeParse).
+ */
+export function isTaskKey(v: string): v is AiTaskKey {
+  return Object.hasOwn(TASKS, v);
+}
+
 export interface ParseResult<T> {
   ok: boolean;
   data?: T;

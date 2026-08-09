@@ -5,7 +5,7 @@ import { revalidatePath } from "next/cache";
 import { bufferToBase64Jpeg, imageToBase64Jpeg } from "@/lib/ai/image";
 import { AI_MAX_PHOTOS } from "@/lib/ai/manifest";
 import { runTask } from "@/lib/ai/openrouter";
-import { TASKS, type AiTaskKey } from "@/lib/ai/tasks";
+import { isTaskKey, TASKS } from "@/lib/ai/tasks";
 import { config } from "@/lib/config";
 import { parseDollarsToCents } from "@/lib/money";
 import { logInteraction, setOutcome } from "@/lib/queries/ai";
@@ -19,10 +19,6 @@ export interface AiSuggestResult {
   error?: string;
   interactionId?: number;
   suggestion?: Record<string, unknown>;
-}
-
-function isTaskKey(v: string): v is AiTaskKey {
-  return v in TASKS;
 }
 
 /**
