@@ -41,6 +41,9 @@ const envSchema = z.object({
   S3_SECRET_ACCESS_KEY: z.string().optional().default(""),
   BACKUP_CRON: z.string().min(1).default("0 3 * * *"),
 
+  // Minimum seconds between full /api/export runs (a VACUUM + whole-tree zip).
+  EXPORT_MIN_INTERVAL_SECONDS: z.coerce.number().int().min(0).default(60),
+
   // Coverage + valuation tuning.
   COVERAGE_WARN_PCT: z.coerce.number().gt(0).lte(1).default(0.8),
   REVALUATION_CADENCE_DAYS: z.coerce.number().int().positive().default(90),
@@ -90,6 +93,11 @@ export const config = {
     get enabled() {
       return parsed.S3_BUCKET.length > 0;
     },
+  },
+
+  export: {
+    /** Minimum gap between full exports; extra requests get 429 (no auth here). */
+    minIntervalMs: parsed.EXPORT_MIN_INTERVAL_SECONDS * 1000,
   },
 
   coverage: {
