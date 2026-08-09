@@ -221,8 +221,12 @@ export const document = sqliteTable(
 // ─── Policy / Coverage ───────────────────────────────────────────────────────
 export const policy = sqliteTable("policy", {
   id: integer("id").primaryKey({ autoIncrement: true }),
+  // One policy per household — enforced at the DB level so a race or a
+  // non-atomic upsert can't create duplicates the coverage spine would then
+  // read arbitrarily.
   householdId: integer("household_id")
     .notNull()
+    .unique()
     .references(() => household.id, { onDelete: "cascade" }),
   // The v1 driver: overall Coverage B – Personal Property limit (cents).
   coverageBPersonalProperty: integer("coverage_b_personal_property"),
