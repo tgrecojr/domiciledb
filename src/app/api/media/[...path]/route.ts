@@ -87,7 +87,10 @@ export async function GET(
     headers: {
       "Content-Type": contentType,
       "Content-Length": String(size),
-      "Cache-Control": "private, max-age=31536000, immutable",
+      // These bytes are the household's receipts, serials and room photos.
+      // Never leave a durable copy in a device/proxy cache: a long-lived
+      // `immutable` entry outlives deleting the item in the app.
+      "Cache-Control": "private, no-store, max-age=0, must-revalidate",
       ...SECURITY_HEADERS,
     },
   });

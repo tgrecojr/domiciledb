@@ -21,13 +21,19 @@ import { listKeys, putObject } from "./s3";
 export interface BackupStatus {
   at: string;
   status: "ok" | "error" | "skipped";
+  /**
+   * App-authored, operator-safe explanation. NEVER third-party (SDK) error
+   * text: this status is rendered on /resilience, which has no auth.
+   */
   reason?: string;
-  error?: string;
   snapshotBytes?: number;
   pdfBytes?: number;
   mediaUploaded?: number;
   mediaSkipped?: number;
 }
+
+const FAILURE_REASON = "Backup failed — see the server log for details";
+const NOT_CONFIGURED_REASON = "S3 not configured";
 
 function walkFiles(dir: string): string[] {
   if (!fs.existsSync(dir)) return [];
@@ -55,9 +61,44 @@ function writeStatus(status: BackupStatus): BackupStatus {
   return status;
 }
 
+function count(value: unknown): number | undefined {
+  return typeof value === "number" && Number.isFinite(value)
+    ? value
+    : undefined;
+}
+
+/**
+ * Project an on-disk status onto the safe fields only. A status file written by
+ * an older build can still hold verbatim SDK error text (bucket, endpoint,
+ * host:port); that must never reach the page, so unknown fields are dropped and
+ * the failure reason is always our own constant.
+ */
+function sanitize(raw: unknown): BackupStatus | null {
+  if (typeof raw !== "object" || raw === null) return null;
+  const r = raw as Record<string, unknown>;
+  const status =
+    r.status === "ok" || r.status === "skipped" ? r.status : "error";
+  return {
+    at: typeof r.at === "string" ? r.at : "",
+    status,
+    reason:
+      status === "error"
+        ? FAILURE_REASON
+        : status === "skipped"
+          ? NOT_CONFIGURED_REASON
+          : undefined,
+    snapshotBytes: count(r.snapshotBytes),
+    pdfBytes: count(r.pdfBytes),
+    mediaUploaded: count(r.mediaUploaded),
+    mediaSkipped: count(r.mediaSkipped),
+  };
+}
+
 export function readBackupStatus(): BackupStatus | null {
   try {
-    return JSON.parse(fs.readFileSync(config.paths.backupStatus, "utf8"));
+    return sanitize(
+      JSON.parse(fs.readFileSync(config.paths.backupStatus, "utf8")),
+    );
   } catch {
     return null;
   }
@@ -68,7 +109,7 @@ async function runBackupOnce(now: string): Promise<BackupStatus> {
     return writeStatus({
       at: now,
       status: "skipped",
-      reason: "S3 not configured",
+      reason: NOT_CONFIGURED_REASON,
     });
   }
 
@@ -116,11 +157,11 @@ async function runBackupOnce(now: string): Promise<BackupStatus> {
       mediaSkipped: localKeys.length - toUpload.length,
     });
   } catch (err) {
-    return writeStatus({
-      at: now,
-      status: "error",
-      error: err instanceof Error ? err.message : String(err),
-    });
+    // The SDK message carries operator infrastructure detail (bucket, endpoint,
+    // host:port). It belongs in the server log the operator owns — not in the
+    // status file the unauthenticated /resilience page renders.
+    console.error("[backup] run failed:", err);
+    return writeStatus({ at: now, status: "error", reason: FAILURE_REASON });
   }
 }
 

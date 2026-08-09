@@ -5,8 +5,9 @@ import { revalidatePath } from "next/cache";
 import { bufferToBase64Jpeg, imageToBase64Jpeg } from "@/lib/ai/image";
 import { AI_MAX_PHOTOS } from "@/lib/ai/manifest";
 import { runTask } from "@/lib/ai/openrouter";
-import { TASKS, type AiTaskKey } from "@/lib/ai/tasks";
+import { isTaskKey, TASKS } from "@/lib/ai/tasks";
 import { config } from "@/lib/config";
+import { sniffImageMime } from "@/lib/image-format";
 import { parseDollarsToCents } from "@/lib/money";
 import { logInteraction, setOutcome } from "@/lib/queries/ai";
 import { findOrCreateCategory } from "@/lib/queries/categories";
@@ -19,10 +20,6 @@ export interface AiSuggestResult {
   error?: string;
   interactionId?: number;
   suggestion?: Record<string, unknown>;
-}
-
-function isTaskKey(v: string): v is AiTaskKey {
-  return v in TASKS;
 }
 
 /**
@@ -84,8 +81,6 @@ export async function aiSuggestForItem(
   };
 }
 
-const DECPAGE_IMAGE = /^image\/(jpe?g|png|webp|heic|heif)$/i;
-
 /**
  * Parse an uploaded declarations-page image to pre-fill the Coverage B policy
  * form. Returns a suggestion the user reviews/confirms before saving. Logs the
@@ -100,13 +95,14 @@ export async function aiParseDecPageAction(
   if (!(file instanceof File) || file.size === 0) {
     return { ok: false, error: "Choose a declarations-page image." };
   }
-  if (!DECPAGE_IMAGE.test(file.type)) {
+
+  // Admit on the SNIFFED content, not the forgeable File.type (VULN-012).
+  const buffer = Buffer.from(await file.arrayBuffer());
+  if (!sniffImageMime(buffer)) {
     return { ok: false, error: "Upload an image of the declarations page." };
   }
 
-  const encoded = await bufferToBase64Jpeg(
-    Buffer.from(await file.arrayBuffer()),
-  );
+  const encoded = await bufferToBase64Jpeg(buffer);
   if (!encoded) return { ok: false, error: "Could not read the image." };
 
   const result = await runTask("parse_decpage", {

@@ -1,7 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { AI_MAX_PHOTOS, buildManifest } from "@/lib/ai/manifest";
-import { parseTaskResponse, TASKS } from "@/lib/ai/tasks";
+import { isTaskKey, parseTaskResponse, TASKS } from "@/lib/ai/tasks";
 
 describe("buildManifest", () => {
   it("reflects the literal prompt + model and that an image will be sent", () => {
@@ -78,6 +78,22 @@ describe("parseTaskResponse", () => {
     expect(data.coverageBUsd).toBe(456750);
     expect("jewelryLimitUsd" in data).toBe(false);
     expect("firearmsLimitUsd" in data).toBe(false);
+  });
+});
+
+describe("isTaskKey own-property guard (VULN-013)", () => {
+  it("rejects prototype-chain keys the `in` operator would admit", () => {
+    // `v in TASKS` walks the prototype chain, so these would pass and then
+    // crash at TASK_SCHEMAS[k].safeParse. Object.hasOwn rejects them.
+    expect(isTaskKey("toString")).toBe(false);
+    expect(isTaskKey("constructor")).toBe(false);
+    expect(isTaskKey("__proto__")).toBe(false);
+    expect(isTaskKey("hasOwnProperty")).toBe(false);
+  });
+
+  it("still accepts real task keys", () => {
+    expect(isTaskKey("identify")).toBe(true);
+    expect(isTaskKey("parse_decpage")).toBe(true);
   });
 });
 
