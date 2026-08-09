@@ -66,3 +66,26 @@ export function createSingleFlightGate(
     },
   };
 }
+
+/**
+ * Wrap an async operation so overlapping callers JOIN the run already in
+ * flight instead of starting another. Used where a second concurrent run would
+ * duplicate remote work (S3 PUT/LIST + egress) and race on shared files.
+ */
+export function singleFlight<A extends unknown[], T>(
+  fn: (...args: A) => Promise<T>,
+): (...args: A) => Promise<T> {
+  let inFlight: Promise<T> | null = null;
+
+  return (...args: A): Promise<T> => {
+    if (inFlight) return inFlight;
+    inFlight = (async () => {
+      try {
+        return await fn(...args);
+      } finally {
+        inFlight = null;
+      }
+    })();
+    return inFlight;
+  };
+}
