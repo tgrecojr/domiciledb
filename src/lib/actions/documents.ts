@@ -5,7 +5,12 @@ import { redirect } from "next/navigation";
 
 import { DOCUMENT_KINDS } from "@/lib/document-kinds";
 import { storeDocument } from "@/lib/documents-store";
-import { addDocument, deleteDocument } from "@/lib/queries/documents";
+import { deleteStoredFile } from "@/lib/media";
+import {
+  addDocument,
+  deleteDocument,
+  getDocument,
+} from "@/lib/queries/documents";
 
 const ACCEPTED = /^(application\/pdf|image\/(jpe?g|png|webp|heic|heif))$/i;
 
@@ -41,7 +46,13 @@ export async function addDocumentAction(formData: FormData) {
 export async function deleteDocumentAction(formData: FormData) {
   const itemId = Number(formData.get("itemId"));
   const docId = Number(formData.get("docId"));
-  if (Number.isInteger(docId)) deleteDocument(docId);
+  if (Number.isInteger(docId)) {
+    // Drop the row AND its bytes: the DB delete does not touch the filesystem,
+    // so upload+delete cycles would otherwise grow DATA_DIR without bound.
+    const doc = getDocument(docId);
+    deleteDocument(docId);
+    if (doc) await deleteStoredFile(doc.path);
+  }
   if (Number.isInteger(itemId)) {
     revalidatePath(`/items/${itemId}`);
     redirect(`/items/${itemId}`);

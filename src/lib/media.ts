@@ -140,6 +140,20 @@ export async function deleteStoredImageFiles(
   }
 }
 
+/**
+ * Remove a stored file addressed by its DB path, which is DATA_DIR-relative
+ * (e.g. "media/documents/items/1/<hash>-receipt.pdf") — not media-root-relative.
+ * Refuses anything that resolves outside the media root; missing files are fine.
+ */
+export async function deleteStoredFile(dataDirRelPath: string): Promise<void> {
+  if (typeof dataDirRelPath !== "string" || dataDirRelPath.includes("\0")) {
+    return;
+  }
+  const abs = path.resolve(config.paths.dataDir, dataDirRelPath);
+  if (!isInsideMediaRoot(abs)) return;
+  await fs.rm(abs, { force: true });
+}
+
 /** Remove a location's on-disk photos. The DB cascades the rows; files don't. */
 export async function deleteLocationMedia(locationId: number): Promise<void> {
   const dir = path.join(
