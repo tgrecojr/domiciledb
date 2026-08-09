@@ -1,5 +1,7 @@
+import { createReadStream } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
+import { Readable } from "node:stream";
 
 import { config } from "@/lib/config";
 import { resolveMediaPath } from "@/lib/media";
@@ -53,23 +55,38 @@ export async function GET(
     return notFound();
   }
 
-  // 3. Only serve regular files (never directories / devices / fifos).
-  let data: Buffer;
+  // 3. Only serve regular files (never directories / devices / fifos), and
+  //    refuse anything over the serve cap outright.
+  let size: number;
   try {
     const stat = await fs.stat(real);
     if (!stat.isFile()) return notFound();
-    data = await fs.readFile(real);
+    size = stat.size;
   } catch {
     return notFound();
+  }
+  if (size > config.uploads.maxServeBytes) {
+    return new Response("Media file too large to serve", {
+      status: 413,
+      headers: SECURITY_HEADERS,
+    });
   }
 
   const contentType =
     CONTENT_TYPES[path.extname(real).toLowerCase()] ??
     "application/octet-stream";
 
-  return new Response(new Uint8Array(data), {
+  // Stream it: reading into a Buffer and copying that into a Uint8Array put two
+  // full copies of every served file in memory, so concurrent requests for big
+  // originals could exhaust the process.
+  const body = Readable.toWeb(
+    createReadStream(real),
+  ) as ReadableStream<Uint8Array>;
+
+  return new Response(body, {
     headers: {
       "Content-Type": contentType,
+      "Content-Length": String(size),
       // These bytes are the household's receipts, serials and room photos.
       // Never leave a durable copy in a device/proxy cache: a long-lived
       // `immutable` entry outlives deleting the item in the app.

@@ -164,7 +164,11 @@ export async function applyItemSuggestion(
   if (modelNumber) patch.modelNumber = modelNumber;
   if (serialNumber) patch.serialNumber = serialNumber;
   if (description) patch.description = description;
-  if (categoryName) patch.categoryId = findOrCreateCategory(categoryName);
+  if (categoryName) {
+    // null when the category ceiling is reached; leave the item's category as is.
+    const categoryId = findOrCreateCategory(categoryName);
+    if (categoryId !== null) patch.categoryId = categoryId;
+  }
 
   if (Object.keys(patch).length > 0) updateItem(itemId, patch);
 

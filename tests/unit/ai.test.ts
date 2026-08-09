@@ -1,6 +1,6 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { buildManifest } from "@/lib/ai/manifest";
+import { AI_MAX_PHOTOS, buildManifest } from "@/lib/ai/manifest";
 import { isTaskKey, parseTaskResponse, TASKS } from "@/lib/ai/tasks";
 
 describe("buildManifest", () => {
@@ -113,5 +113,70 @@ describe("config.ai gating (opt-in)", () => {
     vi.stubEnv("OPENROUTER_API_KEY", "sk-test-123");
     const { config: enabled } = await import("@/lib/config");
     expect(enabled.ai.enabled).toBe(true);
+  });
+});
+
+const fetchMock = vi.fn(async () => {
+  return new Response(
+    JSON.stringify({
+      choices: [{ message: { content: '{"description":"a mug"}' } }],
+    }),
+    { status: 200, headers: { "Content-Type": "application/json" } },
+  );
+});
+
+async function loadRunTask(maxCallsPerHour?: number) {
+  vi.resetModules();
+  vi.stubEnv("OPENROUTER_API_KEY", "sk-test-key");
+  vi.stubEnv("AI_FAKE", "0");
+  if (maxCallsPerHour !== undefined) {
+    vi.stubEnv("AI_MAX_CALLS_PER_HOUR", String(maxCallsPerHour));
+  }
+  const { runTask } = await import("@/lib/ai/openrouter");
+  return runTask;
+}
+
+describe("AI spend caps (VULN-003)", () => {
+  beforeEach(() => {
+    fetchMock.mockClear();
+    vi.stubGlobal("fetch", fetchMock);
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.unstubAllGlobals();
+    vi.resetModules();
+  });
+
+  it("rate limits the paid provider call instead of billing every request", async () => {
+    // Pin the ceiling to a small deterministic value via the real env knob so
+    // the assertion targets the EXACT configured bound, not just "fewer than
+    // attempts". A limiter that honoured any other cap would fail here.
+    const limit = 5;
+    const runTask = await loadRunTask(limit);
+    // Prove the stubbed env actually flowed through the config module the
+    // limiter reads (same fresh module registry as the runTask import).
+    const { config } = await import("@/lib/config");
+    expect(config.ai.maxCallsPerHour).toBe(limit);
+
+    const attempts = 200;
+    let refused = 0;
+    for (let i = 0; i < attempts; i += 1) {
+      const r = await runTask("describe", { imagesBase64Jpeg: ["AAAA"] });
+      if (!r.ok) refused += 1;
+    }
+    // Exactly `limit` paid calls go out; every remaining attempt is refused.
+    expect(fetchMock.mock.calls.length).toBe(limit);
+    expect(refused).toBe(attempts - limit);
+    expect(fetchMock.mock.calls.length).toBeLessThan(attempts);
+    expect(refused).toBeGreaterThan(0);
+  });
+
+  it("refuses more images than the manifest cap, before any paid call", async () => {
+    const runTask = await loadRunTask();
+    const images = Array.from({ length: AI_MAX_PHOTOS + 10 }, () => "AAAA");
+    const r = await runTask("describe", { imagesBase64Jpeg: images });
+    expect(r.ok).toBe(false);
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

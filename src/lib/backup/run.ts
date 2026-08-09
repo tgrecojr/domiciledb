@@ -8,6 +8,7 @@ import { household } from "@/db/schema";
 import { config } from "@/lib/config";
 import { renderProofPacket } from "@/lib/pdf/render";
 import { getReportPacket } from "@/lib/queries/report";
+import { singleFlight } from "@/lib/single-flight";
 import {
   keyForPath,
   LATEST_PDF_KEY,
@@ -103,11 +104,7 @@ export function readBackupStatus(): BackupStatus | null {
   }
 }
 
-/**
- * Back up the db snapshot, item media, and a current PDF export to S3. A no-op
- * (never throws) when S3 isn't configured — backups are optional plumbing.
- */
-export async function runBackup(now: string): Promise<BackupStatus> {
+async function runBackupOnce(now: string): Promise<BackupStatus> {
   if (!config.backup.enabled) {
     return writeStatus({
       at: now,
@@ -167,3 +164,14 @@ export async function runBackup(now: string): Promise<BackupStatus> {
     return writeStatus({ at: now, status: "error", reason: FAILURE_REASON });
   }
 }
+
+/**
+ * Back up the db snapshot, item media, and a current PDF export to S3. A no-op
+ * (never throws) when S3 isn't configured — backups are optional plumbing.
+ *
+ * Single-flight: the cron schedule and the manual "Back up now" action can fire
+ * together, and a second concurrent run would duplicate every S3 LIST/PUT and
+ * race on the one snapshot file. Later callers observe the run already going.
+ */
+export const runBackup: (now: string) => Promise<BackupStatus> =
+  singleFlight(runBackupOnce);

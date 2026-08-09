@@ -26,6 +26,8 @@ const envSchema = z.object({
     .default("https://openrouter.ai/api/v1"),
   // Site URL sent as HTTP-Referer so OpenRouter attributes usage to this app.
   OPENROUTER_REFERER: z.string().optional().default(""),
+  // Ceiling on paid AI calls per hour across the whole process (spend guard).
+  AI_MAX_CALLS_PER_HOUR: z.coerce.number().int().min(0).default(60),
   // Test-only: return canned AI responses instead of calling OpenRouter.
   AI_FAKE: z
     .enum(["0", "1"])
@@ -40,6 +42,20 @@ const envSchema = z.object({
   S3_ACCESS_KEY_ID: z.string().optional().default(""),
   S3_SECRET_ACCESS_KEY: z.string().optional().default(""),
   BACKUP_CRON: z.string().min(1).default("0 3 * * *"),
+
+  // Upload + media-storage ceilings (no auth in front of the capture forms).
+  UPLOAD_MAX_FILE_MB: z.coerce.number().positive().default(25),
+  UPLOAD_MAX_FILES_PER_REQUEST: z.coerce.number().int().positive().default(20),
+  MEDIA_MAX_TOTAL_MB: z.coerce.number().min(0).default(20480),
+  // Largest single file /api/media will serve.
+  MEDIA_MAX_SERVE_MB: z.coerce.number().positive().default(100),
+
+  // Minimum seconds between full /api/export runs (a VACUUM + whole-tree zip).
+  EXPORT_MIN_INTERVAL_SECONDS: z.coerce.number().int().min(0).default(60),
+  // Most items one proof-packet PDF will render before the request is refused.
+  PROOF_PACKET_MAX_ITEMS: z.coerce.number().int().positive().default(2000),
+  // Ceiling on distinct categories (free-form AI suggestions create these).
+  MAX_CATEGORIES: z.coerce.number().int().positive().default(500),
 
   // Coverage + valuation tuning.
   COVERAGE_WARN_PCT: z.coerce.number().gt(0).lte(1).default(0.8),
@@ -75,6 +91,8 @@ export const config = {
     /** App name reported to OpenRouter (X-OpenRouter-Title) for attribution. */
     title: "DomicileDB",
     fake: parsed.AI_FAKE,
+    /** Paid calls allowed per rolling hour; extra calls are refused unsent. */
+    maxCallsPerHour: parsed.AI_MAX_CALLS_PER_HOUR,
     get enabled() {
       return parsed.OPENROUTER_API_KEY.length > 0;
     },
@@ -90,6 +108,29 @@ export const config = {
     get enabled() {
       return parsed.S3_BUCKET.length > 0;
     },
+  },
+
+  uploads: {
+    /** Largest single accepted upload. */
+    maxFileBytes: Math.floor(parsed.UPLOAD_MAX_FILE_MB * 1024 * 1024),
+    /** Most files honoured from one multipart request. */
+    maxFilesPerRequest: parsed.UPLOAD_MAX_FILES_PER_REQUEST,
+    /** Ceiling on total bytes stored under DATA_DIR/media. */
+    maxMediaTotalBytes: Math.floor(parsed.MEDIA_MAX_TOTAL_MB * 1024 * 1024),
+    /** Largest single file the media route will serve. */
+    maxServeBytes: Math.floor(parsed.MEDIA_MAX_SERVE_MB * 1024 * 1024),
+  },
+
+  export: {
+    /** Minimum gap between full exports; extra requests get 429 (no auth here). */
+    minIntervalMs: parsed.EXPORT_MIN_INTERVAL_SECONDS * 1000,
+    /** Item ceiling for one rendered proof packet; bigger asks must filter. */
+    maxPacketItems: parsed.PROOF_PACKET_MAX_ITEMS,
+  },
+
+  categories: {
+    /** Most distinct categories that may exist; past this, none are created. */
+    max: parsed.MAX_CATEGORIES,
   },
 
   coverage: {

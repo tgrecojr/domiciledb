@@ -67,6 +67,44 @@ export function resolveMediaPath(relativeUnderMedia: string): string | null {
   return abs;
 }
 
+/**
+ * Bytes currently stored under DATA_DIR/media. Cheap enough for an upload
+ * pre-check on a self-hosted single-user box (a few thousand files at most).
+ */
+export async function mediaUsageBytes(
+  dir = config.paths.mediaDir,
+): Promise<number> {
+  let total = 0;
+  let entries;
+  try {
+    entries = await fs.readdir(dir, { withFileTypes: true });
+  } catch {
+    return 0;
+  }
+  for (const entry of entries) {
+    const full = path.join(dir, entry.name);
+    if (entry.isDirectory()) {
+      total += await mediaUsageBytes(full);
+    } else if (entry.isFile()) {
+      try {
+        total += (await fs.stat(full)).size;
+      } catch {
+        // Raced with a delete; it contributes nothing.
+      }
+    }
+  }
+  return total;
+}
+
+/**
+ * Bytes still allowed under the media quota. Shared by every upload path so a
+ * single request (or a flood of them) can't fill the operator's volume.
+ */
+export async function remainingMediaQuotaBytes(): Promise<number> {
+  const used = await mediaUsageBytes();
+  return Math.max(0, config.uploads.maxMediaTotalBytes - used);
+}
+
 /** Whether an absolute path is the media root or strictly inside it. */
 export function isInsideMediaRoot(abs: string): boolean {
   const root = path.resolve(config.paths.mediaDir);
@@ -101,6 +139,20 @@ export async function deleteStoredImageFiles(
     const abs = resolveMediaPath(rel);
     if (abs) await fs.rm(abs, { force: true });
   }
+}
+
+/**
+ * Remove a stored file addressed by its DB path, which is DATA_DIR-relative
+ * (e.g. "media/documents/items/1/<hash>-receipt.pdf") — not media-root-relative.
+ * Refuses anything that resolves outside the media root; missing files are fine.
+ */
+export async function deleteStoredFile(dataDirRelPath: string): Promise<void> {
+  if (typeof dataDirRelPath !== "string" || dataDirRelPath.includes("\0")) {
+    return;
+  }
+  const abs = path.resolve(config.paths.dataDir, dataDirRelPath);
+  if (!isInsideMediaRoot(abs)) return;
+  await fs.rm(abs, { force: true });
 }
 
 /** Remove a location's on-disk photos. The DB cascades the rows; files don't. */

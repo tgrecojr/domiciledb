@@ -1,12 +1,25 @@
 import fs from "node:fs";
+import os from "node:os";
 import path from "node:path";
-import { afterAll, describe, expect, it } from "vitest";
+import { afterAll, afterEach, describe, expect, it, vi } from "vitest";
 
 /**
  * VULN-023 (CWE-524 + CWE-312): inventory photos and documents must not be
  * pinned in an on-device HTTP cache. The media route may only hand out a
  * private, short-lived, revalidated policy — never a long-lived immutable one.
+ *
+ * VULN-009 (CWE-400): the route must stream the file and refuse anything over
+ * the serve cap, instead of buffering whole originals into the heap.
  */
+
+const readFileSpy = vi.fn();
+
+vi.mock("node:fs/promises", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("node:fs/promises")>();
+  readFileSpy.mockImplementation(actual.readFile);
+  const patched = { ...actual, readFile: readFileSpy };
+  return { ...patched, default: patched };
+});
 
 const DATA_DIR = `${process.env.TMPDIR ?? "/tmp"}/vuln023-${process.pid}`;
 process.env.DATA_DIR = DATA_DIR;
@@ -61,4 +74,50 @@ describe("VULN-023 media cache policy", () => {
       expect(maxAge).toBeLessThanOrEqual(60);
     },
   );
+});
+
+const REL = ["items", "1", "photo-original.jpg"];
+
+function makeMedia(bytes: number) {
+  const dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "vuln009-unit-"));
+  const abs = path.join(dataDir, "media", ...REL);
+  fs.mkdirSync(path.dirname(abs), { recursive: true });
+  fs.writeFileSync(abs, Buffer.alloc(bytes, 0x41));
+  return { dataDir, abs };
+}
+
+async function get(dataDir: string) {
+  vi.resetModules();
+  vi.stubEnv("DATA_DIR", dataDir);
+  const { GET } = await import("@/app/api/media/[...path]/route");
+  return GET(new Request("http://x/api/media/items/1/photo-original.jpg"), {
+    params: Promise.resolve({ path: REL }),
+  });
+}
+
+describe("GET /api/media/* memory bounds (VULN-009)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+    vi.resetModules();
+    readFileSpy.mockClear();
+  });
+
+  it("streams the file instead of buffering it into the heap", async () => {
+    const { dataDir } = makeMedia(64 * 1024);
+    const res = await get(dataDir);
+    expect(res.status).toBe(200);
+    expect(readFileSpy).not.toHaveBeenCalled();
+    const body = await res.arrayBuffer();
+    expect(body.byteLength).toBe(64 * 1024);
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  });
+
+  it("refuses a file larger than the serve cap", async () => {
+    const { dataDir } = makeMedia(3 * 1024 * 1024);
+    vi.stubEnv("MEDIA_MAX_SERVE_MB", "1");
+    const res = await get(dataDir);
+    expect(res.status).toBe(413);
+    expect(readFileSpy).not.toHaveBeenCalled();
+    fs.rmSync(dataDir, { recursive: true, force: true });
+  });
 });

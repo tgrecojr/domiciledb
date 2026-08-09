@@ -6,8 +6,13 @@ import { redirect } from "next/navigation";
 import { DOCUMENT_KINDS } from "@/lib/document-kinds";
 import { storeDocument } from "@/lib/documents-store";
 import { sniffDocumentMime } from "@/lib/image-format";
+import { deleteStoredFile } from "@/lib/media";
 import { parseId } from "@/lib/parse-id";
-import { addDocument, deleteDocument } from "@/lib/queries/documents";
+import {
+  addDocument,
+  deleteDocument,
+  getDocument,
+} from "@/lib/queries/documents";
 
 function isDocKind(v: string): v is (typeof DOCUMENT_KINDS)[number] {
   return (DOCUMENT_KINDS as readonly string[]).includes(v);
@@ -44,7 +49,13 @@ export async function addDocumentAction(formData: FormData) {
 export async function deleteDocumentAction(formData: FormData) {
   const itemId = Number(formData.get("itemId"));
   const docId = Number(formData.get("docId"));
-  if (Number.isInteger(docId)) deleteDocument(docId);
+  if (Number.isInteger(docId)) {
+    // Drop the row AND its bytes: the DB delete does not touch the filesystem,
+    // so upload+delete cycles would otherwise grow DATA_DIR without bound.
+    const doc = getDocument(docId);
+    deleteDocument(docId);
+    if (doc) await deleteStoredFile(doc.path);
+  }
   if (Number.isInteger(itemId)) {
     revalidatePath(`/items/${itemId}`);
     redirect(`/items/${itemId}`);

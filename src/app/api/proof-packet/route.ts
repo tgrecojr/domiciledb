@@ -1,3 +1,4 @@
+import { config } from "@/lib/config";
 import { getHouseholdId } from "@/lib/queries/household";
 import { getReportPacket, type ReportFilter } from "@/lib/queries/report";
 import { renderProofPacket } from "@/lib/pdf/render";
@@ -26,6 +27,16 @@ export async function GET(req: Request) {
   const packet = getReportPacket(householdId, filter);
   if (!packet) {
     return new Response("No household set up", { status: 404 });
+  }
+
+  // Both filters are optional, so an unfiltered request would render the whole
+  // inventory — bounded CPU/memory per request matters more here than serving
+  // one giant PDF, so ask the caller to narrow it instead.
+  if (packet.itemCount > config.export.maxPacketItems) {
+    return new Response(
+      `This packet covers ${packet.itemCount} items, over the ${config.export.maxPacketItems}-item limit. Narrow it with ?location= or ?category=.`,
+      { status: 413, headers: { "Cache-Control": "no-store" } },
+    );
   }
 
   const pdf = await renderProofPacket(packet);
