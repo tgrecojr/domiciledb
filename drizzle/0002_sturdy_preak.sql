@@ -1,1 +1,0 @@
-CREATE INDEX `category_name_nocase_idx` ON `category` ("name" COLLATE NOCASE);

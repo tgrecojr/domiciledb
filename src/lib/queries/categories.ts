@@ -20,8 +20,10 @@ export function findOrCreateCategory(name: string): number | null {
   const trimmed = name.trim();
   if (trimmed.length === 0) return null;
 
-  // Point lookup served by category_name_nocase_idx; never materialise the
-  // whole table in JS the way the previous case-insensitive fallback did.
+  // Case-insensitive match pushed into SQL — never materialise the whole
+  // table in JS the way the previous fallback did. No supporting index is
+  // needed: config.categories.max caps the table, so this scans at most a
+  // few hundred rows.
   const existing = db
     .select({ id: category.id })
     .from(category)
