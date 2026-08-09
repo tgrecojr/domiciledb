@@ -6,6 +6,16 @@ import { sniffImageMime } from "@/lib/image-format";
 export const ACCEPTED_IMAGE = /^image\/(jpe?g|png|webp|heic|heif)$/i;
 
 /**
+ * Make an attacker-controlled filename safe to interpolate into a log line:
+ * drop CR/LF and control characters (which forge log entries — CWE-117) and
+ * bound the length so an oversized name can't flood the log.
+ */
+export function sanitizeForLog(value: string, maxLen = 128): string {
+  const stripped = value.replace(/[\u0000-\u001f\u007f]/g, "?");
+  return stripped.length > maxLen ? stripped.slice(0, maxLen) + "…" : stripped;
+}
+
+/**
  * Process + persist a batch of uploaded image files via the given `store`
  * callback. Skips empty/unsupported files, and logs-and-continues on a bad
  * photo so one failure never sinks the whole save. Returns how many stored.
@@ -31,7 +41,8 @@ export async function storePhotoFiles(
       stored += 1;
     } catch (err) {
       console.error(
-        `[capture] could not process photo "${file.name}" (${file.type}, ${file.size} bytes) for ${context}:`,
+        `[capture] could not process photo "${sanitizeForLog(file.name)}" ` +
+          `(${sanitizeForLog(file.type, 64)}, ${file.size} bytes) for ${context}:`,
         err,
       );
     }
