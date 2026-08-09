@@ -14,6 +14,7 @@ import {
   ListObjectsV2Command,
   S3Client,
 } from "@aws-sdk/client-s3";
+import { resolveWithinDataDir } from "./restore-path";
 
 const SNAPSHOT_KEY = "backup/domiciledb-snapshot.db";
 
@@ -77,12 +78,20 @@ async function main() {
   }
   console.log(`Restored database -> ${dbPath}`);
 
-  // 2. Restore the media tree (keys are DATA_DIR-relative).
+  // 2. Restore the media tree (keys are DATA_DIR-relative). S3 keys are
+  // attacker-influenced, so assert each stays inside DATA_DIR before writing.
   const mediaKeys = await listKeys("media/");
+  let restored = 0;
   for (const key of mediaKeys) {
-    await download(key, path.join(dataDir, key));
+    const dest = resolveWithinDataDir(dataDir, key);
+    if (!dest) {
+      console.error(`Refusing key that escapes DATA_DIR: ${key}`);
+      continue;
+    }
+    await download(key, dest);
+    restored += 1;
   }
-  console.log(`Restored ${mediaKeys.length} media files.`);
+  console.log(`Restored ${restored} media files.`);
   console.log("Restore complete. Start the app to resume.");
 }
 

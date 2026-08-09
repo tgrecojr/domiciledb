@@ -35,10 +35,11 @@ export default async function ResiliencePage() {
           </div>
 
           {enabled ? (
+            // Deliberately generic: the backup target, endpoint and schedule are
+            // operator infrastructure detail and this page has no auth.
             <p className="text-sm text-neutral-600">
-              Backing up to <strong>{config.backup.bucket}</strong>
-              {config.backup.endpoint ? ` (${config.backup.endpoint})` : ""} on
-              schedule <code>{config.backup.cron}</code>.
+              Configured. Your database, photos, and a current PDF sync off-site
+              on the schedule set at deploy time.
             </p>
           ) : (
             <p className="text-sm text-neutral-600">
@@ -66,9 +67,7 @@ export default async function ResiliencePage() {
                 ? ` · ${status.mediaUploaded ?? 0} new files, db ${Math.round((status.snapshotBytes ?? 0) / 1024)} KB`
                 : status.reason
                   ? ` · ${status.reason}`
-                  : status.error
-                    ? ` · ${status.error}`
-                    : ""}
+                  : ""}
             </p>
           ) : (
             <p className="text-xs text-neutral-500">No backup has run yet.</p>

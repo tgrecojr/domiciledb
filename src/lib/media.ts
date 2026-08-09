@@ -6,6 +6,7 @@ import path from "node:path";
 import sharp from "sharp";
 
 import { config } from "@/lib/config";
+import { sniffImageMime } from "@/lib/image-format";
 
 // Keep sharp's footprint small on a self-hosted box: no operation cache and a
 // single libvips thread per op. Full-size phone photos (up to ~48 MP) can
@@ -158,6 +159,12 @@ export async function processAndStoreImageInDir(
   buffer: Buffer,
   mimeType: string,
 ): Promise<StoredImage> {
+  // Restrict sharp to an explicit decoder allowlist: refuse to hand libvips
+  // anything whose actual bytes aren't jpeg/png/webp/heic (VULN-012).
+  if (!sniffImageMime(buffer)) {
+    throw new Error("Unsupported image content — refusing to decode.");
+  }
+
   // Use the FULL sha256 digest as the content identity: a 64-bit prefix has a
   // feasible (2^32) collision bound, so two distinct images could share a name
   // and silently overwrite/dedup each other, corrupting the proof.
