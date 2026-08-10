@@ -11,8 +11,8 @@ import { drizzle } from "drizzle-orm/better-sqlite3";
 import { migrate } from "drizzle-orm/better-sqlite3/migrator";
 
 const dataDir = process.env.DATA_DIR
-  ? path.resolve(process.env.DATA_DIR)
-  : path.join(process.cwd(), "data");
+	? path.resolve(process.env.DATA_DIR)
+	: path.join(process.cwd(), "data");
 
 fs.mkdirSync(dataDir, { recursive: true });
 

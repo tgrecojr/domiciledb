@@ -6,33 +6,33 @@ import { z } from "zod";
 import { createHousehold, getHouseholdId } from "@/lib/queries/household";
 
 const householdSchema = z.object({
-  name: z.string().trim().min(1, "Give your household a name"),
-  description: z.string().trim().optional(),
-  address: z.string().trim().optional(),
+	name: z.string().trim().min(1, "Give your household a name"),
+	description: z.string().trim().optional(),
+	address: z.string().trim().optional(),
 });
 
 export type ActionState = { error?: string } | null;
 
 export async function setupHouseholdAction(
-  _prev: ActionState,
-  formData: FormData,
+	_prev: ActionState,
+	formData: FormData,
 ): Promise<ActionState> {
-  const parsed = householdSchema.safeParse({
-    name: formData.get("name"),
-    description: formData.get("description") || undefined,
-    address: formData.get("address") || undefined,
-  });
+	const parsed = householdSchema.safeParse({
+		name: formData.get("name"),
+		description: formData.get("description") || undefined,
+		address: formData.get("address") || undefined,
+	});
 
-  if (!parsed.success) {
-    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  }
+	if (!parsed.success) {
+		return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+	}
 
-  // Single-household invariant: don't create a second one if setup already ran.
-  if ((await getHouseholdId()) !== null) {
-    return { error: "A household is already set up" };
-  }
+	// Single-household invariant: don't create a second one if setup already ran.
+	if ((await getHouseholdId()) !== null) {
+		return { error: "A household is already set up" };
+	}
 
-  await createHousehold(parsed.data);
-  revalidatePath("/");
-  return null;
+	await createHousehold(parsed.data);
+	revalidatePath("/");
+	return null;
 }

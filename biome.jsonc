@@ -1,0 +1,36 @@
+{
+	"$schema": "https://biomejs.dev/schemas/2.5.7/schema.json",
+	// Biome defaults on purpose (tabs, double quotes, 80 cols, recommended
+	// rules). Don't accrete style overrides here — if a default hurts, prefer
+	// changing the code.
+	"vcs": {
+		"enabled": true,
+		"clientKind": "git",
+		// Skip everything .gitignore skips (.next, coverage, sw.js, …).
+		"useIgnoreFile": true
+	},
+	"files": {
+		// drizzle/ is drizzle-kit output (SQL + meta snapshots), not source.
+		"includes": ["**", "!drizzle"]
+	},
+	"css": {
+		// globals.css uses Tailwind v4 directives (@theme, @custom-variant, …).
+		"parser": {
+			"tailwindDirectives": true
+		}
+	},
+	"linter": {
+		"domains": {
+			"next": "recommended",
+			"react": "recommended"
+		},
+		"rules": {
+			"performance": {
+				// Media is served by our own /api/media route; next/image's
+				// optimizer adds nothing self-hosted (standalone output) and
+				// its wrapper breaks the plain-<img> capture/gallery flows.
+				"noImgElement": "off"
+			}
+		}
+	}
+}

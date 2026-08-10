@@ -8,125 +8,125 @@
  */
 
 export interface ReportPhoto {
-  pathOriginal: string;
-  pathWeb: string;
+	pathOriginal: string;
+	pathWeb: string;
 }
 
 export interface ReportDocument {
-  kind: string;
-  filename: string;
+	kind: string;
+	filename: string;
 }
 
 export interface ReportItem {
-  id: number;
-  title: string;
-  manufacturer: string | null;
-  modelNumber: string | null;
-  serialNumber: string | null;
-  quantity: number;
-  condition: string | null;
-  ageEstimate: string | null;
-  locationId: number | null;
-  categoryName: string | null;
-  replacementCostCents: number | null;
-  pricePaidCents: number | null;
-  purchaseDate: string | null;
-  lifecycleStatus: string;
-  photos: ReportPhoto[];
-  documents: ReportDocument[];
+	id: number;
+	title: string;
+	manufacturer: string | null;
+	modelNumber: string | null;
+	serialNumber: string | null;
+	quantity: number;
+	condition: string | null;
+	ageEstimate: string | null;
+	locationId: number | null;
+	categoryName: string | null;
+	replacementCostCents: number | null;
+	pricePaidCents: number | null;
+	purchaseDate: string | null;
+	lifecycleStatus: string;
+	photos: ReportPhoto[];
+	documents: ReportDocument[];
 }
 
 export interface ReportRoom {
-  locationId: number | null;
-  locationName: string;
-  /** Wider room/area shots (location-level, not item photos). */
-  photos: ReportPhoto[];
-  items: ReportItem[];
-  totalCents: number;
+	locationId: number | null;
+	locationName: string;
+	/** Wider room/area shots (location-level, not item photos). */
+	photos: ReportPhoto[];
+	items: ReportItem[];
+	totalCents: number;
 }
 
 export interface CategoryTotal {
-  name: string;
-  cents: number;
+	name: string;
+	cents: number;
 }
 
 export interface ReportData {
-  rooms: ReportRoom[];
-  categoryTotals: CategoryTotal[];
-  grandTotalCents: number;
-  countedCount: number;
-  excludedCount: number;
-  itemCount: number;
+	rooms: ReportRoom[];
+	categoryTotals: CategoryTotal[];
+	grandTotalCents: number;
+	countedCount: number;
+	excludedCount: number;
+	itemCount: number;
 }
 
 const UNASSIGNED = "Unassigned";
 
 /** Aggregate replacement value of an item line: per-item cost × quantity. */
 export function itemAggregateCents(item: ReportItem): number | null {
-  if (item.replacementCostCents === null) return null;
-  const qty = Number.isFinite(item.quantity) ? Math.max(0, item.quantity) : 0;
-  return item.replacementCostCents * qty;
+	if (item.replacementCostCents === null) return null;
+	const qty = Number.isFinite(item.quantity) ? Math.max(0, item.quantity) : 0;
+	return item.replacementCostCents * qty;
 }
 
 export function assembleReport(input: {
-  items: ReportItem[];
-  locationNames: Map<number, string>;
-  /** Wider room shots keyed by locationId (optional). */
-  locationPhotos?: Map<number, ReportPhoto[]>;
+	items: ReportItem[];
+	locationNames: Map<number, string>;
+	/** Wider room shots keyed by locationId (optional). */
+	locationPhotos?: Map<number, ReportPhoto[]>;
 }): ReportData {
-  const active = input.items.filter((i) => i.lifecycleStatus === "active");
+	const active = input.items.filter((i) => i.lifecycleStatus === "active");
 
-  const roomMap = new Map<number | null, ReportRoom>();
-  const categoryMap = new Map<string, number>();
-  let grandTotalCents = 0;
-  let countedCount = 0;
-  let excludedCount = 0;
+	const roomMap = new Map<number | null, ReportRoom>();
+	const categoryMap = new Map<string, number>();
+	let grandTotalCents = 0;
+	let countedCount = 0;
+	let excludedCount = 0;
 
-  for (const item of active) {
-    const room = roomMap.get(item.locationId) ?? {
-      locationId: item.locationId,
-      locationName:
-        item.locationId === null
-          ? UNASSIGNED
-          : (input.locationNames.get(item.locationId) ?? UNASSIGNED),
-      photos:
-        item.locationId === null
-          ? []
-          : (input.locationPhotos?.get(item.locationId) ?? []),
-      items: [],
-      totalCents: 0,
-    };
-    room.items.push(item);
+	for (const item of active) {
+		const room = roomMap.get(item.locationId) ?? {
+			locationId: item.locationId,
+			locationName:
+				item.locationId === null
+					? UNASSIGNED
+					: (input.locationNames.get(item.locationId) ?? UNASSIGNED),
+			photos:
+				item.locationId === null
+					? []
+					: (input.locationPhotos?.get(item.locationId) ?? []),
+			items: [],
+			totalCents: 0,
+		};
+		room.items.push(item);
 
-    const agg = itemAggregateCents(item);
-    if (agg === null) {
-      excludedCount += 1;
-    } else {
-      countedCount += 1;
-      grandTotalCents += agg;
-      room.totalCents += agg;
-      const cat = item.categoryName ?? "Uncategorized";
-      categoryMap.set(cat, (categoryMap.get(cat) ?? 0) + agg);
-    }
-    roomMap.set(item.locationId, room);
-  }
+		const agg = itemAggregateCents(item);
+		if (agg === null) {
+			excludedCount += 1;
+		} else {
+			countedCount += 1;
+			grandTotalCents += agg;
+			room.totalCents += agg;
+			const cat = item.categoryName ?? "Uncategorized";
+			categoryMap.set(cat, (categoryMap.get(cat) ?? 0) + agg);
+		}
+		roomMap.set(item.locationId, room);
+	}
 
-  const rooms = [...roomMap.values()].sort((a, b) => {
-    if (a.locationName === UNASSIGNED) return 1;
-    if (b.locationName === UNASSIGNED) return -1;
-    return a.locationName.localeCompare(b.locationName);
-  });
+	const rooms = [...roomMap.values()].sort((a, b) => {
+		if (a.locationName === UNASSIGNED) return 1;
+		if (b.locationName === UNASSIGNED) return -1;
+		return a.locationName.localeCompare(b.locationName);
+	});
 
-  const categoryTotals = [...categoryMap.entries()]
-    .map(([name, cents]) => ({ name, cents }))
-    .sort((a, b) => b.cents - a.cents);
+	const categoryTotals = [...categoryMap.entries()]
+		.map(([name, cents]) => ({ name, cents }))
+		.sort((a, b) => b.cents - a.cents);
 
-  return {
-    rooms,
-    categoryTotals,
-    grandTotalCents,
-    countedCount,
-    excludedCount,
-    itemCount: active.length,
-  };
+	return {
+		rooms,
+		categoryTotals,
+		grandTotalCents,
+		countedCount,
+		excludedCount,
+		itemCount: active.length,
+	};
 }

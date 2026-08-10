@@ -10,12 +10,12 @@ import path from "node:path";
  * the path at the C layer).
  */
 export function resolveWithinDataDir(
-  dataDir: string,
-  key: string,
+	dataDir: string,
+	key: string,
 ): string | null {
-  if (typeof key !== "string" || key.includes("\0")) return null;
-  const root = path.resolve(dataDir);
-  const dest = path.resolve(root, key);
-  if (dest !== root && !dest.startsWith(root + path.sep)) return null;
-  return dest;
+	if (typeof key !== "string" || key.includes("\0")) return null;
+	const root = path.resolve(dataDir);
+	const dest = path.resolve(root, key);
+	if (dest !== root && !dest.startsWith(root + path.sep)) return null;
+	return dest;
 }

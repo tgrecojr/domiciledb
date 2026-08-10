@@ -7,7 +7,7 @@ export const DOCUMENT_KINDS = ["receipt", "warranty", "manual"] as const;
 export type DocumentKind = (typeof DOCUMENT_KINDS)[number];
 
 export const DOCUMENT_KIND_LABELS: Record<DocumentKind, string> = {
-  receipt: "Receipt",
-  warranty: "Warranty",
-  manual: "Manual",
+	receipt: "Receipt",
+	warranty: "Warranty",
+	manual: "Manual",
 };

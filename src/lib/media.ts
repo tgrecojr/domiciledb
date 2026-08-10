@@ -1,6 +1,7 @@
 import "server-only";
 
 import { createHash } from "node:crypto";
+import type { Dirent } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 import sharp from "sharp";
@@ -29,24 +30,24 @@ const WEB_MAX = 1024;
 const THUMB_MAX = 320;
 
 export interface StoredImage {
-  pathOriginal: string;
-  pathWeb: string;
-  pathThumb: string;
-  contentHash: string;
-  width: number | null;
-  height: number | null;
+	pathOriginal: string;
+	pathWeb: string;
+	pathThumb: string;
+	contentHash: string;
+	width: number | null;
+	height: number | null;
 }
 
 /** Public URL for a stored (DATA_DIR-relative) media path. */
 export function mediaUrl(relativePath: string): string {
-  return `/api/${relativePath}`;
+	return `/api/${relativePath}`;
 }
 
 function extFromMime(mime: string): string {
-  if (mime === "image/png") return "png";
-  if (mime === "image/webp") return "webp";
-  if (mime === "image/heic" || mime === "image/heif") return "heic";
-  return "jpg";
+	if (mime === "image/png") return "png";
+	if (mime === "image/webp") return "webp";
+	if (mime === "image/heic" || mime === "image/heif") return "heic";
+	return "jpg";
 }
 
 /**
@@ -57,14 +58,14 @@ function extFromMime(mime: string): string {
  * guard is LEXICAL — the route adds a realpath re-check for symlinks.
  */
 export function resolveMediaPath(relativeUnderMedia: string): string | null {
-  if (typeof relativeUnderMedia !== "string") return null;
-  // Reject NUL bytes outright (would otherwise truncate the path at the C layer).
-  if (relativeUnderMedia.includes("\0")) return null;
+	if (typeof relativeUnderMedia !== "string") return null;
+	// Reject NUL bytes outright (would otherwise truncate the path at the C layer).
+	if (relativeUnderMedia.includes("\0")) return null;
 
-  const root = path.resolve(config.paths.mediaDir);
-  const abs = path.resolve(root, relativeUnderMedia);
-  if (abs !== root && !abs.startsWith(root + path.sep)) return null;
-  return abs;
+	const root = path.resolve(config.paths.mediaDir);
+	const abs = path.resolve(root, relativeUnderMedia);
+	if (abs !== root && !abs.startsWith(root + path.sep)) return null;
+	return abs;
 }
 
 /**
@@ -72,28 +73,28 @@ export function resolveMediaPath(relativeUnderMedia: string): string | null {
  * pre-check on a self-hosted single-user box (a few thousand files at most).
  */
 export async function mediaUsageBytes(
-  dir = config.paths.mediaDir,
+	dir = config.paths.mediaDir,
 ): Promise<number> {
-  let total = 0;
-  let entries;
-  try {
-    entries = await fs.readdir(dir, { withFileTypes: true });
-  } catch {
-    return 0;
-  }
-  for (const entry of entries) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) {
-      total += await mediaUsageBytes(full);
-    } else if (entry.isFile()) {
-      try {
-        total += (await fs.stat(full)).size;
-      } catch {
-        // Raced with a delete; it contributes nothing.
-      }
-    }
-  }
-  return total;
+	let total = 0;
+	let entries: Dirent[];
+	try {
+		entries = await fs.readdir(dir, { withFileTypes: true });
+	} catch {
+		return 0;
+	}
+	for (const entry of entries) {
+		const full = path.join(dir, entry.name);
+		if (entry.isDirectory()) {
+			total += await mediaUsageBytes(full);
+		} else if (entry.isFile()) {
+			try {
+				total += (await fs.stat(full)).size;
+			} catch {
+				// Raced with a delete; it contributes nothing.
+			}
+		}
+	}
+	return total;
 }
 
 /**
@@ -101,14 +102,14 @@ export async function mediaUsageBytes(
  * single request (or a flood of them) can't fill the operator's volume.
  */
 export async function remainingMediaQuotaBytes(): Promise<number> {
-  const used = await mediaUsageBytes();
-  return Math.max(0, config.uploads.maxMediaTotalBytes - used);
+	const used = await mediaUsageBytes();
+	return Math.max(0, config.uploads.maxMediaTotalBytes - used);
 }
 
 /** Whether an absolute path is the media root or strictly inside it. */
 export function isInsideMediaRoot(abs: string): boolean {
-  const root = path.resolve(config.paths.mediaDir);
-  return abs === root || abs.startsWith(root + path.sep);
+	const root = path.resolve(config.paths.mediaDir);
+	return abs === root || abs.startsWith(root + path.sep);
 }
 
 /**
@@ -119,22 +120,22 @@ export function isInsideMediaRoot(abs: string): boolean {
  * Returns false on any escape/miss/mismatch.
  */
 export async function verifyStoredContent(
-  dataDirRelativePath: string,
-  expectedSha256: string,
+	dataDirRelativePath: string,
+	expectedSha256: string,
 ): Promise<boolean> {
-  if (typeof dataDirRelativePath !== "string") return false;
-  if (dataDirRelativePath.includes("\0")) return false;
-  // DB paths are DATA_DIR-relative (e.g. "media/items/1/<hash>-web.webp");
-  // resolve there and require the result to stay inside the media root.
-  const abs = path.resolve(config.paths.dataDir, dataDirRelativePath);
-  if (!isInsideMediaRoot(abs)) return false;
-  try {
-    const bytes = await fs.readFile(abs);
-    const actual = createHash("sha256").update(bytes).digest("hex");
-    return actual === expectedSha256;
-  } catch {
-    return false;
-  }
+	if (typeof dataDirRelativePath !== "string") return false;
+	if (dataDirRelativePath.includes("\0")) return false;
+	// DB paths are DATA_DIR-relative (e.g. "media/items/1/<hash>-web.webp");
+	// resolve there and require the result to stay inside the media root.
+	const abs = path.resolve(config.paths.dataDir, dataDirRelativePath);
+	if (!isInsideMediaRoot(abs)) return false;
+	try {
+		const bytes = await fs.readFile(abs);
+		const actual = createHash("sha256").update(bytes).digest("hex");
+		return actual === expectedSha256;
+	} catch {
+		return false;
+	}
 }
 
 /**
@@ -142,19 +143,19 @@ export async function verifyStoredContent(
  * the rows, but the files live on the filesystem and must be removed too.
  */
 export async function deleteItemMedia(itemId: number): Promise<void> {
-  const dirs = [
-    path.join(config.paths.dataDir, "media", "items", String(itemId)),
-    path.join(
-      config.paths.dataDir,
-      "media",
-      "documents",
-      "items",
-      String(itemId),
-    ),
-  ];
-  for (const dir of dirs) {
-    await fs.rm(dir, { recursive: true, force: true });
-  }
+	const dirs = [
+		path.join(config.paths.dataDir, "media", "items", String(itemId)),
+		path.join(
+			config.paths.dataDir,
+			"media",
+			"documents",
+			"items",
+			String(itemId),
+		),
+	];
+	for (const dir of dirs) {
+		await fs.rm(dir, { recursive: true, force: true });
+	}
 }
 
 /**
@@ -168,13 +169,13 @@ export async function deleteItemMedia(itemId: number): Promise<void> {
  * deleting one photo can't destroy a still-referenced duplicate.
  */
 export async function deleteStoredImageFiles(
-  relativePaths: string[],
+	relativePaths: string[],
 ): Promise<void> {
-  for (const rel of relativePaths) {
-    if (typeof rel !== "string" || rel.includes("\0")) continue;
-    const abs = path.resolve(config.paths.dataDir, rel);
-    if (isInsideMediaRoot(abs)) await fs.rm(abs, { force: true });
-  }
+	for (const rel of relativePaths) {
+		if (typeof rel !== "string" || rel.includes("\0")) continue;
+		const abs = path.resolve(config.paths.dataDir, rel);
+		if (isInsideMediaRoot(abs)) await fs.rm(abs, { force: true });
+	}
 }
 
 /**
@@ -183,23 +184,23 @@ export async function deleteStoredImageFiles(
  * Refuses anything that resolves outside the media root; missing files are fine.
  */
 export async function deleteStoredFile(dataDirRelPath: string): Promise<void> {
-  if (typeof dataDirRelPath !== "string" || dataDirRelPath.includes("\0")) {
-    return;
-  }
-  const abs = path.resolve(config.paths.dataDir, dataDirRelPath);
-  if (!isInsideMediaRoot(abs)) return;
-  await fs.rm(abs, { force: true });
+	if (typeof dataDirRelPath !== "string" || dataDirRelPath.includes("\0")) {
+		return;
+	}
+	const abs = path.resolve(config.paths.dataDir, dataDirRelPath);
+	if (!isInsideMediaRoot(abs)) return;
+	await fs.rm(abs, { force: true });
 }
 
 /** Remove a location's on-disk photos. The DB cascades the rows; files don't. */
 export async function deleteLocationMedia(locationId: number): Promise<void> {
-  const dir = path.join(
-    config.paths.dataDir,
-    "media",
-    "locations",
-    String(locationId),
-  );
-  await fs.rm(dir, { recursive: true, force: true });
+	const dir = path.join(
+		config.paths.dataDir,
+		"media",
+		"locations",
+		String(locationId),
+	);
+	await fs.rm(dir, { recursive: true, force: true });
 }
 
 /**
@@ -207,82 +208,82 @@ export async function deleteLocationMedia(locationId: number): Promise<void> {
  * "media/items/1" or "media/locations/3"), producing the three variants.
  */
 export async function processAndStoreImageInDir(
-  relDir: string,
-  buffer: Buffer,
-  mimeType: string,
+	relDir: string,
+	buffer: Buffer,
+	mimeType: string,
 ): Promise<StoredImage> {
-  // Restrict sharp to an explicit decoder allowlist: refuse to hand libvips
-  // anything whose actual bytes aren't jpeg/png/webp/heic (VULN-012).
-  if (!sniffImageMime(buffer)) {
-    throw new Error("Unsupported image content — refusing to decode.");
-  }
+	// Restrict sharp to an explicit decoder allowlist: refuse to hand libvips
+	// anything whose actual bytes aren't jpeg/png/webp/heic (VULN-012).
+	if (!sniffImageMime(buffer)) {
+		throw new Error("Unsupported image content — refusing to decode.");
+	}
 
-  // Use the FULL sha256 digest as the content identity: a 64-bit prefix has a
-  // feasible (2^32) collision bound, so two distinct images could share a name
-  // and silently overwrite/dedup each other, corrupting the proof.
-  const contentHash = createHash("sha256").update(buffer).digest("hex");
+	// Use the FULL sha256 digest as the content identity: a 64-bit prefix has a
+	// feasible (2^32) collision bound, so two distinct images could share a name
+	// and silently overwrite/dedup each other, corrupting the proof.
+	const contentHash = createHash("sha256").update(buffer).digest("hex");
 
-  const absDir = path.join(config.paths.dataDir, relDir);
-  await fs.mkdir(absDir, { recursive: true });
+	const absDir = path.join(config.paths.dataDir, relDir);
+	await fs.mkdir(absDir, { recursive: true });
 
-  const ext = extFromMime(mimeType);
-  const originalName = `${contentHash}-original.${ext}`;
-  const webName = `${contentHash}-web.webp`;
-  const thumbName = `${contentHash}-thumb.webp`;
+	const ext = extFromMime(mimeType);
+	const originalName = `${contentHash}-original.${ext}`;
+	const webName = `${contentHash}-web.webp`;
+	const thumbName = `${contentHash}-thumb.webp`;
 
-  const meta = await sharp(buffer, { failOn: "none" }).metadata();
+	const meta = await sharp(buffer, { failOn: "none" }).metadata();
 
-  // Store the untouched original (cheap — no decode), then derive the two
-  // variants with FRESH pipelines, SEQUENTIALLY. Fresh pipelines let libvips
-  // shrink-on-load for JPEGs, and one-at-a-time keeps only a single decode in
-  // flight — far lower peak memory than cloning a fully-decoded, rotated base
-  // and resizing twice in parallel (which OOM'd on large photos).
-  await fs.writeFile(path.join(absDir, originalName), buffer);
+	// Store the untouched original (cheap — no decode), then derive the two
+	// variants with FRESH pipelines, SEQUENTIALLY. Fresh pipelines let libvips
+	// shrink-on-load for JPEGs, and one-at-a-time keeps only a single decode in
+	// flight — far lower peak memory than cloning a fully-decoded, rotated base
+	// and resizing twice in parallel (which OOM'd on large photos).
+	await fs.writeFile(path.join(absDir, originalName), buffer);
 
-  await sharp(buffer, { failOn: "none" })
-    .rotate()
-    .resize(WEB_MAX, WEB_MAX, { fit: "inside", withoutEnlargement: true })
-    .webp({ quality: 80 })
-    .toFile(path.join(absDir, webName));
+	await sharp(buffer, { failOn: "none" })
+		.rotate()
+		.resize(WEB_MAX, WEB_MAX, { fit: "inside", withoutEnlargement: true })
+		.webp({ quality: 80 })
+		.toFile(path.join(absDir, webName));
 
-  await sharp(buffer, { failOn: "none" })
-    .rotate()
-    .resize(THUMB_MAX, THUMB_MAX, { fit: "cover" })
-    .webp({ quality: 70 })
-    .toFile(path.join(absDir, thumbName));
+	await sharp(buffer, { failOn: "none" })
+		.rotate()
+		.resize(THUMB_MAX, THUMB_MAX, { fit: "cover" })
+		.webp({ quality: 70 })
+		.toFile(path.join(absDir, thumbName));
 
-  return {
-    pathOriginal: path.join(relDir, originalName),
-    pathWeb: path.join(relDir, webName),
-    pathThumb: path.join(relDir, thumbName),
-    contentHash,
-    width: meta.width ?? null,
-    height: meta.height ?? null,
-  };
+	return {
+		pathOriginal: path.join(relDir, originalName),
+		pathWeb: path.join(relDir, webName),
+		pathThumb: path.join(relDir, thumbName),
+		contentHash,
+		width: meta.width ?? null,
+		height: meta.height ?? null,
+	};
 }
 
 /** Store an item photo under media/items/<itemId>/. */
 export function processAndStoreImage(
-  itemId: number,
-  buffer: Buffer,
-  mimeType: string,
+	itemId: number,
+	buffer: Buffer,
+	mimeType: string,
 ): Promise<StoredImage> {
-  return processAndStoreImageInDir(
-    path.join("media", "items", String(itemId)),
-    buffer,
-    mimeType,
-  );
+	return processAndStoreImageInDir(
+		path.join("media", "items", String(itemId)),
+		buffer,
+		mimeType,
+	);
 }
 
 /** Store a location photo under media/locations/<locationId>/. */
 export function processAndStoreLocationImage(
-  locationId: number,
-  buffer: Buffer,
-  mimeType: string,
+	locationId: number,
+	buffer: Buffer,
+	mimeType: string,
 ): Promise<StoredImage> {
-  return processAndStoreImageInDir(
-    path.join("media", "locations", String(locationId)),
-    buffer,
-    mimeType,
-  );
+	return processAndStoreImageInDir(
+		path.join("media", "locations", String(locationId)),
+		buffer,
+		mimeType,
+	);
 }

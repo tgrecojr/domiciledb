@@ -9,30 +9,30 @@ import { category } from "./schema";
  * jewelry, and art are included because they map to common policy sub-limits.
  */
 const DEFAULT_CATEGORIES = [
-  "Electronics",
-  "Appliances",
-  "Furniture",
-  "Jewelry",
-  "Art",
-  "Firearms",
-  "Tools",
-  "Kitchenware",
-  "Clothing",
-  "Sporting Goods",
-  "Musical Instruments",
-  "Collectibles",
-  "Books & Media",
-  "Outdoor & Garden",
-  "Other",
+	"Electronics",
+	"Appliances",
+	"Furniture",
+	"Jewelry",
+	"Art",
+	"Firearms",
+	"Tools",
+	"Kitchenware",
+	"Clothing",
+	"Sporting Goods",
+	"Musical Instruments",
+	"Collectibles",
+	"Books & Media",
+	"Outdoor & Garden",
+	"Other",
 ];
 
 /** Idempotent: insert defaults only if the category table is empty. */
 export function seedCategories() {
-  const existing = db.select({ id: category.id }).from(category).limit(1).all();
-  if (existing.length > 0) return;
+	const existing = db.select({ id: category.id }).from(category).limit(1).all();
+	if (existing.length > 0) return;
 
-  db.insert(category)
-    .values(DEFAULT_CATEGORIES.map((name) => ({ name })))
-    .onConflictDoNothing()
-    .run();
+	db.insert(category)
+		.values(DEFAULT_CATEGORIES.map((name) => ({ name })))
+		.onConflictDoNothing()
+		.run();
 }

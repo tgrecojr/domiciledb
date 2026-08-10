@@ -13,8 +13,13 @@ export const ACCEPTED_IMAGE = /^image\/(jpe?g|png|webp|heic|heif)$/i;
  * bound the length so an oversized name can't flood the log.
  */
 export function sanitizeForLog(value: string, maxLen = 128): string {
-  const stripped = value.replace(/[\u0000-\u001f\u007f]/g, "?");
-  return stripped.length > maxLen ? stripped.slice(0, maxLen) + "…" : stripped;
+	// Compare code units instead of a control-char regex: same effect, and
+	// nothing for a regex linter to mistake for an accidental literal.
+	const stripped = Array.from(value, (ch) => {
+		const code = ch.charCodeAt(0);
+		return code < 0x20 || code === 0x7f ? "?" : ch;
+	}).join("");
+	return stripped.length > maxLen ? `${stripped.slice(0, maxLen)}…` : stripped;
 }
 
 /**
@@ -32,50 +37,50 @@ export function sanitizeForLog(value: string, maxLen = 128): string {
  * `size` (before the file is ever buffered), and the DATA_DIR media quota.
  */
 export async function storePhotoFiles(
-  files: File[],
-  context: string,
-  store: (buffer: Buffer, mimeType: string) => Promise<void>,
+	files: File[],
+	context: string,
+	store: (buffer: Buffer, mimeType: string) => Promise<void>,
 ): Promise<number> {
-  const batch = files.slice(0, config.uploads.maxFilesPerRequest);
-  if (batch.length < files.length) {
-    console.warn(
-      `[capture] ignored ${files.length - batch.length} extra photo(s) for ${context}: over the ${config.uploads.maxFilesPerRequest}-file per-request cap`,
-    );
-  }
+	const batch = files.slice(0, config.uploads.maxFilesPerRequest);
+	if (batch.length < files.length) {
+		console.warn(
+			`[capture] ignored ${files.length - batch.length} extra photo(s) for ${context}: over the ${config.uploads.maxFilesPerRequest}-file per-request cap`,
+		);
+	}
 
-  // Budget for this batch, charged from the originals; the derived web/thumb
-  // variants are far smaller and are picked up by the next request's re-check.
-  let budget = await remainingMediaQuotaBytes();
+	// Budget for this batch, charged from the originals; the derived web/thumb
+	// variants are far smaller and are picked up by the next request's re-check.
+	let budget = await remainingMediaQuotaBytes();
 
-  let stored = 0;
-  for (const file of batch) {
-    if (file.size === 0) continue;
-    if (file.size > config.uploads.maxFileBytes) {
-      console.warn(
-        `[capture] rejected photo "${sanitizeForLog(file.name)}" for ${context}: ${file.size} bytes is over the ${config.uploads.maxFileBytes}-byte cap`,
-      );
-      continue;
-    }
-    try {
-      const buffer = Buffer.from(await file.arrayBuffer());
-      const mimeType = sniffImageMime(buffer);
-      if (!mimeType) continue;
-      if (file.size > budget) {
-        console.warn(
-          `[capture] rejected photo "${sanitizeForLog(file.name)}" for ${context}: media storage quota exhausted`,
-        );
-        break;
-      }
-      await store(buffer, mimeType);
-      budget -= file.size;
-      stored += 1;
-    } catch (err) {
-      console.error(
-        `[capture] could not process photo "${sanitizeForLog(file.name)}" ` +
-          `(${sanitizeForLog(file.type, 64)}, ${file.size} bytes) for ${context}:`,
-        err,
-      );
-    }
-  }
-  return stored;
+	let stored = 0;
+	for (const file of batch) {
+		if (file.size === 0) continue;
+		if (file.size > config.uploads.maxFileBytes) {
+			console.warn(
+				`[capture] rejected photo "${sanitizeForLog(file.name)}" for ${context}: ${file.size} bytes is over the ${config.uploads.maxFileBytes}-byte cap`,
+			);
+			continue;
+		}
+		try {
+			const buffer = Buffer.from(await file.arrayBuffer());
+			const mimeType = sniffImageMime(buffer);
+			if (!mimeType) continue;
+			if (file.size > budget) {
+				console.warn(
+					`[capture] rejected photo "${sanitizeForLog(file.name)}" for ${context}: media storage quota exhausted`,
+				);
+				break;
+			}
+			await store(buffer, mimeType);
+			budget -= file.size;
+			stored += 1;
+		} catch (err) {
+			console.error(
+				`[capture] could not process photo "${sanitizeForLog(file.name)}" ` +
+					`(${sanitizeForLog(file.type, 64)}, ${file.size} bytes) for ${context}:`,
+				err,
+			);
+		}
+	}
+	return stored;
 }

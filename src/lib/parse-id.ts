@@ -6,9 +6,9 @@
  * error is swallowed). Require an explicit run of digits and reject zero.
  */
 export function parseId(value: unknown): number | null {
-  if (typeof value !== "string") return null;
-  const s = value.trim();
-  if (!/^\d+$/.test(s)) return null;
-  const n = Number(s);
-  return Number.isSafeInteger(n) && n > 0 ? n : null;
+	if (typeof value !== "string") return null;
+	const s = value.trim();
+	if (!/^\d+$/.test(s)) return null;
+	const n = Number(s);
+	return Number.isSafeInteger(n) && n > 0 ? n : null;
 }

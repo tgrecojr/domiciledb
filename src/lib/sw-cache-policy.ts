@@ -23,44 +23,44 @@ const NEVER_CACHED_PREFIXES = ["/api/"];
 
 /** Whether the service worker may keep a response for this URL on the device. */
 export function isRuntimeCacheable(
-  pathname: string,
-  sameOrigin: boolean,
+	pathname: string,
+	sameOrigin: boolean,
 ): boolean {
-  if (!sameOrigin) return true;
-  return !NEVER_CACHED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+	if (!sameOrigin) return true;
+	return !NEVER_CACHED_PREFIXES.some((prefix) => pathname.startsWith(prefix));
 }
 
 /** Whether a `Cache-Control` value permits storing the response. */
 export function isStorableResponse(cacheControl: string | null): boolean {
-  return !(cacheControl ?? "")
-    .split(",")
-    .some((directive) => directive.trim().toLowerCase() === "no-store");
+	return !(cacheControl ?? "")
+		.split(",")
+		.some((directive) => directive.trim().toLowerCase() === "no-store");
 }
 
 /** Honours `no-store`, which the built-in strategies otherwise ignore. */
 export const noStorePlugin: SerwistPlugin = {
-  cacheWillUpdate: async ({ response }) =>
-    isStorableResponse(response.headers.get("Cache-Control")) ? response : null,
+	cacheWillUpdate: async ({ response }) =>
+		isStorableResponse(response.headers.get("Cache-Control")) ? response : null,
 };
 
 /** The service worker's route table: Serwist's defaults, narrowed as above. */
 export function hardenRuntimeCaching(
-  defaults: RuntimeCaching[],
+	defaults: RuntimeCaching[],
 ): RuntimeCaching[] {
-  return [
-    {
-      matcher: ({ url, sameOrigin }) =>
-        !isRuntimeCacheable(url.pathname, sameOrigin),
-      handler: new NetworkOnly(),
-    },
-    ...defaults.map((entry) => {
-      if (
-        entry.handler instanceof Strategy &&
-        !entry.handler.plugins.includes(noStorePlugin)
-      ) {
-        entry.handler.plugins.push(noStorePlugin);
-      }
-      return entry;
-    }),
-  ];
+	return [
+		{
+			matcher: ({ url, sameOrigin }) =>
+				!isRuntimeCacheable(url.pathname, sameOrigin),
+			handler: new NetworkOnly(),
+		},
+		...defaults.map((entry) => {
+			if (
+				entry.handler instanceof Strategy &&
+				!entry.handler.plugins.includes(noStorePlugin)
+			) {
+				entry.handler.plugins.push(noStorePlugin);
+			}
+			return entry;
+		}),
+	];
 }

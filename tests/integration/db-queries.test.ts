@@ -26,261 +26,262 @@ let dataDir: string;
 let householdId: number;
 
 beforeAll(async () => {
-  dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "domicile-dbq-"));
-  process.env.DATA_DIR = dataDir;
-  process.env.COVERAGE_WARN_PCT = "0.8";
+	dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "domicile-dbq-"));
+	process.env.DATA_DIR = dataDir;
+	process.env.COVERAGE_WARN_PCT = "0.8";
 
-  const { runMigrations } = await import("@/db/migrate");
-  ({ db } = await import("@/db"));
-  schema = await import("@/db/schema");
-  ({ recordValuations, currentValuations } =
-    await import("@/lib/queries/valuations"));
-  ({ getCoverageSummary } = await import("@/lib/queries/coverage"));
-  ({ getReportPacket } = await import("@/lib/queries/report"));
-  ({ deleteItem, listItems } = await import("@/lib/queries/items"));
-  ({ deleteItemMedia } = await import("@/lib/media"));
+	const { runMigrations } = await import("@/db/migrate");
+	({ db } = await import("@/db"));
+	schema = await import("@/db/schema");
+	({ recordValuations, currentValuations } = await import(
+		"@/lib/queries/valuations"
+	));
+	({ getCoverageSummary } = await import("@/lib/queries/coverage"));
+	({ getReportPacket } = await import("@/lib/queries/report"));
+	({ deleteItem, listItems } = await import("@/lib/queries/items"));
+	({ deleteItemMedia } = await import("@/lib/media"));
 
-  runMigrations();
-  householdId = db
-    .insert(schema.household)
-    .values({ name: "DB Test Household" })
-    .returning()
-    .all()[0]!.id;
+	runMigrations();
+	householdId = db
+		.insert(schema.household)
+		.values({ name: "DB Test Household" })
+		.returning()
+		.all()[0]!.id;
 });
 
 function newItem(over: Partial<typeof schema.item.$inferInsert> = {}) {
-  return db
-    .insert(schema.item)
-    .values({ householdId, title: "Item", ...over })
-    .returning()
-    .all()[0]!;
+	return db
+		.insert(schema.item)
+		.values({ householdId, title: "Item", ...over })
+		.returning()
+		.all()[0]!;
 }
 
 describe("recordValuations integrity", () => {
-  it("inserts only on change and keeps the item's denormalized cost in sync", () => {
-    const it = newItem();
+	it("inserts only on change and keeps the item's denormalized cost in sync", () => {
+		const it = newItem();
 
-    recordValuations(it.id, { replacementCostCents: 100_00 });
-    let rows = db
-      .select()
-      .from(schema.valuation)
-      .where(eq(schema.valuation.itemId, it.id))
-      .all();
-    expect(rows).toHaveLength(1);
+		recordValuations(it.id, { replacementCostCents: 100_00 });
+		let rows = db
+			.select()
+			.from(schema.valuation)
+			.where(eq(schema.valuation.itemId, it.id))
+			.all();
+		expect(rows).toHaveLength(1);
 
-    let item = db
-      .select()
-      .from(schema.item)
-      .where(eq(schema.item.id, it.id))
-      .get()!;
-    expect(item.currentReplacementCost).toBe(100_00);
-    expect(item.currentReplacementValuedAt).toBeTruthy();
+		let item = db
+			.select()
+			.from(schema.item)
+			.where(eq(schema.item.id, it.id))
+			.get()!;
+		expect(item.currentReplacementCost).toBe(100_00);
+		expect(item.currentReplacementValuedAt).toBeTruthy();
 
-    // Same value again -> no new history row.
-    recordValuations(it.id, { replacementCostCents: 100_00 });
-    rows = db
-      .select()
-      .from(schema.valuation)
-      .where(eq(schema.valuation.itemId, it.id))
-      .all();
-    expect(rows).toHaveLength(1);
+		// Same value again -> no new history row.
+		recordValuations(it.id, { replacementCostCents: 100_00 });
+		rows = db
+			.select()
+			.from(schema.valuation)
+			.where(eq(schema.valuation.itemId, it.id))
+			.all();
+		expect(rows).toHaveLength(1);
 
-    // Changed value -> new row + denormalized cost updated.
-    recordValuations(it.id, { replacementCostCents: 150_00 });
-    rows = db
-      .select()
-      .from(schema.valuation)
-      .where(eq(schema.valuation.itemId, it.id))
-      .all();
-    expect(rows.filter((r) => r.kind === "replacement_cost")).toHaveLength(2);
-    item = db
-      .select()
-      .from(schema.item)
-      .where(eq(schema.item.id, it.id))
-      .get()!;
-    expect(item.currentReplacementCost).toBe(150_00);
-    expect(currentValuations(it.id).replacementCostCents).toBe(150_00);
-  });
+		// Changed value -> new row + denormalized cost updated.
+		recordValuations(it.id, { replacementCostCents: 150_00 });
+		rows = db
+			.select()
+			.from(schema.valuation)
+			.where(eq(schema.valuation.itemId, it.id))
+			.all();
+		expect(rows.filter((r) => r.kind === "replacement_cost")).toHaveLength(2);
+		item = db
+			.select()
+			.from(schema.item)
+			.where(eq(schema.item.id, it.id))
+			.get()!;
+		expect(item.currentReplacementCost).toBe(150_00);
+		expect(currentValuations(it.id).replacementCostCents).toBe(150_00);
+	});
 
-  it("records price paid with the purchase date", () => {
-    const it = newItem();
-    recordValuations(it.id, {
-      pricePaidCents: 80_00,
-      purchaseDate: "2021-03-15",
-    });
-    const v = currentValuations(it.id);
-    expect(v.pricePaidCents).toBe(80_00);
-    expect(v.purchaseDate).toBe("2021-03-15");
-  });
+	it("records price paid with the purchase date", () => {
+		const it = newItem();
+		recordValuations(it.id, {
+			pricePaidCents: 80_00,
+			purchaseDate: "2021-03-15",
+		});
+		const v = currentValuations(it.id);
+		expect(v.pricePaidCents).toBe(80_00);
+		expect(v.purchaseDate).toBe("2021-03-15");
+	});
 });
 
 describe("getCoverageSummary wired to the database", () => {
-  it("counts active valued items, drops sold ones, and excludes unvalued ones", () => {
-    // Updated for VULN-020: household is a DB-enforced singleton, so reuse the
-    // shared household and reset its rows instead of inserting a second one.
-    db.delete(schema.item).run();
-    db.delete(schema.policy).run();
-    db.insert(schema.policy)
-      .values({
-        householdId,
-        coverageBPersonalProperty: 1_000_00,
-        source: "user",
-        updatedAt: new Date().toISOString(),
-      })
-      .run();
+	it("counts active valued items, drops sold ones, and excludes unvalued ones", () => {
+		// Updated for VULN-020: household is a DB-enforced singleton, so reuse the
+		// shared household and reset its rows instead of inserting a second one.
+		db.delete(schema.item).run();
+		db.delete(schema.policy).run();
+		db.insert(schema.policy)
+			.values({
+				householdId,
+				coverageBPersonalProperty: 1_000_00,
+				source: "user",
+				updatedAt: new Date().toISOString(),
+			})
+			.run();
 
-    const valued = db
-      .insert(schema.item)
-      .values({
-        householdId,
-        title: "Valued",
-        currentReplacementCost: 500_00,
-        quantity: 1,
-      })
-      .returning()
-      .all()[0]!;
+		const valued = db
+			.insert(schema.item)
+			.values({
+				householdId,
+				title: "Valued",
+				currentReplacementCost: 500_00,
+				quantity: 1,
+			})
+			.returning()
+			.all()[0]!;
 
-    let s = getCoverageSummary(householdId);
-    expect(s.totalCents).toBe(500_00);
-    expect(s.status).toBe("within");
+		let s = getCoverageSummary(householdId);
+		expect(s.totalCents).toBe(500_00);
+		expect(s.status).toBe("within");
 
-    // Mark it sold -> it must leave the coverage total.
-    db.update(schema.item)
-      .set({ lifecycleStatus: "sold" })
-      .where(eq(schema.item.id, valued.id))
-      .run();
-    s = getCoverageSummary(householdId);
-    expect(s.totalCents).toBe(0);
+		// Mark it sold -> it must leave the coverage total.
+		db.update(schema.item)
+			.set({ lifecycleStatus: "sold" })
+			.where(eq(schema.item.id, valued.id))
+			.run();
+		s = getCoverageSummary(householdId);
+		expect(s.totalCents).toBe(0);
 
-    // An active item with no replacement cost is excluded, not counted.
-    db.insert(schema.item).values({ householdId, title: "Unvalued" }).run();
-    s = getCoverageSummary(householdId);
-    expect(s.totalCents).toBe(0);
-    expect(s.excludedCount).toBe(1);
-  });
+		// An active item with no replacement cost is excluded, not counted.
+		db.insert(schema.item).values({ householdId, title: "Unvalued" }).run();
+		s = getCoverageSummary(householdId);
+		expect(s.totalCents).toBe(0);
+		expect(s.excludedCount).toBe(1);
+	});
 });
 
 describe("getReportPacket location filter", () => {
-  it("returns only items in the requested location", () => {
-    // Updated for VULN-020: household is a DB-enforced singleton, so reuse the
-    // shared household and reset its rows instead of inserting a second one.
-    db.delete(schema.item).run();
-    db.delete(schema.location).run();
-    const roomA = db
-      .insert(schema.location)
-      .values({ householdId, name: "Room A", kind: "room" })
-      .returning()
-      .all()[0]!;
-    const roomB = db
-      .insert(schema.location)
-      .values({ householdId, name: "Room B", kind: "room" })
-      .returning()
-      .all()[0]!;
-    db.insert(schema.item)
-      .values({
-        householdId,
-        locationId: roomA.id,
-        title: "A1",
-        currentReplacementCost: 100_00,
-      })
-      .run();
-    db.insert(schema.item)
-      .values({
-        householdId,
-        locationId: roomB.id,
-        title: "B1",
-        currentReplacementCost: 200_00,
-      })
-      .run();
+	it("returns only items in the requested location", () => {
+		// Updated for VULN-020: household is a DB-enforced singleton, so reuse the
+		// shared household and reset its rows instead of inserting a second one.
+		db.delete(schema.item).run();
+		db.delete(schema.location).run();
+		const roomA = db
+			.insert(schema.location)
+			.values({ householdId, name: "Room A", kind: "room" })
+			.returning()
+			.all()[0]!;
+		const roomB = db
+			.insert(schema.location)
+			.values({ householdId, name: "Room B", kind: "room" })
+			.returning()
+			.all()[0]!;
+		db.insert(schema.item)
+			.values({
+				householdId,
+				locationId: roomA.id,
+				title: "A1",
+				currentReplacementCost: 100_00,
+			})
+			.run();
+		db.insert(schema.item)
+			.values({
+				householdId,
+				locationId: roomB.id,
+				title: "B1",
+				currentReplacementCost: 200_00,
+			})
+			.run();
 
-    const all = getReportPacket(householdId)!;
-    expect(all.itemCount).toBe(2);
+		const all = getReportPacket(householdId)!;
+		expect(all.itemCount).toBe(2);
 
-    const onlyA = getReportPacket(householdId, { locationId: roomA.id })!;
-    expect(onlyA.itemCount).toBe(1);
-    expect(onlyA.rooms).toHaveLength(1);
-    expect(onlyA.rooms[0]!.locationName).toBe("Room A");
-    expect(onlyA.grandTotalCents).toBe(100_00);
-  });
+		const onlyA = getReportPacket(householdId, { locationId: roomA.id })!;
+		expect(onlyA.itemCount).toBe(1);
+		expect(onlyA.rooms).toHaveLength(1);
+		expect(onlyA.rooms[0]!.locationName).toBe("Room A");
+		expect(onlyA.grandTotalCents).toBe(100_00);
+	});
 });
 
 describe("listItems location filter", () => {
-  it("filters by location id, by unassigned, and returns all when omitted", () => {
-    // Updated for VULN-020: household is a DB-enforced singleton, so reuse the
-    // shared household and reset its rows instead of inserting a second one.
-    db.delete(schema.item).run();
-    db.delete(schema.location).run();
-    const kitchen = db
-      .insert(schema.location)
-      .values({ householdId, name: "Kitchen", kind: "room" })
-      .returning()
-      .all()[0]!;
-    db.insert(schema.item)
-      .values({ householdId, locationId: kitchen.id, title: "Fridge" })
-      .run();
-    db.insert(schema.item)
-      .values({ householdId, locationId: kitchen.id, title: "Oven" })
-      .run();
-    db.insert(schema.item)
-      .values({ householdId, locationId: null, title: "Floating lamp" })
-      .run();
+	it("filters by location id, by unassigned, and returns all when omitted", () => {
+		// Updated for VULN-020: household is a DB-enforced singleton, so reuse the
+		// shared household and reset its rows instead of inserting a second one.
+		db.delete(schema.item).run();
+		db.delete(schema.location).run();
+		const kitchen = db
+			.insert(schema.location)
+			.values({ householdId, name: "Kitchen", kind: "room" })
+			.returning()
+			.all()[0]!;
+		db.insert(schema.item)
+			.values({ householdId, locationId: kitchen.id, title: "Fridge" })
+			.run();
+		db.insert(schema.item)
+			.values({ householdId, locationId: kitchen.id, title: "Oven" })
+			.run();
+		db.insert(schema.item)
+			.values({ householdId, locationId: null, title: "Floating lamp" })
+			.run();
 
-    expect(listItems(householdId)).toHaveLength(3);
+		expect(listItems(householdId)).toHaveLength(3);
 
-    const inKitchen = listItems(householdId, { location: kitchen.id });
-    expect(inKitchen.map((r) => r.title).sort()).toEqual(["Fridge", "Oven"]);
+		const inKitchen = listItems(householdId, { location: kitchen.id });
+		expect(inKitchen.map((r) => r.title).sort()).toEqual(["Fridge", "Oven"]);
 
-    const unassigned = listItems(householdId, { location: null });
-    expect(unassigned).toHaveLength(1);
-    expect(unassigned[0]!.title).toBe("Floating lamp");
-  });
+		const unassigned = listItems(householdId, { location: null });
+		expect(unassigned).toHaveLength(1);
+		expect(unassigned[0]!.title).toBe("Floating lamp");
+	});
 });
 
 describe("deleteItem cascades rows and removes on-disk media", () => {
-  it("deletes the item, its photo/valuation rows, and its media files", async () => {
-    const it = newItem();
-    const rel = `media/items/${it.id}/photo-web.webp`;
-    db.insert(schema.photo)
-      .values({
-        itemId: it.id,
-        kind: "general",
-        pathOriginal: rel,
-        pathWeb: rel,
-        pathThumb: rel,
-        contentHash: "hash",
-      })
-      .run();
-    recordValuations(it.id, { replacementCostCents: 100_00 });
+	it("deletes the item, its photo/valuation rows, and its media files", async () => {
+		const it = newItem();
+		const rel = `media/items/${it.id}/photo-web.webp`;
+		db.insert(schema.photo)
+			.values({
+				itemId: it.id,
+				kind: "general",
+				pathOriginal: rel,
+				pathWeb: rel,
+				pathThumb: rel,
+				contentHash: "hash",
+			})
+			.run();
+		recordValuations(it.id, { replacementCostCents: 100_00 });
 
-    const abs = path.join(dataDir, rel);
-    fs.mkdirSync(path.dirname(abs), { recursive: true });
-    fs.writeFileSync(abs, "bytes");
+		const abs = path.join(dataDir, rel);
+		fs.mkdirSync(path.dirname(abs), { recursive: true });
+		fs.writeFileSync(abs, "bytes");
 
-    deleteItem(it.id);
-    await deleteItemMedia(it.id);
+		deleteItem(it.id);
+		await deleteItemMedia(it.id);
 
-    // Item + cascaded child rows are gone.
-    expect(
-      db.select().from(schema.item).where(eq(schema.item.id, it.id)).all(),
-    ).toHaveLength(0);
-    expect(
-      db
-        .select()
-        .from(schema.photo)
-        .where(eq(schema.photo.itemId, it.id))
-        .all(),
-    ).toHaveLength(0);
-    expect(
-      db
-        .select()
-        .from(schema.valuation)
-        .where(eq(schema.valuation.itemId, it.id))
-        .all(),
-    ).toHaveLength(0);
+		// Item + cascaded child rows are gone.
+		expect(
+			db.select().from(schema.item).where(eq(schema.item.id, it.id)).all(),
+		).toHaveLength(0);
+		expect(
+			db
+				.select()
+				.from(schema.photo)
+				.where(eq(schema.photo.itemId, it.id))
+				.all(),
+		).toHaveLength(0);
+		expect(
+			db
+				.select()
+				.from(schema.valuation)
+				.where(eq(schema.valuation.itemId, it.id))
+				.all(),
+		).toHaveLength(0);
 
-    // On-disk media directory is removed.
-    expect(
-      fs.existsSync(path.join(dataDir, "media", "items", String(it.id))),
-    ).toBe(false);
-  });
+		// On-disk media directory is removed.
+		expect(
+			fs.existsSync(path.join(dataDir, "media", "items", String(it.id))),
+		).toBe(false);
+	});
 });

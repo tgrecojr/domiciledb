@@ -12,17 +12,17 @@ export const LATEST_PDF_KEY = "backup/proof-packet-latest.pdf";
 
 /** Which content-addressed media keys still need uploading. */
 export function mediaToUpload(
-  localKeys: string[],
-  existingKeys: Set<string>,
+	localKeys: string[],
+	existingKeys: Set<string>,
 ): string[] {
-  return localKeys.filter((k) => !existingKeys.has(k));
+	return localKeys.filter((k) => !existingKeys.has(k));
 }
 
 /** Convert an absolute path under dataDir to its S3 key (POSIX-relative). */
 export function keyForPath(absPath: string, dataDir: string): string {
-  let rel = absPath.startsWith(dataDir)
-    ? absPath.slice(dataDir.length)
-    : absPath;
-  rel = rel.replace(/\\/g, "/").replace(/^\/+/, "");
-  return rel;
+	let rel = absPath.startsWith(dataDir)
+		? absPath.slice(dataDir.length)
+		: absPath;
+	rel = rel.replace(/\\/g, "/").replace(/^\/+/, "");
+	return rel;
 }

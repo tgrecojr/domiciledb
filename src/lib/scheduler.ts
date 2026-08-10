@@ -16,21 +16,21 @@ import { config } from "@/lib/config";
  */
 
 const globalForScheduler = globalThis as unknown as {
-  __domicileSchedulerStarted?: boolean;
+	__domicileSchedulerStarted?: boolean;
 };
 
 export function startScheduler() {
-  if (globalForScheduler.__domicileSchedulerStarted) return;
-  globalForScheduler.__domicileSchedulerStarted = true;
+	if (globalForScheduler.__domicileSchedulerStarted) return;
+	globalForScheduler.__domicileSchedulerStarted = true;
 
-  if (config.backup.enabled && cron.validate(config.backup.cron)) {
-    cron.schedule(config.backup.cron, () => {
-      void import("@/lib/backup/run").then(({ runBackup }) =>
-        runBackup(new Date().toISOString()),
-      );
-    });
-  }
+	if (config.backup.enabled && cron.validate(config.backup.cron)) {
+		cron.schedule(config.backup.cron, () => {
+			void import("@/lib/backup/run").then(({ runBackup }) =>
+				runBackup(new Date().toISOString()),
+			);
+		});
+	}
 
-  // Phase 5: daily staleness + warranty-expiry reminder scans.
-  // cron.schedule("0 2 * * *", () => { ... });
+	// Phase 5: daily staleness + warranty-expiry reminder scans.
+	// cron.schedule("0 2 * * *", () => { ... });
 }

@@ -11,15 +11,15 @@ import { sniffImageMime } from "@/lib/image-format";
 import { parseDollarsToCents } from "@/lib/money";
 import { logInteraction, setOutcome } from "@/lib/queries/ai";
 import { findOrCreateCategory } from "@/lib/queries/categories";
-import { getItem, updateItem, type ItemPatch } from "@/lib/queries/items";
+import { getItem, type ItemPatch, updateItem } from "@/lib/queries/items";
 import { listPhotos } from "@/lib/queries/photos";
 import { recordValuations } from "@/lib/queries/valuations";
 
 export interface AiSuggestResult {
-  ok: boolean;
-  error?: string;
-  interactionId?: number;
-  suggestion?: Record<string, unknown>;
+	ok: boolean;
+	error?: string;
+	interactionId?: number;
+	suggestion?: Record<string, unknown>;
 }
 
 /**
@@ -29,56 +29,56 @@ export interface AiSuggestResult {
  * explicit apply step.
  */
 export async function aiSuggestForItem(
-  itemId: number,
-  taskKey: string,
-  photoId: number | null,
+	itemId: number,
+	taskKey: string,
+	photoId: number | null,
 ): Promise<AiSuggestResult> {
-  if (!config.ai.enabled) return { ok: false, error: "AI is not configured." };
-  if (!isTaskKey(taskKey)) return { ok: false, error: "Unknown AI task." };
+	if (!config.ai.enabled) return { ok: false, error: "AI is not configured." };
+	if (!isTaskKey(taskKey)) return { ok: false, error: "Unknown AI task." };
 
-  const item = getItem(itemId);
-  if (!item) return { ok: false, error: "Unknown item." };
+	const item = getItem(itemId);
+	if (!item) return { ok: false, error: "Unknown item." };
 
-  const task = TASKS[taskKey];
-  const imagesBase64: string[] = [];
-  const imageRefs: string[] = [];
+	const task = TASKS[taskKey];
+	const imagesBase64: string[] = [];
+	const imageRefs: string[] = [];
 
-  if (task.needsPhoto) {
-    const photos = listPhotos(itemId);
-    const selected = photoId
-      ? photos.filter((p) => p.id === photoId)
-      : photos.slice(0, AI_MAX_PHOTOS);
-    if (selected.length === 0) {
-      return { ok: false, error: "Add a photo to this item first." };
-    }
-    for (const photo of selected) {
-      const encoded = await imageToBase64Jpeg(photo.pathWeb);
-      if (!encoded) continue;
-      imagesBase64.push(encoded.base64);
-      imageRefs.push(photo.pathWeb);
-    }
-    if (imagesBase64.length === 0) {
-      return { ok: false, error: "Could not read the photo." };
-    }
-  }
+	if (task.needsPhoto) {
+		const photos = listPhotos(itemId);
+		const selected = photoId
+			? photos.filter((p) => p.id === photoId)
+			: photos.slice(0, AI_MAX_PHOTOS);
+		if (selected.length === 0) {
+			return { ok: false, error: "Add a photo to this item first." };
+		}
+		for (const photo of selected) {
+			const encoded = await imageToBase64Jpeg(photo.pathWeb);
+			if (!encoded) continue;
+			imagesBase64.push(encoded.base64);
+			imageRefs.push(photo.pathWeb);
+		}
+		if (imagesBase64.length === 0) {
+			return { ok: false, error: "Could not read the photo." };
+		}
+	}
 
-  const result = await runTask(taskKey, { imagesBase64Jpeg: imagesBase64 });
+	const result = await runTask(taskKey, { imagesBase64Jpeg: imagesBase64 });
 
-  const interactionId = logInteraction({
-    itemId,
-    action: taskKey,
-    model: config.ai.model,
-    promptText: task.prompt,
-    imageRefs,
-    response: result.ok ? result.data : { error: result.error },
-  });
+	const interactionId = logInteraction({
+		itemId,
+		action: taskKey,
+		model: config.ai.model,
+		promptText: task.prompt,
+		imageRefs,
+		response: result.ok ? result.data : { error: result.error },
+	});
 
-  if (!result.ok) return { ok: false, error: result.error, interactionId };
-  return {
-    ok: true,
-    interactionId,
-    suggestion: result.data as Record<string, unknown>,
-  };
+	if (!result.ok) return { ok: false, error: result.error, interactionId };
+	return {
+		ok: true,
+		interactionId,
+		suggestion: result.data as Record<string, unknown>,
+	};
 }
 
 /**
@@ -87,52 +87,52 @@ export async function aiSuggestForItem(
  * call; never writes the policy itself.
  */
 export async function aiParseDecPageAction(
-  formData: FormData,
+	formData: FormData,
 ): Promise<AiSuggestResult> {
-  if (!config.ai.enabled) return { ok: false, error: "AI is not configured." };
+	if (!config.ai.enabled) return { ok: false, error: "AI is not configured." };
 
-  const file = formData.get("decpage");
-  if (!(file instanceof File) || file.size === 0) {
-    return { ok: false, error: "Choose a declarations-page image." };
-  }
+	const file = formData.get("decpage");
+	if (!(file instanceof File) || file.size === 0) {
+		return { ok: false, error: "Choose a declarations-page image." };
+	}
 
-  // Admit on the SNIFFED content, not the forgeable File.type (VULN-012).
-  const buffer = Buffer.from(await file.arrayBuffer());
-  if (!sniffImageMime(buffer)) {
-    return { ok: false, error: "Upload an image of the declarations page." };
-  }
+	// Admit on the SNIFFED content, not the forgeable File.type (VULN-012).
+	const buffer = Buffer.from(await file.arrayBuffer());
+	if (!sniffImageMime(buffer)) {
+		return { ok: false, error: "Upload an image of the declarations page." };
+	}
 
-  const encoded = await bufferToBase64Jpeg(buffer);
-  if (!encoded) return { ok: false, error: "Could not read the image." };
+	const encoded = await bufferToBase64Jpeg(buffer);
+	if (!encoded) return { ok: false, error: "Could not read the image." };
 
-  const result = await runTask("parse_decpage", {
-    imagesBase64Jpeg: [encoded.base64],
-  });
+	const result = await runTask("parse_decpage", {
+		imagesBase64Jpeg: [encoded.base64],
+	});
 
-  const interactionId = logInteraction({
-    itemId: null,
-    action: "parse_decpage",
-    model: config.ai.model,
-    promptText: TASKS.parse_decpage.prompt,
-    imageRefs: [],
-    response: result.ok ? result.data : { error: result.error },
-  });
+	const interactionId = logInteraction({
+		itemId: null,
+		action: "parse_decpage",
+		model: config.ai.model,
+		promptText: TASKS.parse_decpage.prompt,
+		imageRefs: [],
+		response: result.ok ? result.data : { error: result.error },
+	});
 
-  if (!result.ok) return { ok: false, error: result.error, interactionId };
-  return {
-    ok: true,
-    interactionId,
-    suggestion: result.data as Record<string, unknown>,
-  };
+	if (!result.ok) return { ok: false, error: result.error, interactionId };
+	return {
+		ok: true,
+		interactionId,
+		suggestion: result.data as Record<string, unknown>,
+	};
 }
 
 export interface ItemSuggestionFields {
-  manufacturer?: string;
-  modelNumber?: string;
-  serialNumber?: string;
-  description?: string;
-  categoryName?: string;
-  replacementCost?: string;
+	manufacturer?: string;
+	modelNumber?: string;
+	serialNumber?: string;
+	description?: string;
+	categoryName?: string;
+	replacementCost?: string;
 }
 
 /**
@@ -141,49 +141,49 @@ export interface ItemSuggestionFields {
  * client (which refreshes) rather than redirecting, so the panel can reset.
  */
 export async function applyItemSuggestion(
-  itemId: number,
-  interactionId: number | null,
-  fields: ItemSuggestionFields,
+	itemId: number,
+	interactionId: number | null,
+	fields: ItemSuggestionFields,
 ): Promise<{ ok: boolean; error?: string }> {
-  if (!Number.isInteger(itemId)) return { ok: false, error: "Unknown item." };
-  const item = getItem(itemId);
-  if (!item) return { ok: false, error: "Unknown item." };
+	if (!Number.isInteger(itemId)) return { ok: false, error: "Unknown item." };
+	const item = getItem(itemId);
+	if (!item) return { ok: false, error: "Unknown item." };
 
-  const clean = (v?: string) => {
-    const t = (v ?? "").trim();
-    return t.length > 0 ? t : null;
-  };
+	const clean = (v?: string) => {
+		const t = (v ?? "").trim();
+		return t.length > 0 ? t : null;
+	};
 
-  const patch: ItemPatch = {};
-  const manufacturer = clean(fields.manufacturer);
-  const modelNumber = clean(fields.modelNumber);
-  const serialNumber = clean(fields.serialNumber);
-  const description = clean(fields.description);
-  const categoryName = clean(fields.categoryName);
-  if (manufacturer) patch.manufacturer = manufacturer;
-  if (modelNumber) patch.modelNumber = modelNumber;
-  if (serialNumber) patch.serialNumber = serialNumber;
-  if (description) patch.description = description;
-  if (categoryName) {
-    // null when the category ceiling is reached; leave the item's category as is.
-    const categoryId = findOrCreateCategory(categoryName);
-    if (categoryId !== null) patch.categoryId = categoryId;
-  }
+	const patch: ItemPatch = {};
+	const manufacturer = clean(fields.manufacturer);
+	const modelNumber = clean(fields.modelNumber);
+	const serialNumber = clean(fields.serialNumber);
+	const description = clean(fields.description);
+	const categoryName = clean(fields.categoryName);
+	if (manufacturer) patch.manufacturer = manufacturer;
+	if (modelNumber) patch.modelNumber = modelNumber;
+	if (serialNumber) patch.serialNumber = serialNumber;
+	if (description) patch.description = description;
+	if (categoryName) {
+		// null when the category ceiling is reached; leave the item's category as is.
+		const categoryId = findOrCreateCategory(categoryName);
+		if (categoryId !== null) patch.categoryId = categoryId;
+	}
 
-  if (Object.keys(patch).length > 0) updateItem(itemId, patch);
+	if (Object.keys(patch).length > 0) updateItem(itemId, patch);
 
-  const replacementCostCents = parseDollarsToCents(
-    fields.replacementCost ?? "",
-  );
-  if (replacementCostCents !== null) {
-    recordValuations(itemId, { replacementCostCents });
-  }
+	const replacementCostCents = parseDollarsToCents(
+		fields.replacementCost ?? "",
+	);
+	if (replacementCostCents !== null) {
+		recordValuations(itemId, { replacementCostCents });
+	}
 
-  if (interactionId !== null && Number.isInteger(interactionId)) {
-    setOutcome(interactionId, "accepted");
-  }
+	if (interactionId !== null && Number.isInteger(interactionId)) {
+		setOutcome(interactionId, "accepted");
+	}
 
-  revalidatePath(`/items/${itemId}`);
-  revalidatePath("/");
-  return { ok: true };
+	revalidatePath(`/items/${itemId}`);
+	revalidatePath("/");
+	return { ok: true };
 }

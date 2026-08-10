@@ -5,35 +5,35 @@ import { household } from "@/db/schema";
 
 /** The v1 app manages a single household; return it if set up, else null. */
 export async function getHousehold() {
-  const rows = db.select().from(household).limit(1).all();
-  return rows[0] ?? null;
+	const rows = db.select().from(household).limit(1).all();
+	return rows[0] ?? null;
 }
 
 /** The single household's id, or null if onboarding hasn't happened yet. */
 export async function getHouseholdId(): Promise<number | null> {
-  const rows = db.select({ id: household.id }).from(household).limit(1).all();
-  return rows[0]?.id ?? null;
+	const rows = db.select({ id: household.id }).from(household).limit(1).all();
+	return rows[0]?.id ?? null;
 }
 
 export async function createHousehold(input: {
-  name: string;
-  description?: string;
-  address?: string;
+	name: string;
+	description?: string;
+	address?: string;
 }) {
-  // Single-household invariant: reject a second setup up front (the DB's
-  // singleton unique constraint is the backstop against a race).
-  const existing = await getHouseholdId();
-  if (existing !== null) {
-    throw new Error("A household is already set up");
-  }
-  const rows = db
-    .insert(household)
-    .values({
-      name: input.name,
-      description: input.description || null,
-      address: input.address || null,
-    })
-    .returning()
-    .all();
-  return rows[0]!;
+	// Single-household invariant: reject a second setup up front (the DB's
+	// singleton unique constraint is the backstop against a race).
+	const existing = await getHouseholdId();
+	if (existing !== null) {
+		throw new Error("A household is already set up");
+	}
+	const rows = db
+		.insert(household)
+		.values({
+			name: input.name,
+			description: input.description || null,
+			address: input.address || null,
+		})
+		.returning()
+		.all();
+	return rows[0]!;
 }
