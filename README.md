@@ -84,7 +84,7 @@ container runs as a non-root user (uid 65532); the mounted volume must be writab
 | `npm run test:coverage`    | Unit tests with the enforced coverage gate                 |
 | `npm run test:integration` | Integration tests (DB + media; S3 round-trip needs RustFS) |
 | `npm run test:e2e`         | End-to-end tests (Playwright)                              |
-| `npm run lint`             | Lint                                                       |
+| `npm run lint`             | Lint + format check (Biome)                                |
 | `npm run typecheck`        | Type-check (no emit)                                       |
 | `npm run db:generate`      | Generate a Drizzle migration after editing the schema      |
 | `npm run db:migrate`       | Apply migrations (also runs automatically on boot)         |

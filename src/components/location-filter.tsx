@@ -11,31 +11,31 @@ const UNASSIGNED = "unassigned";
  * `value` is the currently active selection ("all", "unassigned", or an id).
  */
 export function LocationFilter({
-  locations,
-  value,
+	locations,
+	value,
 }: {
-  locations: { id: number; name: string }[];
-  value: string;
+	locations: { id: number; name: string }[];
+	value: string;
 }) {
-  const router = useRouter();
+	const router = useRouter();
 
-  return (
-    <select
-      aria-label="Filter by location"
-      value={value}
-      onChange={(e) => {
-        const v = e.target.value;
-        router.push(v === ALL ? "/items" : `/items?location=${v}`);
-      }}
-      className="max-w-[10rem] truncate rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-sm"
-    >
-      <option value={ALL}>All locations</option>
-      <option value={UNASSIGNED}>Unassigned</option>
-      {locations.map((l) => (
-        <option key={l.id} value={l.id}>
-          {l.name}
-        </option>
-      ))}
-    </select>
-  );
+	return (
+		<select
+			aria-label="Filter by location"
+			value={value}
+			onChange={(e) => {
+				const v = e.target.value;
+				router.push(v === ALL ? "/items" : `/items?location=${v}`);
+			}}
+			className="max-w-[10rem] truncate rounded-lg border border-neutral-300 bg-white px-2 py-1.5 text-sm"
+		>
+			<option value={ALL}>All locations</option>
+			<option value={UNASSIGNED}>Unassigned</option>
+			{locations.map((l) => (
+				<option key={l.id} value={l.id}>
+					{l.name}
+				</option>
+			))}
+		</select>
+	);
 }

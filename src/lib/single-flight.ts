@@ -7,64 +7,64 @@
  */
 
 export interface GateAdmission {
-  ok: boolean;
-  /** Seconds the caller should wait before retrying (only when `ok` is false). */
-  retryAfterSec: number;
-  reason?: "in-flight" | "too-soon";
+	ok: boolean;
+	/** Seconds the caller should wait before retrying (only when `ok` is false). */
+	retryAfterSec: number;
+	reason?: "in-flight" | "too-soon";
 }
 
 export interface SingleFlightGate {
-  /**
-   * Synchronously claim the gate. Must be called before the first `await` of
-   * the handler, otherwise two requests can both pass the check.
-   */
-  tryEnter(): GateAdmission;
-  /**
-   * Release the claim. `completed` records the finish time so the minimum
-   * interval starts counting; pass false when the run did no real work.
-   */
-  release(completed?: boolean): void;
-  readonly inFlight: boolean;
+	/**
+	 * Synchronously claim the gate. Must be called before the first `await` of
+	 * the handler, otherwise two requests can both pass the check.
+	 */
+	tryEnter(): GateAdmission;
+	/**
+	 * Release the claim. `completed` records the finish time so the minimum
+	 * interval starts counting; pass false when the run did no real work.
+	 */
+	release(completed?: boolean): void;
+	readonly inFlight: boolean;
 }
 
 export function createSingleFlightGate(
-  minIntervalMs: number,
-  now: () => number = Date.now,
+	minIntervalMs: number,
+	now: () => number = Date.now,
 ): SingleFlightGate {
-  let running = false;
-  let lastFinishedAt = Number.NEGATIVE_INFINITY;
+	let running = false;
+	let lastFinishedAt = Number.NEGATIVE_INFINITY;
 
-  return {
-    tryEnter(): GateAdmission {
-      if (running) {
-        return {
-          ok: false,
-          retryAfterSec: Math.max(1, Math.ceil(minIntervalMs / 1000)),
-          reason: "in-flight",
-        };
-      }
-      const waited = now() - lastFinishedAt;
-      if (waited < minIntervalMs) {
-        return {
-          ok: false,
-          retryAfterSec: Math.max(
-            1,
-            Math.ceil((minIntervalMs - waited) / 1000),
-          ),
-          reason: "too-soon",
-        };
-      }
-      running = true;
-      return { ok: true, retryAfterSec: 0 };
-    },
-    release(completed = true) {
-      running = false;
-      if (completed) lastFinishedAt = now();
-    },
-    get inFlight() {
-      return running;
-    },
-  };
+	return {
+		tryEnter(): GateAdmission {
+			if (running) {
+				return {
+					ok: false,
+					retryAfterSec: Math.max(1, Math.ceil(minIntervalMs / 1000)),
+					reason: "in-flight",
+				};
+			}
+			const waited = now() - lastFinishedAt;
+			if (waited < minIntervalMs) {
+				return {
+					ok: false,
+					retryAfterSec: Math.max(
+						1,
+						Math.ceil((minIntervalMs - waited) / 1000),
+					),
+					reason: "too-soon",
+				};
+			}
+			running = true;
+			return { ok: true, retryAfterSec: 0 };
+		},
+		release(completed = true) {
+			running = false;
+			if (completed) lastFinishedAt = now();
+		},
+		get inFlight() {
+			return running;
+		},
+	};
 }
 
 /**
@@ -73,19 +73,19 @@ export function createSingleFlightGate(
  * duplicate remote work (S3 PUT/LIST + egress) and race on shared files.
  */
 export function singleFlight<A extends unknown[], T>(
-  fn: (...args: A) => Promise<T>,
+	fn: (...args: A) => Promise<T>,
 ): (...args: A) => Promise<T> {
-  let inFlight: Promise<T> | null = null;
+	let inFlight: Promise<T> | null = null;
 
-  return (...args: A): Promise<T> => {
-    if (inFlight) return inFlight;
-    inFlight = (async () => {
-      try {
-        return await fn(...args);
-      } finally {
-        inFlight = null;
-      }
-    })();
-    return inFlight;
-  };
+	return (...args: A): Promise<T> => {
+		if (inFlight) return inFlight;
+		inFlight = (async () => {
+			try {
+				return await fn(...args);
+			} finally {
+				inFlight = null;
+			}
+		})();
+		return inFlight;
+	};
 }

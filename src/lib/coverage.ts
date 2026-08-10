@@ -13,93 +13,93 @@
 export type CoverageStatus = "within" | "approaching" | "over";
 
 export interface CoverageItemInput {
-  /** Per-item replacement cost in cents, or null if not yet valued. */
-  replacementCostCents: number | null;
-  quantity: number;
-  /** Only "active" items count toward coverage. */
-  lifecycleStatus: string;
+	/** Per-item replacement cost in cents, or null if not yet valued. */
+	replacementCostCents: number | null;
+	quantity: number;
+	/** Only "active" items count toward coverage. */
+	lifecycleStatus: string;
 }
 
 export interface CoverageInput {
-  items: CoverageItemInput[];
-  /** Coverage B limit in cents, or null if no policy is set up yet. */
-  coverageBLimitCents: number | null;
-  /** Fraction (0–1] at which "approaching" begins. Operator config. */
-  warnPct: number;
+	items: CoverageItemInput[];
+	/** Coverage B limit in cents, or null if no policy is set up yet. */
+	coverageBLimitCents: number | null;
+	/** Fraction (0–1] at which "approaching" begins. Operator config. */
+	warnPct: number;
 }
 
 export interface CoverageResult {
-  /** Aggregate replacement cost of counted (active + valued) items, cents. */
-  totalCents: number;
-  limitCents: number | null;
-  /** total / limit, or null when no limit is set. */
-  pctUsed: number | null;
-  /** null when no limit is set. */
-  status: CoverageStatus | null;
-  /** Active items with no replacement cost (excluded from the total). */
-  excludedCount: number;
-  /** Active items that have a replacement cost (included in the total). */
-  countedCount: number;
+	/** Aggregate replacement cost of counted (active + valued) items, cents. */
+	totalCents: number;
+	limitCents: number | null;
+	/** total / limit, or null when no limit is set. */
+	pctUsed: number | null;
+	/** null when no limit is set. */
+	status: CoverageStatus | null;
+	/** Active items with no replacement cost (excluded from the total). */
+	excludedCount: number;
+	/** Active items that have a replacement cost (included in the total). */
+	countedCount: number;
 }
 
 function isActive(lifecycleStatus: string): boolean {
-  return lifecycleStatus === "active";
+	return lifecycleStatus === "active";
 }
 
 export function computeCoverage(input: CoverageInput): CoverageResult {
-  let totalCents = 0;
-  let countedCount = 0;
-  let excludedCount = 0;
+	let totalCents = 0;
+	let countedCount = 0;
+	let excludedCount = 0;
 
-  for (const it of input.items) {
-    if (!isActive(it.lifecycleStatus)) continue;
-    if (it.replacementCostCents === null) {
-      excludedCount += 1;
-      continue;
-    }
-    const qty = Number.isFinite(it.quantity) ? Math.max(0, it.quantity) : 0;
-    // Clamp the running total to the safe-integer range. An out-of-range
-    // quantity or value (should be rejected at the write boundary, but this is
-    // the spine — stay defensive) would otherwise overflow past
-    // Number.MAX_SAFE_INTEGER, silently losing integer precision and corrupting
-    // pctUsed/status. A clamped total still reads honestly as "over".
-    totalCents = Math.min(
-      Number.MAX_SAFE_INTEGER,
-      totalCents + it.replacementCostCents * qty,
-    );
-    countedCount += 1;
-  }
+	for (const it of input.items) {
+		if (!isActive(it.lifecycleStatus)) continue;
+		if (it.replacementCostCents === null) {
+			excludedCount += 1;
+			continue;
+		}
+		const qty = Number.isFinite(it.quantity) ? Math.max(0, it.quantity) : 0;
+		// Clamp the running total to the safe-integer range. An out-of-range
+		// quantity or value (should be rejected at the write boundary, but this is
+		// the spine — stay defensive) would otherwise overflow past
+		// Number.MAX_SAFE_INTEGER, silently losing integer precision and corrupting
+		// pctUsed/status. A clamped total still reads honestly as "over".
+		totalCents = Math.min(
+			Number.MAX_SAFE_INTEGER,
+			totalCents + it.replacementCostCents * qty,
+		);
+		countedCount += 1;
+	}
 
-  const limitCents = input.coverageBLimitCents;
-  if (limitCents === null || limitCents <= 0) {
-    return {
-      totalCents,
-      limitCents,
-      pctUsed: null,
-      status: null,
-      excludedCount,
-      countedCount,
-    };
-  }
+	const limitCents = input.coverageBLimitCents;
+	if (limitCents === null || limitCents <= 0) {
+		return {
+			totalCents,
+			limitCents,
+			pctUsed: null,
+			status: null,
+			excludedCount,
+			countedCount,
+		};
+	}
 
-  const pctUsed = totalCents / limitCents;
-  const status: CoverageStatus =
-    pctUsed > 1 ? "over" : pctUsed >= input.warnPct ? "approaching" : "within";
+	const pctUsed = totalCents / limitCents;
+	const status: CoverageStatus =
+		pctUsed > 1 ? "over" : pctUsed >= input.warnPct ? "approaching" : "within";
 
-  return {
-    totalCents,
-    limitCents,
-    pctUsed,
-    status,
-    excludedCount,
-    countedCount,
-  };
+	return {
+		totalCents,
+		limitCents,
+		pctUsed,
+		status,
+		excludedCount,
+		countedCount,
+	};
 }
 
 const STATUS_RANK: Record<CoverageStatus, number> = {
-  within: 0,
-  approaching: 1,
-  over: 2,
+	within: 0,
+	approaching: 1,
+	over: 2,
 };
 
 /**
@@ -109,11 +109,11 @@ const STATUS_RANK: Record<CoverageStatus, number> = {
  * moved up to it; returns null when unchanged, de-escalated, or no policy.
  */
 export function crossedThreshold(
-  before: CoverageStatus | null,
-  after: CoverageStatus | null,
+	before: CoverageStatus | null,
+	after: CoverageStatus | null,
 ): Exclude<CoverageStatus, "within"> | null {
-  if (after === null || after === "within") return null;
-  const beforeRank = before === null ? -1 : STATUS_RANK[before];
-  if (STATUS_RANK[after] > beforeRank) return after;
-  return null;
+	if (after === null || after === "within") return null;
+	const beforeRank = before === null ? -1 : STATUS_RANK[before];
+	if (STATUS_RANK[after] > beforeRank) return after;
+	return null;
 }

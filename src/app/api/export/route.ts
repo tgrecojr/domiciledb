@@ -20,68 +20,68 @@ const ZIP_LEVEL = 6;
 const exportGate = createSingleFlightGate(config.export.minIntervalMs);
 
 function tooMany(retryAfterSec: number) {
-  return new Response("An export is already running or ran very recently.", {
-    status: 429,
-    headers: {
-      "Retry-After": String(retryAfterSec),
-      "Cache-Control": "no-store",
-    },
-  });
+	return new Response("An export is already running or ran very recently.", {
+		status: 429,
+		headers: {
+			"Retry-After": String(retryAfterSec),
+			"Cache-Control": "no-store",
+		},
+	});
 }
 
 /** Full export: a ZIP of a consistent db snapshot + all media (photos + docs). */
 export async function GET() {
-  // Claim before the first await, or concurrent requests both pass the check.
-  const admission = exportGate.tryEnter();
-  if (!admission.ok) return tooMany(admission.retryAfterSec);
+	// Claim before the first await, or concurrent requests both pass the check.
+	const admission = exportGate.tryEnter();
+	if (!admission.ok) return tooMany(admission.retryAfterSec);
 
-  let householdId: number | null;
-  try {
-    householdId = await getHouseholdId();
-  } catch (err) {
-    exportGate.release(false);
-    throw err;
-  }
-  if (householdId === null) {
-    exportGate.release(false);
-    return new Response("No household set up", { status: 404 });
-  }
+	let householdId: number | null;
+	try {
+		householdId = await getHouseholdId();
+	} catch (err) {
+		exportGate.release(false);
+		throw err;
+	}
+	if (householdId === null) {
+		exportGate.release(false);
+		return new Response("No household set up", { status: 404 });
+	}
 
-  let archive: ZipArchive;
-  try {
-    const snap = createSnapshot();
-    // archiver v8 removed the factory function; use the ZipArchive class.
-    archive = new ZipArchive({ zlib: { level: ZIP_LEVEL } });
-    archive.file(snap.path, { name: "domiciledb-snapshot.db" });
-    if (fs.existsSync(config.paths.mediaDir)) {
-      archive.directory(config.paths.mediaDir, "media");
-    }
-    void archive.finalize();
-  } catch (err) {
-    exportGate.release();
-    throw err;
-  }
+	let archive: ZipArchive;
+	try {
+		const snap = createSnapshot();
+		// archiver v8 removed the factory function; use the ZipArchive class.
+		archive = new ZipArchive({ zlib: { level: ZIP_LEVEL } });
+		archive.file(snap.path, { name: "domiciledb-snapshot.db" });
+		if (fs.existsSync(config.paths.mediaDir)) {
+			archive.directory(config.paths.mediaDir, "media");
+		}
+		void archive.finalize();
+	} catch (err) {
+		exportGate.release();
+		throw err;
+	}
 
-  // Hold the claim until the response body is fully drained (or aborted), so a
-  // second export can't start while this one is still streaming.
-  let released = false;
-  const release = () => {
-    if (released) return;
-    released = true;
-    exportGate.release();
-  };
-  archive.once("end", release);
-  archive.once("close", release);
-  archive.once("error", release);
+	// Hold the claim until the response body is fully drained (or aborted), so a
+	// second export can't start while this one is still streaming.
+	let released = false;
+	const release = () => {
+		if (released) return;
+		released = true;
+		exportGate.release();
+	};
+	archive.once("end", release);
+	archive.once("close", release);
+	archive.once("error", release);
 
-  const date = new Date().toISOString().slice(0, 10);
-  const webStream = Readable.toWeb(archive) as ReadableStream<Uint8Array>;
+	const date = new Date().toISOString().slice(0, 10);
+	const webStream = Readable.toWeb(archive) as ReadableStream<Uint8Array>;
 
-  return new Response(webStream, {
-    headers: {
-      "Content-Type": "application/zip",
-      "Content-Disposition": `attachment; filename="domiciledb-export-${date}.zip"`,
-      "Cache-Control": "no-store",
-    },
-  });
+	return new Response(webStream, {
+		headers: {
+			"Content-Type": "application/zip",
+			"Content-Disposition": `attachment; filename="domiciledb-export-${date}.zip"`,
+			"Cache-Control": "no-store",
+		},
+	});
 }

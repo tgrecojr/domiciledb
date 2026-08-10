@@ -9,22 +9,22 @@ import type { ReportItem, ReportRoom } from "@/lib/report";
 export const ITEMS_PER_PAGE = 10;
 
 export interface PageChunk {
-  room: ReportRoom;
-  items: ReportItem[];
-  continued: boolean;
+	room: ReportRoom;
+	items: ReportItem[];
+	continued: boolean;
 }
 
 export function paginateRooms(rooms: ReportRoom[]): PageChunk[] {
-  const chunks: PageChunk[] = [];
-  for (const room of rooms) {
-    if (room.items.length === 0) continue;
-    for (let i = 0; i < room.items.length; i += ITEMS_PER_PAGE) {
-      chunks.push({
-        room,
-        items: room.items.slice(i, i + ITEMS_PER_PAGE),
-        continued: i > 0,
-      });
-    }
-  }
-  return chunks;
+	const chunks: PageChunk[] = [];
+	for (const room of rooms) {
+		if (room.items.length === 0) continue;
+		for (let i = 0; i < room.items.length; i += ITEMS_PER_PAGE) {
+			chunks.push({
+				room,
+				items: room.items.slice(i, i + ITEMS_PER_PAGE),
+				continued: i > 0,
+			});
+		}
+	}
+	return chunks;
 }

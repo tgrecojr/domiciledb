@@ -6,41 +6,41 @@
  */
 
 export interface RateDecision {
-  ok: boolean;
-  /** Seconds until the window frees a slot (only meaningful when !ok). */
-  retryAfterSec: number;
-  remaining: number;
+	ok: boolean;
+	/** Seconds until the window frees a slot (only meaningful when !ok). */
+	retryAfterSec: number;
+	remaining: number;
 }
 
 export interface RateLimiter {
-  /** Consume one slot if the window allows it. */
-  take(): RateDecision;
+	/** Consume one slot if the window allows it. */
+	take(): RateDecision;
 }
 
 export function createRateLimiter(
-  limit: number,
-  windowMs: number,
-  now: () => number = Date.now,
+	limit: number,
+	windowMs: number,
+	now: () => number = Date.now,
 ): RateLimiter {
-  const hits: number[] = [];
+	const hits: number[] = [];
 
-  return {
-    take(): RateDecision {
-      const t = now();
-      const cutoff = t - windowMs;
-      while (hits.length > 0 && hits[0]! <= cutoff) hits.shift();
+	return {
+		take(): RateDecision {
+			const t = now();
+			const cutoff = t - windowMs;
+			while (hits.length > 0 && hits[0]! <= cutoff) hits.shift();
 
-      if (limit <= 0 || hits.length >= limit) {
-        const oldest = hits[0] ?? t;
-        return {
-          ok: false,
-          retryAfterSec: Math.max(1, Math.ceil((oldest + windowMs - t) / 1000)),
-          remaining: 0,
-        };
-      }
+			if (limit <= 0 || hits.length >= limit) {
+				const oldest = hits[0] ?? t;
+				return {
+					ok: false,
+					retryAfterSec: Math.max(1, Math.ceil((oldest + windowMs - t) / 1000)),
+					remaining: 0,
+				};
+			}
 
-      hits.push(t);
-      return { ok: true, retryAfterSec: 0, remaining: limit - hits.length };
-    },
-  };
+			hits.push(t);
+			return { ok: true, retryAfterSec: 0, remaining: limit - hits.length };
+		},
+	};
 }

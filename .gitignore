@@ -36,6 +36,12 @@ test-results/
 .vitest/
 .e2e-data/
 
+# Local analysis-tool output (also keeps Biome's VCS ignore-file support
+# from linting it)
+.vulnhunter-fix/
+graphify-out/
+domiciledb_VULNHUNT_RESULTS_*/
+
 # Claude local files
 .claude/settings.local.json
 CLAUDE.local.md

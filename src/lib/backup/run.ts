@@ -10,61 +10,61 @@ import { renderProofPacket } from "@/lib/pdf/render";
 import { getReportPacket } from "@/lib/queries/report";
 import { singleFlight } from "@/lib/single-flight";
 import {
-  keyForPath,
-  LATEST_PDF_KEY,
-  mediaToUpload,
-  SNAPSHOT_KEY,
+	keyForPath,
+	LATEST_PDF_KEY,
+	mediaToUpload,
+	SNAPSHOT_KEY,
 } from "./plan";
-import { createSnapshot } from "./snapshot";
 import { listKeys, putObject } from "./s3";
+import { createSnapshot } from "./snapshot";
 
 export interface BackupStatus {
-  at: string;
-  status: "ok" | "error" | "skipped";
-  /**
-   * App-authored, operator-safe explanation. NEVER third-party (SDK) error
-   * text: this status is rendered on /resilience, which has no auth.
-   */
-  reason?: string;
-  snapshotBytes?: number;
-  pdfBytes?: number;
-  mediaUploaded?: number;
-  mediaSkipped?: number;
+	at: string;
+	status: "ok" | "error" | "skipped";
+	/**
+	 * App-authored, operator-safe explanation. NEVER third-party (SDK) error
+	 * text: this status is rendered on /resilience, which has no auth.
+	 */
+	reason?: string;
+	snapshotBytes?: number;
+	pdfBytes?: number;
+	mediaUploaded?: number;
+	mediaSkipped?: number;
 }
 
 const FAILURE_REASON = "Backup failed — see the server log for details";
 const NOT_CONFIGURED_REASON = "S3 not configured";
 
 function walkFiles(dir: string): string[] {
-  if (!fs.existsSync(dir)) return [];
-  const out: string[] = [];
-  for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
-    const full = path.join(dir, entry.name);
-    if (entry.isDirectory()) out.push(...walkFiles(full));
-    else out.push(full);
-  }
-  return out;
+	if (!fs.existsSync(dir)) return [];
+	const out: string[] = [];
+	for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+		const full = path.join(dir, entry.name);
+		if (entry.isDirectory()) out.push(...walkFiles(full));
+		else out.push(full);
+	}
+	return out;
 }
 
 function contentTypeFor(p: string): string {
-  const ext = path.extname(p).toLowerCase();
-  if (ext === ".webp") return "image/webp";
-  if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
-  if (ext === ".png") return "image/png";
-  if (ext === ".pdf") return "application/pdf";
-  return "application/octet-stream";
+	const ext = path.extname(p).toLowerCase();
+	if (ext === ".webp") return "image/webp";
+	if (ext === ".jpg" || ext === ".jpeg") return "image/jpeg";
+	if (ext === ".png") return "image/png";
+	if (ext === ".pdf") return "application/pdf";
+	return "application/octet-stream";
 }
 
 function writeStatus(status: BackupStatus): BackupStatus {
-  fs.mkdirSync(config.paths.backupDir, { recursive: true });
-  fs.writeFileSync(config.paths.backupStatus, JSON.stringify(status, null, 2));
-  return status;
+	fs.mkdirSync(config.paths.backupDir, { recursive: true });
+	fs.writeFileSync(config.paths.backupStatus, JSON.stringify(status, null, 2));
+	return status;
 }
 
 function count(value: unknown): number | undefined {
-  return typeof value === "number" && Number.isFinite(value)
-    ? value
-    : undefined;
+	return typeof value === "number" && Number.isFinite(value)
+		? value
+		: undefined;
 }
 
 /**
@@ -74,95 +74,95 @@ function count(value: unknown): number | undefined {
  * the failure reason is always our own constant.
  */
 function sanitize(raw: unknown): BackupStatus | null {
-  if (typeof raw !== "object" || raw === null) return null;
-  const r = raw as Record<string, unknown>;
-  const status =
-    r.status === "ok" || r.status === "skipped" ? r.status : "error";
-  return {
-    at: typeof r.at === "string" ? r.at : "",
-    status,
-    reason:
-      status === "error"
-        ? FAILURE_REASON
-        : status === "skipped"
-          ? NOT_CONFIGURED_REASON
-          : undefined,
-    snapshotBytes: count(r.snapshotBytes),
-    pdfBytes: count(r.pdfBytes),
-    mediaUploaded: count(r.mediaUploaded),
-    mediaSkipped: count(r.mediaSkipped),
-  };
+	if (typeof raw !== "object" || raw === null) return null;
+	const r = raw as Record<string, unknown>;
+	const status =
+		r.status === "ok" || r.status === "skipped" ? r.status : "error";
+	return {
+		at: typeof r.at === "string" ? r.at : "",
+		status,
+		reason:
+			status === "error"
+				? FAILURE_REASON
+				: status === "skipped"
+					? NOT_CONFIGURED_REASON
+					: undefined,
+		snapshotBytes: count(r.snapshotBytes),
+		pdfBytes: count(r.pdfBytes),
+		mediaUploaded: count(r.mediaUploaded),
+		mediaSkipped: count(r.mediaSkipped),
+	};
 }
 
 export function readBackupStatus(): BackupStatus | null {
-  try {
-    return sanitize(
-      JSON.parse(fs.readFileSync(config.paths.backupStatus, "utf8")),
-    );
-  } catch {
-    return null;
-  }
+	try {
+		return sanitize(
+			JSON.parse(fs.readFileSync(config.paths.backupStatus, "utf8")),
+		);
+	} catch {
+		return null;
+	}
 }
 
 async function runBackupOnce(now: string): Promise<BackupStatus> {
-  if (!config.backup.enabled) {
-    return writeStatus({
-      at: now,
-      status: "skipped",
-      reason: NOT_CONFIGURED_REASON,
-    });
-  }
+	if (!config.backup.enabled) {
+		return writeStatus({
+			at: now,
+			status: "skipped",
+			reason: NOT_CONFIGURED_REASON,
+		});
+	}
 
-  try {
-    // 1. Consistent db snapshot.
-    const snap = createSnapshot();
-    await putObject(
-      SNAPSHOT_KEY,
-      fs.readFileSync(snap.path),
-      "application/x-sqlite3",
-    );
+	try {
+		// 1. Consistent db snapshot.
+		const snap = createSnapshot();
+		await putObject(
+			SNAPSHOT_KEY,
+			fs.readFileSync(snap.path),
+			"application/x-sqlite3",
+		);
 
-    // 2. Current PDF proof packet (so the inventory is readable with no app).
-    let pdfBytes: number | undefined;
-    const hh = db.select({ id: household.id }).from(household).limit(1).get();
-    if (hh) {
-      const packet = getReportPacket(hh.id);
-      if (packet) {
-        const pdf = await renderProofPacket(packet);
-        fs.writeFileSync(config.paths.latestPdf, pdf);
-        await putObject(LATEST_PDF_KEY, pdf, "application/pdf");
-        pdfBytes = pdf.length;
-      }
-    }
+		// 2. Current PDF proof packet (so the inventory is readable with no app).
+		let pdfBytes: number | undefined;
+		const hh = db.select({ id: household.id }).from(household).limit(1).get();
+		if (hh) {
+			const packet = getReportPacket(hh.id);
+			if (packet) {
+				const pdf = await renderProofPacket(packet);
+				fs.writeFileSync(config.paths.latestPdf, pdf);
+				await putObject(LATEST_PDF_KEY, pdf, "application/pdf");
+				pdfBytes = pdf.length;
+			}
+		}
 
-    // 3. Media — content-addressed, so upload only keys not already present.
-    const localFiles = walkFiles(config.paths.mediaDir);
-    const localKeys = localFiles.map((f) =>
-      keyForPath(f, config.paths.dataDir),
-    );
-    const existing = await listKeys("media/");
-    const toUpload = mediaToUpload(localKeys, existing);
-    const keyToPath = new Map(localKeys.map((k, i) => [k, localFiles[i]!]));
-    for (const key of toUpload) {
-      const p = keyToPath.get(key)!;
-      await putObject(key, fs.readFileSync(p), contentTypeFor(p));
-    }
+		// 3. Media — content-addressed, so upload only keys not already present.
+		const localFiles = walkFiles(config.paths.mediaDir);
+		const localKeys = localFiles.map((f) =>
+			keyForPath(f, config.paths.dataDir),
+		);
+		const existing = await listKeys("media/");
+		const toUpload = mediaToUpload(localKeys, existing);
+		const keyToPath = new Map(localKeys.map((k, i) => [k, localFiles[i]!]));
+		for (const key of toUpload) {
+			const p = keyToPath.get(key)!;
+			await putObject(key, fs.readFileSync(p), contentTypeFor(p));
+		}
 
-    return writeStatus({
-      at: now,
-      status: "ok",
-      snapshotBytes: snap.bytes,
-      pdfBytes,
-      mediaUploaded: toUpload.length,
-      mediaSkipped: localKeys.length - toUpload.length,
-    });
-  } catch (err) {
-    // The SDK message carries operator infrastructure detail (bucket, endpoint,
-    // host:port). It belongs in the server log the operator owns — not in the
-    // status file the unauthenticated /resilience page renders.
-    console.error("[backup] run failed:", err);
-    return writeStatus({ at: now, status: "error", reason: FAILURE_REASON });
-  }
+		return writeStatus({
+			at: now,
+			status: "ok",
+			snapshotBytes: snap.bytes,
+			pdfBytes,
+			mediaUploaded: toUpload.length,
+			mediaSkipped: localKeys.length - toUpload.length,
+		});
+	} catch (err) {
+		// The SDK message carries operator infrastructure detail (bucket, endpoint,
+		// host:port). It belongs in the server log the operator owns — not in the
+		// status file the unauthenticated /resilience page renders.
+		console.error("[backup] run failed:", err);
+		return writeStatus({ at: now, status: "error", reason: FAILURE_REASON });
+	}
 }
 
 /**
@@ -174,4 +174,4 @@ async function runBackupOnce(now: string): Promise<BackupStatus> {
  * race on the one snapshot file. Later callers observe the run already going.
  */
 export const runBackup: (now: string) => Promise<BackupStatus> =
-  singleFlight(runBackupOnce);
+	singleFlight(runBackupOnce);

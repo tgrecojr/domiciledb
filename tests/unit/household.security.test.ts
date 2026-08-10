@@ -12,25 +12,25 @@ let sqlite: typeof import("@/db").sqlite;
 let createHousehold: typeof import("@/lib/queries/household").createHousehold;
 
 beforeAll(async () => {
-  process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "vuln020-"));
-  const { runMigrations } = await import("@/db/migrate");
-  ({ sqlite } = await import("@/db"));
-  ({ createHousehold } = await import("@/lib/queries/household"));
-  runMigrations();
+	process.env.DATA_DIR = fs.mkdtempSync(path.join(os.tmpdir(), "vuln020-"));
+	const { runMigrations } = await import("@/db/migrate");
+	({ sqlite } = await import("@/db"));
+	({ createHousehold } = await import("@/lib/queries/household"));
+	runMigrations();
 });
 
 describe("single-household invariant (VULN-020)", () => {
-  it("createHousehold rejects a second household", async () => {
-    await createHousehold({ name: "First" });
-    await expect(createHousehold({ name: "Second" })).rejects.toThrow();
-    const count = sqlite
-      .prepare("SELECT COUNT(*) AS c FROM household")
-      .get() as { c: number };
-    expect(count.c).toBe(1);
-  });
+	it("createHousehold rejects a second household", async () => {
+		await createHousehold({ name: "First" });
+		await expect(createHousehold({ name: "Second" })).rejects.toThrow();
+		const count = sqlite
+			.prepare("SELECT COUNT(*) AS c FROM household")
+			.get() as { c: number };
+		expect(count.c).toBe(1);
+	});
 
-  it("the DB rejects a raw second household insert", () => {
-    const ins = sqlite.prepare("INSERT INTO household (name) VALUES (?)");
-    expect(() => ins.run("Another")).toThrow();
-  });
+	it("the DB rejects a raw second household insert", () => {
+		const ins = sqlite.prepare("INSERT INTO household (name) VALUES (?)");
+		expect(() => ins.run("Another")).toThrow();
+	});
 });

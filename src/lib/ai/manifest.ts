@@ -1,4 +1,4 @@
-import { TASKS, type AiTaskKey } from "./tasks";
+import { type AiTaskKey, TASKS } from "./tasks";
 
 /**
  * Cap on how many of an item's photos are sent in one AI call. Sending all of
@@ -14,28 +14,28 @@ export const AI_MAX_PHOTOS = 6;
  * + client-safe so the consent UI and tests share one source of truth.
  */
 export interface AiManifest {
-  taskKey: AiTaskKey;
-  label: string;
-  blurb: string;
-  model: string;
-  prompt: string;
-  sendsImage: boolean;
-  imageNote: string | null;
+	taskKey: AiTaskKey;
+	label: string;
+	blurb: string;
+	model: string;
+	prompt: string;
+	sendsImage: boolean;
+	imageNote: string | null;
 }
 
 export function buildManifest(
-  taskKey: AiTaskKey,
-  opts: { model: string; hasImage: boolean; imageNote?: string | null },
+	taskKey: AiTaskKey,
+	opts: { model: string; hasImage: boolean; imageNote?: string | null },
 ): AiManifest {
-  const task = TASKS[taskKey];
-  return {
-    taskKey,
-    label: task.label,
-    blurb: task.blurb,
-    model: opts.model,
-    prompt: task.prompt,
-    sendsImage: task.needsPhoto && opts.hasImage,
-    imageNote:
-      task.needsPhoto && opts.hasImage ? (opts.imageNote ?? "1 photo") : null,
-  };
+	const task = TASKS[taskKey];
+	return {
+		taskKey,
+		label: task.label,
+		blurb: task.blurb,
+		model: opts.model,
+		prompt: task.prompt,
+		sendsImage: task.needsPhoto && opts.hasImage,
+		imageNote:
+			task.needsPhoto && opts.hasImage ? (opts.imageNote ?? "1 photo") : null,
+	};
 }

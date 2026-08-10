@@ -18,27 +18,27 @@ import { config } from "@/lib/config";
  * a reader always sees either the old or the new complete file.
  */
 export function createSnapshot(): { path: string; bytes: number } {
-  fs.mkdirSync(config.paths.backupDir, { recursive: true });
-  const target = config.paths.backupSnapshot;
-  // Unique per call so concurrent snapshots don't collide, and VACUUM INTO
-  // (which requires a non-existent destination) always has a clean target.
-  const tmp = `${target}.tmp-${process.pid}-${randomBytes(8).toString("hex")}`;
+	fs.mkdirSync(config.paths.backupDir, { recursive: true });
+	const target = config.paths.backupSnapshot;
+	// Unique per call so concurrent snapshots don't collide, and VACUUM INTO
+	// (which requires a non-existent destination) always has a clean target.
+	const tmp = `${target}.tmp-${process.pid}-${randomBytes(8).toString("hex")}`;
 
-  // Flush WAL into the main db, then VACUUM INTO the temp file.
-  sqlite.pragma("wal_checkpoint(TRUNCATE)");
-  try {
-    sqlite.exec(`VACUUM INTO '${tmp.replace(/'/g, "''")}'`);
-    // Atomic on the same filesystem: replaces target in one step, so a reader
-    // never observes a missing/partial canonical snapshot.
-    fs.renameSync(tmp, target);
-  } catch (err) {
-    try {
-      fs.rmSync(tmp, { force: true });
-    } catch {
-      // best-effort temp cleanup
-    }
-    throw err;
-  }
+	// Flush WAL into the main db, then VACUUM INTO the temp file.
+	sqlite.pragma("wal_checkpoint(TRUNCATE)");
+	try {
+		sqlite.exec(`VACUUM INTO '${tmp.replace(/'/g, "''")}'`);
+		// Atomic on the same filesystem: replaces target in one step, so a reader
+		// never observes a missing/partial canonical snapshot.
+		fs.renameSync(tmp, target);
+	} catch (err) {
+		try {
+			fs.rmSync(tmp, { force: true });
+		} catch {
+			// best-effort temp cleanup
+		}
+		throw err;
+	}
 
-  return { path: target, bytes: fs.statSync(target).size };
+	return { path: target, bytes: fs.statSync(target).size };
 }

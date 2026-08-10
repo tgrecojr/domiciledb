@@ -13,29 +13,33 @@ import * as schema from "./schema";
  */
 
 function ensureDataDirs() {
-  for (const dir of [
-    config.paths.dataDir,
-    config.paths.backupDir,
-    config.paths.mediaDir,
-  ]) {
-    fs.mkdirSync(dir, { recursive: true });
-  }
+	for (const dir of [
+		config.paths.dataDir,
+		config.paths.backupDir,
+		config.paths.mediaDir,
+	]) {
+		fs.mkdirSync(dir, { recursive: true });
+	}
 }
 
 function createConnection() {
-  ensureDataDirs();
-  const sqlite = new Database(config.paths.dbFile);
-  sqlite.pragma("journal_mode = WAL");
-  sqlite.pragma("foreign_keys = ON");
-  sqlite.pragma("busy_timeout = 5000");
-  return sqlite;
+	ensureDataDirs();
+	const sqlite = new Database(config.paths.dbFile);
+	sqlite.pragma("journal_mode = WAL");
+	sqlite.pragma("foreign_keys = ON");
+	sqlite.pragma("busy_timeout = 5000");
+	return sqlite;
 }
 
 const globalForDb = globalThis as unknown as {
-  __domicileSqlite?: Database.Database;
+	__domicileSqlite?: Database.Database;
 };
 
-export const sqlite = (globalForDb.__domicileSqlite ??= createConnection());
+if (!globalForDb.__domicileSqlite) {
+	globalForDb.__domicileSqlite = createConnection();
+}
+
+export const sqlite = globalForDb.__domicileSqlite;
 
 export const db = drizzle(sqlite, { schema });
 

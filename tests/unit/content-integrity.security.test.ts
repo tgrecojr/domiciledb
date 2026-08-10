@@ -14,38 +14,38 @@ let verifyStoredContent: typeof import("@/lib/media").verifyStoredContent;
 let dataDir: string;
 
 beforeAll(async () => {
-  dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "vuln018-"));
-  process.env.DATA_DIR = dataDir;
-  ({ storeDocument } = await import("@/lib/documents-store"));
-  ({ verifyStoredContent } = await import("@/lib/media"));
+	dataDir = fs.mkdtempSync(path.join(os.tmpdir(), "vuln018-"));
+	process.env.DATA_DIR = dataDir;
+	({ storeDocument } = await import("@/lib/documents-store"));
+	({ verifyStoredContent } = await import("@/lib/media"));
 });
 
 describe("content identity (VULN-018)", () => {
-  it("names a stored document with the full 64-hex-char digest", async () => {
-    const bytes = Buffer.from("a receipt");
-    const stored = await storeDocument(1, bytes, "receipt.pdf");
-    const hashPart = path.basename(stored.path).split("-")[0];
-    expect(hashPart).toMatch(/^[0-9a-f]{64}$/);
-    // Identity must match the true content digest end-to-end.
-    const disk = createHash("sha256")
-      .update(fs.readFileSync(path.join(dataDir, stored.path)))
-      .digest("hex");
-    expect(disk).toBe(stored.contentHash);
-    expect(hashPart).toBe(stored.contentHash);
-  });
+	it("names a stored document with the full 64-hex-char digest", async () => {
+		const bytes = Buffer.from("a receipt");
+		const stored = await storeDocument(1, bytes, "receipt.pdf");
+		const hashPart = path.basename(stored.path).split("-")[0];
+		expect(hashPart).toMatch(/^[0-9a-f]{64}$/);
+		// Identity must match the true content digest end-to-end.
+		const disk = createHash("sha256")
+			.update(fs.readFileSync(path.join(dataDir, stored.path)))
+			.digest("hex");
+		expect(disk).toBe(stored.contentHash);
+		expect(hashPart).toBe(stored.contentHash);
+	});
 
-  it("verifies intact content and detects a tampered read-back", async () => {
-    const stored = await storeDocument(2, Buffer.from("genuine"), "r.pdf");
-    expect(await verifyStoredContent(stored.path, stored.contentHash)).toBe(
-      true,
-    );
-    // Swap the bytes on disk: the recorded digest no longer matches.
-    fs.writeFileSync(
-      path.join(dataDir, stored.path),
-      Buffer.from("forged bytes"),
-    );
-    expect(await verifyStoredContent(stored.path, stored.contentHash)).toBe(
-      false,
-    );
-  });
+	it("verifies intact content and detects a tampered read-back", async () => {
+		const stored = await storeDocument(2, Buffer.from("genuine"), "r.pdf");
+		expect(await verifyStoredContent(stored.path, stored.contentHash)).toBe(
+			true,
+		);
+		// Swap the bytes on disk: the recorded digest no longer matches.
+		fs.writeFileSync(
+			path.join(dataDir, stored.path),
+			Buffer.from("forged bytes"),
+		);
+		expect(await verifyStoredContent(stored.path, stored.contentHash)).toBe(
+			false,
+		);
+	});
 });

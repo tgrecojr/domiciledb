@@ -3,42 +3,6 @@
 # Keep this file as small as possible, and always prefer fixing the dependency
 # over silencing the finding. Every entry needs a reason and an `effectiveUntil`
 # so it expires and the finding re-surfaces rather than rotting here silently.
-
-[[PackageOverrides]]
-name = "brace-expansion"
-version = "1.1.16"
-ecosystem = "npm"
-vulnerability.ignore = true
-effectiveUntil = 2026-10-31
-reason = """
-GHSA-mh99-v99m-4gvg / CVE-2026-14257 (expand() bounds result count but not
-result length, so chained brace groups exhaust memory and take the process down
-with an uncatchable OOM).
-
-Not fixable here, on either axis:
-
-  * There is no patch for the 1.x line. The advisory covers everything <= 5.0.7
-    and the only fixed release is 5.0.8.
-  * The override that would normally work -- forcing this copy up to 5.0.8 --
-    breaks the consumer. brace-expansion 5 replaced the callable CommonJS
-    default export (`module.exports = expand`) with a named `exports.expand`,
-    and minimatch@3 does `const expand = require('brace-expansion')` and then
-    calls it, so it throws at require time. Overriding minimatch@3 up to
-    minimatch@10 fails the same way, for the same reason.
-
-Reachability is dev-only and effectively nil. This copy is pulled exclusively by
-the ESLint 9 toolchain (eslint-plugin-react / -import / -jsx-a11y -> minimatch@3)
-to match lint glob patterns from our own committed config. It is a devDependency,
-never installed in the production image, and never sees untrusted input.
-
-The production copy of brace-expansion is a separate instance (archiver ->
-readdir-glob/glob -> minimatch@10) and IS patched -- it is pinned to 5.0.8 by the
-`brace-expansion@5` override in package.json. This entry is scoped to the exact
-1.1.16 version so that production instance stays fully scanned.
-
-Clearing this for real means dropping eslint-config-next and hand-composing the
-flat config, since eslint-plugin-react (last release 2025-04) and
-eslint-plugin-jsx-a11y (last release 2024-10) are the only things left holding
-minimatch@3. Upstream ESLint 10 support is tracked in
-jsx-eslint/eslint-plugin-react#3977, open since 2026-02. Re-evaluate at expiry.
-"""
+#
+# (Currently empty: the sole entry — brace-expansion 1.x, unfixable on that
+# line — left the tree with the ESLint 9 toolchain when we moved to Biome.)
