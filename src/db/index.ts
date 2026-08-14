@@ -23,6 +23,14 @@ function ensureDataDirs() {
 }
 
 function createConnection() {
+	// During `next build`, page-data collection imports this module from several
+	// parallel workers. A fresh DB file's WAL conversion can throw SQLITE_BUSY
+	// under that race, and the build DB is throwaway anyway (migrations are
+	// skipped in this phase too — see instrumentation.ts), so give each build
+	// worker a private in-memory DB instead of touching the real file.
+	if (process.env.NEXT_PHASE === "phase-production-build") {
+		return new Database(":memory:");
+	}
 	ensureDataDirs();
 	const sqlite = new Database(config.paths.dbFile);
 	sqlite.pragma("journal_mode = WAL");
