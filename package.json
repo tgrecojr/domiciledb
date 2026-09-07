@@ -61,13 +61,14 @@
 	},
 	"comments": {
 		"types-node": "@types/node tracks the RUNTIME Node major (24: CI setup-node, Dockerfile builder node:24 and distroless nodejs24), not the newest types major — newer types would let code reference APIs the deployed runtime doesn't have. Take Renovate's @types/node major only together with the runtime bump.",
-		"overrides": "Security floors are RANGES (^), never exact pins: npm applies an override verbatim, so an exact version is a ceiling that holds the tree on a known-vulnerable release (brace-expansion@5 sat on 5.0.8 after 5.0.9 shipped for exactly this reason). The @emnapi/* entries below are the one exception and stay exact on purpose. Pin @emnapi/* (optional+peer wasm deps from sharp/transitive) to consistent versions; works around an npm bug where the lockfile writer and `npm ci` validator disagree, which otherwise breaks `npm ci` in CI and Docker. brace-expansion@5 floors at ^5.0.9 for GHSA-mh99-v99m-4gvg (unbounded expand() output -> uncatchable OOM); sharp is floored at its fixed release for GHSA-f88m-g3jw-g9cj (libvips runtime CVEs), and that override also lifts next's bundled 0.34.x copy past the vuln. The former brace-expansion@1 floor (GHSA-3jxr-9vmj-r5cp, plus an osv-scanner suppression for the unfixable 1.x line) left with ESLint -- nothing in the tree depends on the 1.x line anymore."
+		"overrides": "Security floors are RANGES (^), never exact pins: npm applies an override verbatim, so an exact version is a ceiling that holds the tree on a known-vulnerable release (brace-expansion@5 sat on 5.0.8 after 5.0.9 shipped for exactly this reason). The @emnapi/* entries below are the one exception and stay exact on purpose. Pin @emnapi/* (optional+peer wasm deps from sharp/transitive) to consistent versions; works around an npm bug where the lockfile writer and `npm ci` validator disagree, which otherwise breaks `npm ci` in CI and Docker. brace-expansion@5 floors at ^5.0.9 for GHSA-mh99-v99m-4gvg (unbounded expand() output -> uncatchable OOM); sharp is floored at its fixed release for GHSA-f88m-g3jw-g9cj (libvips runtime CVEs), and that override also lifts next's bundled 0.34.x copy past the vuln. The former brace-expansion@1 floor (GHSA-3jxr-9vmj-r5cp, plus an osv-scanner suppression for the unfixable 1.x line) left with ESLint -- nothing in the tree depends on the 1.x line anymore. browserslist floors at ^4.28.7 for GHSA-73wf-gq98-2v4g / GHSA-c83g-rgw3-j3cx because @serwist/next 9.5.12 pins browserslist to exactly 4.28.6 (no fixed stable serwist release yet) -- drop this override once @serwist/next depends on >=4.28.7. postcss uses the `$postcss` reference form (like sharp) rather than a literal range: for a direct dependency npm requires the override to match the dependency spec exactly, so a literal range breaks Renovate's lockfile update with EOVERRIDE whenever it bumps postcss."
 	},
 	"overrides": {
 		"@emnapi/wasi-threads": "2.0.1",
 		"@emnapi/core": "1.11.3",
 		"esbuild": "^0.28.1",
-		"postcss": "^8.5.10",
+		"postcss": "$postcss",
+		"browserslist": "^4.28.7",
 		"brace-expansion@5": "^5.0.9",
 		"sharp": "$sharp",
 		"nanoid": "^6.0.1"
