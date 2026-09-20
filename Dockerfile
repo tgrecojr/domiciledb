@@ -4,7 +4,7 @@
 # Debian trixie = glibc, matching the distroless runtime below. Both stages
 # must stay on the same Debian release so the native addons compiled here
 # (better-sqlite3, sharp/libvips) link against the runtime's glibc.
-FROM node:24-trixie-slim@sha256:6950b66b4c0cb0151ce89fa75074673850763d096b044f422c6729b588dd4956 AS builder
+FROM node:24-trixie-slim@sha256:8ec5d7557396cfe32d21c3f9c13072355ceab22b584578ca4bb28af31120cffe AS builder
 WORKDIR /app
 
 # Toolchain for node-gyp (better-sqlite3 compiles from source).
