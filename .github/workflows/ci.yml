@@ -5,6 +5,11 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  # Weekly absolute supply-chain scan of main. PR scans run in diff mode (only
+  # vulnerabilities a PR introduces fail it), so this is what surfaces an
+  # advisory that lands against already-merged dependencies.
+  schedule:
+    - cron: "0 13 * * 1" # Mondays 09:00 America/New_York (13:00 UTC)
 
 permissions:
   contents: read
@@ -16,6 +21,7 @@ concurrency:
 jobs:
   app:
     name: App (Next.js / TypeScript)
+    if: ${{ github.event_name != 'schedule' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -58,6 +64,7 @@ jobs:
 
   integration:
     name: Integration (RustFS S3 round-trip)
+    if: ${{ github.event_name != 'schedule' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
