@@ -66,6 +66,13 @@ grounds the insurance model (Coverage B – Personal Property = $456,750).
   `npm install` on macOS leaves the lock linux-incomplete for sharp's optional
   `@emnapi/*` peer deps, which then breaks `npm ci` in Docker/CI. (CI's `npm ci`
   is the safety net — a bad lock fails the build before it can reach prod.)
+  **Then run `npm install --package-lock-only` and commit that lock.** A full
+  install on macOS/Linux-x64 skips the optional `@tailwindcss/oxide-wasm32-wasi`
+  package, so it never records that package's `bundledDependencies` (the
+  `inBundle` entries). Renovate regenerates the lock in lock-only mode, which
+  must download that tarball to fill them in, and Mend's hosted npm runs with
+  `allow-remote` disabled, so the `renovate/artifacts` step fails with
+  `EALLOWREMOTE` on every npm PR until the committed lock carries the entries.
 - **Then always run `npm ci` locally before pushing.** A clean regen is necessary
   but not sufficient: npm's lockfile writer and its `npm ci` validator can
   disagree about **optional peer dependencies**, so `npm install` will happily
