@@ -6,7 +6,7 @@ identity, description, and value.
 
 ## Status
 
-**AUDITED** — mapped and audited 2026-10-24 (git SHA `59605b6`, uncommitted working tree). Specs
+**OK** — mapped and audited 2026-10-24 (git SHA `f74d36b`). Specs
 verified against code and annotated at every entry point; the six gaps found in mapping (AI
 provenance and outcomes, interaction ownership, household checks and fail-closed ids on every
 write action, document caps, unmount flush) were built in the same pass, the editor now errors on

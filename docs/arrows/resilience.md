@@ -6,7 +6,7 @@ packet synced to S3 on a cron; a full ZIP export on demand; a restore runbook th
 
 ## Status
 
-**AUDITED** — mapped and audited 2026-10-24 (git SHA `59605b6`, uncommitted working tree). Specs
+**OK** — mapped and audited 2026-10-24 (git SHA `f74d36b`). Specs
 verified against code and annotated at every entry point; in the same pass an invalid
 `BACKUP_CRON` became a startup failure, restore validates the snapshot header and brings back
 only referenced media, and a throttled export returns a readable retry page. Every active spec

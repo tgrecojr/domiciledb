@@ -6,7 +6,7 @@ app shell and service-worker policy, and the container and CI that ship it.
 
 ## Status
 
-**AUDITED** — mapped and audited 2026-10-24 (git SHA `59605b6`, uncommitted working tree). Every
+**AUDITED** — mapped and audited 2026-10-24 (git SHA `f74d36b`). Every
 spec was checked against the code it describes; `@spec` annotations sit at every code entry point
 with an anchor. Not `OK`: four gaps remain and most specs are pinned by code review, not by a
 test.

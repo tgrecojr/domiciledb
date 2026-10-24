@@ -18,51 +18,51 @@ taxonomy:
 # Flat depth-2 design tree: every leaf sits directly under docs/high-level-design.md.
 arrows:
   capture:
-    status: AUDITED
+    status: OK
     parent: null
     sampled: 2026-10-24
     audited: 2026-10-24
-    audited_sha: 59605b6
+    audited_sha: f74d36b
     blocks: [enrich, household-locations]
     blockedBy: [platform, enrich]
     detail: capture.md
-    next: "Promote to OK after the next audit of a committed tree; decide photo kinds (CAPTURE-FLOW-013) when enrich settles the photo model."
+    next: null
     drift: null
 
   enrich:
-    status: AUDITED
+    status: OK
     parent: null
     sampled: 2026-10-24
     audited: 2026-10-24
-    audited_sha: 59605b6
+    audited_sha: f74d36b
     blocks: [capture, coverage, proof-packet]
     blockedBy: [platform, keep-current, coverage, capture]
     detail: enrich.md
-    next: "Promote to OK after the next audit of a committed tree; then a read surface for ai_interaction, transactions around patch + valuation, and an AI fetch timeout."
+    next: "Nice-to-haves: a read surface for ai_interaction; transactions around patch + valuation; AI fetch timeout; per-photo delete (ENRICH-PHOTO-005, deferred)."
     drift: null
 
   coverage:
-    status: AUDITED
+    status: OK
     parent: null
     sampled: 2026-10-24
     audited: 2026-10-24
-    audited_sha: 59605b6
+    audited_sha: f74d36b
     blocks: [proof-packet, enrich]
     blockedBy: [platform, keep-current, enrich]
     detail: coverage.md
-    next: "Promote to OK after the next audit of a committed tree; deferred: PDF dec pages, per-category sub-limits."
+    next: "Deferred only: PDF declarations pages (COVERAGE-DECPAGE-008), per-category sub-limits (COVERAGE-POLICY-007)."
     drift: null
 
   proof-packet:
-    status: AUDITED
+    status: OK
     parent: null
     sampled: 2026-10-24
     audited: 2026-10-24
-    audited_sha: 59605b6
+    audited_sha: f74d36b
     blocks: [resilience]
     blockedBy: [coverage, enrich, household-locations, keep-current, platform]
     detail: proof-packet.md
-    next: "Promote to OK after the next audit of a committed tree; nice-to-haves only (date-compare latest price paid, Unassigned label collision, renderer smoke test)."
+    next: "Nice-to-haves: date-compare latest price paid; Unassigned label collision; renderer smoke test."
     drift: null
 
   keep-current:
@@ -70,7 +70,7 @@ arrows:
     parent: null
     sampled: 2026-10-24
     audited: 2026-10-24
-    audited_sha: 59605b6
+    audited_sha: f74d36b
     blocks: [coverage, proof-packet, enrich]
     blockedBy: [platform]
     detail: keep-current.md
@@ -78,27 +78,27 @@ arrows:
     drift: "Reminders are specified (CURRENT-REMIND-001 to 004) but exist only as a table, a config key, and a commented scheduler slot."
 
   resilience:
-    status: AUDITED
+    status: OK
     parent: null
     sampled: 2026-10-24
     audited: 2026-10-24
-    audited_sha: 59605b6
+    audited_sha: f74d36b
     blocks: []
     blockedBy: [platform, proof-packet]
     detail: resilience.md
-    next: "Promote to OK after the next audit of a committed tree; nice-to-haves only (S3 client reuse, HEIC content type, stream restore downloads, restore the PDF)."
+    next: "Nice-to-haves: S3 client reuse; HEIC content type; stream restore downloads; restore the PDF (RESILIENCE-RESTORE-004, deferred)."
     drift: null
 
   household-locations:
-    status: AUDITED
+    status: OK
     parent: null
     sampled: 2026-10-24
     audited: 2026-10-24
-    audited_sha: 59605b6
+    audited_sha: f74d36b
     blocks: [capture, enrich, proof-packet]
     blockedBy: [platform, capture]
     detail: household-locations.md
-    next: "Promote to OK after the next audit of a committed tree; nice-to-haves only (placeholder text, description on create, room-photo camera hint)."
+    next: "Nice-to-haves: onboarding placeholder text; description on create; room-photo camera hint."
     drift: null
 
   platform:
@@ -106,7 +106,7 @@ arrows:
     parent: null
     sampled: 2026-10-24
     audited: 2026-10-24
-    audited_sha: 59605b6
+    audited_sha: f74d36b
     blocks: [capture, enrich, coverage, proof-packet, keep-current, resilience, household-locations]
     blockedBy: []
     detail: platform.md

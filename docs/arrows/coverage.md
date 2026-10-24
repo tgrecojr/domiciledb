@@ -7,7 +7,7 @@ the limit.
 
 ## Status
 
-**AUDITED** — mapped and audited 2026-10-24 (git SHA `59605b6`, uncommitted working tree). Specs
+**OK** — mapped and audited 2026-10-24 (git SHA `f74d36b`). Specs
 verified against code and annotated at every entry point; the manual policy form now errors on
 any unparseable amount (COVERAGE-POLICY-005), dec-page applies record provenance
 (COVERAGE-DECPAGE-007), and the coverage module owns the totalling rules the packet consumes.

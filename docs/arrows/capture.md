@@ -5,7 +5,7 @@ required fields, and admit uploads within operator-set bounds.
 
 ## Status
 
-**AUDITED** — mapped and audited 2026-10-24 (git SHA `59605b6`, uncommitted working tree). Specs
+**OK** — mapped and audited 2026-10-24 (git SHA `f74d36b`). Specs
 verified against code and annotated at every entry point; the two gaps (location validation,
 dropped-photo reporting) were built in the same pass and `captureItemAction` moved into its own
 module. Every active spec is implemented.

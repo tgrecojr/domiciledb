@@ -6,7 +6,7 @@ yet built.
 
 ## Status
 
-**AUDITED** — mapped and audited 2026-10-24 (git SHA `59605b6`, uncommitted working tree). Specs
+**AUDITED** — mapped and audited 2026-10-24 (git SHA `f74d36b`). Specs
 verified against code and annotated at every entry point; the valued-at pointer rule
 (CURRENT-VAL-003) was fixed and is pinned by the integration test. Intent still exceeds the code:
 reminders exist only as a table, a config key, and a commented-out scheduler stub, and are

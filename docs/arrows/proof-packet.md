@@ -6,7 +6,7 @@ household or a single location or category.
 
 ## Status
 
-**AUDITED** — mapped and audited 2026-10-24 (git SHA `59605b6`, uncommitted working tree). Specs
+**OK** — mapped and audited 2026-10-24 (git SHA `f74d36b`). Specs
 verified against code and annotated at every entry point; in the same pass the packet took the
 coverage module's totalling rules, photo order now matches the item page, receipt images are
 embedded, and the report page withholds the whole-household link above the item cap. Every
