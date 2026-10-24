@@ -27,6 +27,7 @@ const STATUS_STYLES = {
 	},
 } as const;
 
+// @spec COVERAGE-UI-001, COVERAGE-UI-002, COVERAGE-UI-003, COVERAGE-UI-004
 export function CoverageWidget({ summary }: { summary: CoverageSummary }) {
 	// No policy / limit yet — invite setup rather than showing a meaningless bar.
 	if (

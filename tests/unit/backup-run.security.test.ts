@@ -93,6 +93,7 @@ describe("VULN-006 backup failure disclosure", () => {
 		vi.spyOn(console, "error").mockImplementation(() => {});
 	});
 
+	// @spec RESILIENCE-BACKUP-010, RESILIENCE-BACKUP-011, RESILIENCE-UI-003
 	it("never persists third-party SDK error text into the backup status", async () => {
 		const { runBackup } = await import("@/lib/backup/run");
 		const status = await runBackup(new Date().toISOString());
@@ -107,6 +108,7 @@ describe("VULN-006 backup failure disclosure", () => {
 		expectNoOperatorDetail(onDisk);
 	});
 
+	// @spec RESILIENCE-BACKUP-010, RESILIENCE-BACKUP-011, RESILIENCE-UI-003
 	it("never hands the page an error field, even from a legacy status file", async () => {
 		const { readBackupStatus } = await import("@/lib/backup/run");
 		const statusFile = path.join(fixture.dataDir, "backup", "status.json");
@@ -123,6 +125,7 @@ describe("VULN-006 backup failure disclosure", () => {
 		expectNoOperatorDetail(JSON.stringify(readBackupStatus()));
 	});
 
+	// @spec RESILIENCE-BACKUP-010, RESILIENCE-BACKUP-011, RESILIENCE-UI-003
 	it("renders no bucket, endpoint, cron or SDK error on /resilience", async () => {
 		const statusFile = path.join(fixture.dataDir, "backup", "status.json");
 		fs.mkdirSync(path.dirname(statusFile), { recursive: true });
@@ -150,6 +153,7 @@ describe("runBackup single-flight (VULN-011)", () => {
 		fixture.listKeys.mockClear();
 	});
 
+	// @spec RESILIENCE-BACKUP-008
 	it("collapses overlapping callers into one run", async () => {
 		const { runBackup } = await import("@/lib/backup/run");
 		const now = new Date().toISOString();

@@ -24,6 +24,7 @@ async function drain(res: Response) {
 	if (res.body) await new Response(res.body).arrayBuffer();
 }
 
+// @spec RESILIENCE-EXPORT-002
 describe("GET /api/export throttling (VULN-002)", () => {
 	beforeEach(() => {
 		vi.resetModules();
@@ -49,9 +50,16 @@ describe("GET /api/export throttling (VULN-002)", () => {
 		expect(first.status).toBe(200);
 
 		const second = await GET();
-		await drain(second);
 		expect(second.status).toBe(429);
 		expect(second.headers.get("Retry-After")).toBeTruthy();
 		expect(createSnapshot).toHaveBeenCalledTimes(1);
+
+		// @spec RESILIENCE-EXPORT-004
+		// A browser following the plain export link lands on this response, so
+		// it must read as a page that says when to retry, not a raw string.
+		expect(second.headers.get("Content-Type")).toMatch(/text\/html/);
+		const body = await second.text();
+		expect(body).toMatch(/try again in \d+ second/i);
+		expect(body).toMatch(/href="\/resilience"/);
 	});
 });

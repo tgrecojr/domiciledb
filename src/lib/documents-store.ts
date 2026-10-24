@@ -19,11 +19,13 @@ export interface StoredDocument {
 }
 
 /** Strip directory components + unsafe chars from a user-supplied filename. */
+// @spec ENRICH-DOC-008
 export function sanitizeFilename(name: string): string {
 	const base = path.basename(name).replace(/[^a-zA-Z0-9._-]/g, "_");
 	return base.length > 0 ? base.slice(0, 120) : "file";
 }
 
+// @spec ENRICH-DOC-002
 export async function storeDocument(
 	itemId: number,
 	buffer: Buffer,

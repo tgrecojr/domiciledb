@@ -19,10 +19,12 @@ const globalForScheduler = globalThis as unknown as {
 	__domicileSchedulerStarted?: boolean;
 };
 
+// @spec PLATFORM-BOOT-004
 export function startScheduler() {
 	if (globalForScheduler.__domicileSchedulerStarted) return;
 	globalForScheduler.__domicileSchedulerStarted = true;
 
+	// @spec RESILIENCE-BACKUP-002
 	if (config.backup.enabled && cron.validate(config.backup.cron)) {
 		cron.schedule(config.backup.cron, () => {
 			void import("@/lib/backup/run").then(({ runBackup }) =>
@@ -31,6 +33,7 @@ export function startScheduler() {
 		});
 	}
 
+	// @spec CURRENT-REMIND-001, CURRENT-REMIND-002 (gap)
 	// Phase 5: daily staleness + warranty-expiry reminder scans.
 	// cron.schedule("0 2 * * *", () => { ... });
 }

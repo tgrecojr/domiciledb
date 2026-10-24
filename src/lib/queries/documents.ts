@@ -29,6 +29,7 @@ export function addDocument(
 	return rows[0]!;
 }
 
+// @spec ENRICH-DOC-005
 export function listDocuments(itemId: number) {
 	return db
 		.select()
@@ -42,6 +43,7 @@ export function getDocument(id: number) {
 	return db.select().from(document).where(eq(document.id, id)).get() ?? null;
 }
 
+// @spec ENRICH-DOC-006
 export function deleteDocument(id: number) {
 	db.delete(document).where(eq(document.id, id)).run();
 }

@@ -25,6 +25,7 @@ export interface ItemPatch {
 	lifecycleDate?: string | null;
 }
 
+// @spec CAPTURE-FLOW-003, CAPTURE-FLOW-004
 export function createDraftItem(input: {
 	householdId: number;
 	title: string;
@@ -54,6 +55,7 @@ export function updateItem(id: number, patch: ItemPatch) {
 		.run();
 }
 
+// @spec ENRICH-ITEM-015
 export function setItemStatus(id: number, status: ItemStatus) {
 	db.update(item)
 		.set({ status, updatedAt: new Date().toISOString() })
@@ -62,6 +64,7 @@ export function setItemStatus(id: number, status: ItemStatus) {
 }
 
 /** Hard-delete an item. FKs cascade to photos/documents/valuations/tags. */
+// @spec ENRICH-ITEM-017
 export function deleteItem(id: number) {
 	db.delete(item).where(eq(item.id, id)).run();
 }
@@ -80,6 +83,7 @@ export interface ItemListRow {
  * `location` filters by location: a numeric id, `null` for unassigned items,
  * or omitted for all locations.
  */
+// @spec ENRICH-LIST-001, ENRICH-LIST-002
 export function listItems(
 	householdId: number,
 	opts: { status?: ItemStatus; location?: number | null } = {},
@@ -109,6 +113,21 @@ export function listItems(
 
 	const thumbs = firstThumbByItem(rows.map((r) => r.id));
 	return rows.map((r) => ({ ...r, thumbPath: thumbs.get(r.id) ?? null }));
+}
+
+/** Items that would appear in the whole-household proof packet. */
+// @spec PACKET-ROUTE-005
+export function countActiveItems(householdId: number): number {
+	return db
+		.select({ id: item.id })
+		.from(item)
+		.where(
+			and(
+				eq(item.householdId, householdId),
+				eq(item.lifecycleStatus, "active"),
+			),
+		)
+		.all().length;
 }
 
 export function countDraftItems(householdId: number): number {

@@ -10,6 +10,7 @@ export const COLORS = {
 	over: "#dc2626",
 };
 
+// @spec PACKET-PDF-001
 export const styles = StyleSheet.create({
 	page: {
 		paddingTop: 54,
@@ -112,6 +113,9 @@ export const styles = StyleSheet.create({
 	photo: { width: 70, height: 70, objectFit: "cover", borderRadius: 2 },
 	// Wider room/area shots: larger than item thumbnails to convey context.
 	roomPhoto: { width: 120, height: 90, objectFit: "cover", borderRadius: 2 },
+	// Receipt scans are tall documents: taller than item thumbnails and
+	// contained rather than cropped so the printed figures stay legible.
+	receipt: { width: 90, height: 120, objectFit: "contain", borderRadius: 2 },
 	pill: {
 		fontSize: 8,
 		paddingVertical: 2,

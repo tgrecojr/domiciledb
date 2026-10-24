@@ -14,6 +14,7 @@ function fmt(at: string): string {
 	return Number.isNaN(d.getTime()) ? at : d.toLocaleString();
 }
 
+// @spec RESILIENCE-UI-001, RESILIENCE-UI-002, RESILIENCE-UI-003, RESILIENCE-UI-004, RESILIENCE-EXPORT-004 (gap)
 export default async function ResiliencePage() {
 	const householdId = await getHouseholdId();
 	if (householdId === null) redirect("/");

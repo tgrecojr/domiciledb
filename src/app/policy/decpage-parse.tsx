@@ -5,7 +5,11 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 
 import { type AiSuggestResult, aiParseDecPageAction } from "@/lib/actions/ai";
-import { applyDecPagePolicy, type DecPageFields } from "@/lib/actions/policy";
+import {
+	applyDecPagePolicy,
+	type DecPageFields,
+	discardDecPage,
+} from "@/lib/actions/policy";
 import { TASKS } from "@/lib/ai/tasks";
 
 const inputClass =
@@ -36,10 +40,13 @@ const FIELDS: { name: keyof DecPageFields; label: string; from: string }[] = [
 	{ name: "policyNumber", label: "Policy number", from: "policyNumber" },
 ];
 
+// @spec COVERAGE-DECPAGE-001, COVERAGE-DECPAGE-002, COVERAGE-DECPAGE-005, COVERAGE-DECPAGE-007
 export function DecPageParse({ model }: { model: string }) {
 	const [phase, setPhase] = useState<Phase>({ step: "idle" });
 	const [file, setFile] = useState<File | null>(null);
 	const [values, setValues] = useState<DecPageFields>({});
+	// What the model returned, so Apply can report whether the user edited it.
+	const [original, setOriginal] = useState<DecPageFields>({});
 	const [pending, startTransition] = useTransition();
 	const router = useRouter();
 
@@ -66,12 +73,16 @@ export function DecPageParse({ model }: { model: string }) {
 			init[f.name] = v == null ? "" : String(v);
 		}
 		setValues(init);
+		setOriginal(init);
 		setPhase({ step: "review", result });
 	}
 
-	function apply() {
+	function apply(interactionId: number | null) {
+		const edited = FIELDS.some(
+			(f) => (values[f.name] ?? "") !== (original[f.name] ?? ""),
+		);
 		startTransition(async () => {
-			const res = await applyDecPagePolicy(values);
+			const res = await applyDecPagePolicy(values, interactionId, edited);
 			if (res.ok) {
 				setPhase({ step: "idle" });
 				setFile(null);
@@ -80,6 +91,12 @@ export function DecPageParse({ model }: { model: string }) {
 				setPhase({ step: "error", message: "Could not save coverage." });
 			}
 		});
+	}
+
+	// Audit-only; the panel resets without waiting on the write.
+	function discard(interactionId: number | null) {
+		if (interactionId !== null) void discardDecPage(interactionId);
+		setPhase({ step: "idle" });
 	}
 
 	return (
@@ -166,14 +183,14 @@ export function DecPageParse({ model }: { model: string }) {
 						<button
 							type="button"
 							disabled={pending}
-							onClick={apply}
+							onClick={() => apply(phase.result.interactionId ?? null)}
 							className="rounded-lg bg-violet-600 px-3 py-1.5 text-sm font-medium text-white disabled:opacity-50"
 						>
 							{pending ? "Saving…" : "Apply to coverage"}
 						</button>
 						<button
 							type="button"
-							onClick={() => setPhase({ step: "idle" })}
+							onClick={() => discard(phase.result.interactionId ?? null)}
 							className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm"
 						>
 							Discard

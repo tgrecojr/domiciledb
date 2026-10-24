@@ -12,6 +12,7 @@ const TRAVERSAL_PAYLOADS = [
 	"/api/media/%2e%2e/%2e%2e/%2e%2e/etc/passwd",
 ];
 
+// @spec PLATFORM-MEDIA-009
 test("media route serves stored files with anti-sniffing headers", async ({
 	page,
 }) => {
@@ -32,6 +33,7 @@ test("media route serves stored files with anti-sniffing headers", async ({
 	expect(res.headers()["x-content-type-options"]).toBe("nosniff");
 });
 
+// @spec PLATFORM-MEDIA-007, PLATFORM-MEDIA-008
 test("media route refuses path-traversal and never leaks host files", async ({
 	page,
 }) => {
@@ -45,6 +47,7 @@ test("media route refuses path-traversal and never leaks host files", async ({
 	}
 });
 
+// @spec PLATFORM-MEDIA-007, PLATFORM-MEDIA-008
 test("media route rejects a NUL-byte path", async ({ page }) => {
 	const res = await page.request.get("/api/media/items%2f1%2fa%00.webp", {
 		maxRedirects: 0,

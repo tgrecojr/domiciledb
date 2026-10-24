@@ -6,6 +6,7 @@
  * NOTE: with a `src/` directory, Next requires this file at `src/instrumentation.ts`
  * (a root-level instrumentation.ts is ignored).
  */
+// @spec PLATFORM-BOOT-001
 export async function register() {
 	if (process.env.NEXT_RUNTIME !== "nodejs") return;
 

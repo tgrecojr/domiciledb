@@ -45,6 +45,7 @@ const paidCallLimiter = createRateLimiter(
 	60 * 60 * 1000,
 );
 
+// @spec ENRICH-AI-005, ENRICH-AI-006, ENRICH-AI-007, ENRICH-AI-008, ENRICH-AI-016, ENRICH-AI-017
 export async function runTask(
 	taskKey: AiTaskKey,
 	input: { imagesBase64Jpeg?: string[] },

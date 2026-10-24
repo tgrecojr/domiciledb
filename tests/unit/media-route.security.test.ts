@@ -45,6 +45,7 @@ function directives(cacheControl: string | null): string[] {
 }
 
 describe("VULN-023 media cache policy", () => {
+	// @spec PLATFORM-MEDIA-009
 	it.each(FILES.map((f) => f.parts))(
 		"serves /api/media/%s/%s with a private, non-persistent policy",
 		async (...parts: string[]) => {
@@ -102,6 +103,7 @@ describe("GET /api/media/* memory bounds (VULN-009)", () => {
 		readFileSpy.mockClear();
 	});
 
+	// @spec PLATFORM-MEDIA-008
 	it("streams the file instead of buffering it into the heap", async () => {
 		const { dataDir } = makeMedia(64 * 1024);
 		const res = await get(dataDir);
@@ -112,6 +114,7 @@ describe("GET /api/media/* memory bounds (VULN-009)", () => {
 		fs.rmSync(dataDir, { recursive: true, force: true });
 	});
 
+	// @spec PLATFORM-MEDIA-008
 	it("refuses a file larger than the serve cap", async () => {
 		const { dataDir } = makeMedia(3 * 1024 * 1024);
 		vi.stubEnv("MEDIA_MAX_SERVE_MB", "1");

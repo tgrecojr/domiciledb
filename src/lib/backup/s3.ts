@@ -14,6 +14,7 @@ import { config } from "@/lib/config";
  * Cloudflare R2, RustFS) — a custom endpoint enables path-style addressing.
  */
 
+// @spec RESILIENCE-BACKUP-012
 function makeClient(): S3Client {
 	const hasEndpoint = config.backup.endpoint.length > 0;
 	return new S3Client({
@@ -46,6 +47,7 @@ export async function putObject(
 }
 
 /** All object keys under a prefix (handles pagination). */
+// @spec RESILIENCE-BACKUP-012
 export async function listKeys(prefix: string): Promise<Set<string>> {
 	const client = makeClient();
 	const keys = new Set<string>();

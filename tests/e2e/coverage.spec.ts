@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { captureDraft, ensureOnboarded, withAutoSave } from "./helpers";
 
+// @spec COVERAGE-POLICY-004, COVERAGE-POLICY-006, COVERAGE-UI-002, COVERAGE-UI-006
 test("set Coverage B, value an item over the limit → contextual alert + red dashboard widget", async ({
 	page,
 }) => {
@@ -33,6 +34,7 @@ test("set Coverage B, value an item over the limit → contextual alert + red da
 	await expect(page.getByText("Over your limit")).toBeVisible();
 });
 
+// @spec COVERAGE-UI-002, COVERAGE-CALC-007
 test("approaching the limit shows the amber status", async ({ page }) => {
 	await ensureOnboarded(page);
 

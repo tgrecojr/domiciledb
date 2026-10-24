@@ -4,20 +4,24 @@ import { Camera } from "lucide-react";
 import { useRef, useState } from "react";
 import { useFormStatus } from "react-dom";
 
-import { captureItemAction } from "@/lib/actions/items";
+import { captureItemAction } from "@/lib/actions/capture";
 
 const inputClass =
 	"w-full rounded-lg border border-neutral-300 bg-white px-3 py-2 text-base " +
 	"outline-hidden focus:border-neutral-500 focus:ring-2 focus:ring-neutral-200";
 
+// @spec CAPTURE-UI-001, CAPTURE-UI-002, CAPTURE-UI-003, CAPTURE-UI-004
 export function CaptureForm({
 	locations,
 	justSaved,
 	emptyError,
+	dropped,
 }: {
 	locations: { id: number; name: string }[];
 	justSaved: boolean;
 	emptyError: boolean;
+	/** Photos from the last capture that were not saved (size, type, quota). */
+	dropped: number;
 }) {
 	const [previews, setPreviews] = useState<string[]>([]);
 	const fileRef = useRef<HTMLInputElement>(null);
@@ -32,6 +36,13 @@ export function CaptureForm({
 			{justSaved ? (
 				<p className="bg-coverage-within/10 text-coverage-within rounded-lg px-3 py-2 text-sm">
 					Saved ✓ — capture the next item, or finish details later.
+				</p>
+			) : null}
+			{dropped > 0 ? (
+				<p className="bg-coverage-approaching/10 text-coverage-approaching rounded-lg px-3 py-2 text-sm">
+					{dropped} photo{dropped === 1 ? "" : "s"} could not be saved (too
+					large, an unsupported type, or storage full). Take{" "}
+					{dropped === 1 ? "it" : "them"} again on the item.
 				</p>
 			) : null}
 			{emptyError ? (

@@ -20,6 +20,7 @@ beforeAll(async () => {
 });
 
 describe("processAndStoreImage", () => {
+	// @spec PLATFORM-MEDIA-001
 	it("writes original + web(<=1024) + thumb(320) variants and reports dimensions", async () => {
 		const source = await sharp({
 			create: {

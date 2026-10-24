@@ -13,6 +13,7 @@ export interface CoverageSummary extends CoverageResult {
 	warnPct: number;
 }
 
+// @spec COVERAGE-CALC-010
 /** Live coverage status for the household dashboard + contextual alerts. */
 export function getCoverageSummary(householdId: number): CoverageSummary {
 	const policy = getPolicy(householdId);

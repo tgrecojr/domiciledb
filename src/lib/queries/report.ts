@@ -1,6 +1,6 @@
 import "server-only";
 
-import { and, eq, inArray } from "drizzle-orm";
+import { and, asc, eq, inArray } from "drizzle-orm";
 
 import { db } from "@/db";
 import {
@@ -40,6 +40,7 @@ function groupBy<T, K>(rows: T[], key: (r: T) => K): Map<K, T[]> {
 	return map;
 }
 
+// @spec PACKET-DATA-008, PACKET-DATA-009, PACKET-DATA-010, PACKET-DATA-011
 export function getReportPacket(
 	householdId: number,
 	filter: ReportFilter = {},
@@ -84,6 +85,9 @@ export function getReportPacket(
 					})
 					.from(photo)
 					.where(inArray(photo.itemId, itemIds))
+					// Same order as the item page, so the packet's first photos are
+					// the ones the owner sees first.
+					.orderBy(asc(photo.sortOrder), asc(photo.id))
 					.all()
 			: [],
 		(p) => p.itemId,
@@ -95,6 +99,7 @@ export function getReportPacket(
 						itemId: document.itemId,
 						kind: document.kind,
 						filename: document.filename,
+						path: document.path,
 					})
 					.from(document)
 					.where(inArray(document.itemId, itemIds))

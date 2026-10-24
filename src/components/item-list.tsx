@@ -3,6 +3,7 @@ import Link from "next/link";
 import { mediaUrl } from "@/lib/media";
 import type { ItemListRow } from "@/lib/queries/items";
 
+// @spec ENRICH-LIST-004
 export function ItemList({
 	items,
 	locationNames,

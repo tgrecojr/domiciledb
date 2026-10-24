@@ -19,17 +19,29 @@ const ZIP_LEVEL = 6;
 // auth in front of it.
 const exportGate = createSingleFlightGate(config.export.minIntervalMs);
 
+// The export is a plain link from /resilience, so a throttled request lands the
+// browser on this response: make it a page that says when to come back.
+// @spec RESILIENCE-EXPORT-004
 function tooMany(retryAfterSec: number) {
-	return new Response("An export is already running or ran very recently.", {
+	const html =
+		'<!doctype html><meta charset="utf-8"><title>Export busy</title>' +
+		'<main style="font-family:system-ui;max-width:32rem;margin:3rem auto;padding:0 1rem">' +
+		'<h1 style="font-size:1.25rem">Export busy</h1>' +
+		"<p>An export is already running or ran very recently. " +
+		`Try again in ${retryAfterSec} second${retryAfterSec === 1 ? "" : "s"}.</p>` +
+		'<p><a href="/resilience">Back to Backup &amp; export</a></p></main>';
+	return new Response(html, {
 		status: 429,
 		headers: {
 			"Retry-After": String(retryAfterSec),
 			"Cache-Control": "no-store",
+			"Content-Type": "text/html; charset=utf-8",
 		},
 	});
 }
 
 /** Full export: a ZIP of a consistent db snapshot + all media (photos + docs). */
+// @spec RESILIENCE-EXPORT-001, RESILIENCE-EXPORT-002, RESILIENCE-EXPORT-003
 export async function GET() {
 	// Claim before the first await, or concurrent requests both pass the check.
 	const admission = exportGate.tryEnter();

@@ -8,6 +8,7 @@ import type { StoredImage } from "@/lib/media";
 
 export type PhotoKind = (typeof PHOTO_KINDS)[number];
 
+// @spec CAPTURE-FLOW-007
 export function addPhoto(itemId: number, stored: StoredImage, kind: PhotoKind) {
 	const rows = db
 		.insert(photo)
@@ -26,6 +27,7 @@ export function addPhoto(itemId: number, stored: StoredImage, kind: PhotoKind) {
 	return rows[0]!;
 }
 
+// @spec ENRICH-PHOTO-004
 export function listPhotos(itemId: number) {
 	return db
 		.select()
@@ -36,6 +38,7 @@ export function listPhotos(itemId: number) {
 }
 
 /** First photo (thumb) per item, for list views. Keyed by itemId. */
+// @spec ENRICH-PHOTO-004, ENRICH-LIST-004
 export function firstThumbByItem(itemIds: number[]) {
 	if (itemIds.length === 0) return new Map<number, string>();
 	const rows = db

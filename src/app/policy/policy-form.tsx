@@ -50,6 +50,7 @@ function MoneyField({
 	);
 }
 
+// @spec COVERAGE-POLICY-003, COVERAGE-UI-004
 export function PolicyForm({ initial }: { initial: Initial }) {
 	const [state, formAction, pending] = useActionState<
 		PolicyFormState,

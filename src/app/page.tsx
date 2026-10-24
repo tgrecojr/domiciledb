@@ -2,6 +2,7 @@ import {
 	ClipboardList,
 	DatabaseBackup,
 	FileText,
+	Home,
 	MapPin,
 	Package,
 	ShieldCheck,
@@ -20,6 +21,7 @@ import { OnboardingForm } from "./onboarding-form";
 // build time (the db/tables only exist after migrations run on boot).
 export const dynamic = "force-dynamic";
 
+// @spec PLATFORM-PWA-003, HOUSEHOLD-HH-001
 export default async function HomePage() {
 	const household = await getHousehold();
 
@@ -47,6 +49,7 @@ export default async function HomePage() {
 		<AppShell title={household.name}>
 			<div className="flex flex-col gap-6">
 				{/* Ambient coverage status — glanceable, never demanding. */}
+				{/* @spec COVERAGE-UI-001, COVERAGE-UI-005 */}
 				<CoverageWidget summary={coverage} />
 
 				{items.length === 0 ? (
@@ -84,6 +87,7 @@ export default async function HomePage() {
 						label="Locations"
 						badge={locations.length}
 					/>
+					<Tile href="/household" icon={Home} label="Household" />
 					<Tile href="/policy" icon={ShieldCheck} label="Insurance coverage" />
 					<Tile href="/report" icon={FileText} label="Proof packet (PDF)" />
 					<Tile

@@ -11,6 +11,7 @@ import { LocationPhotoGrid } from "./location-photo-grid";
 
 export const dynamic = "force-dynamic";
 
+// @spec HOUSEHOLD-LOC-004, HOUSEHOLD-PHOTO-004
 export default async function LocationEditPage({
 	params,
 }: {

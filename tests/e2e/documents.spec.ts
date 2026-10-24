@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { captureDraft, ensureOnboarded, sampleJpeg } from "./helpers";
 
+// @spec ENRICH-DOC-001, ENRICH-DOC-002, ENRICH-DOC-005
 test("attach a receipt to an item and see it listed", async ({ page }) => {
 	await ensureOnboarded(page);
 

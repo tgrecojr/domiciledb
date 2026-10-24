@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+// @spec PLATFORM-PWA-004
 export default function manifest(): MetadataRoute.Manifest {
 	return {
 		name: "DomicileDB",

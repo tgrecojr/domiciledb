@@ -24,6 +24,7 @@ function file(bytes: Uint8Array, type: string): File {
 	return new File([ab], "upload.png", { type });
 }
 
+// @spec PLATFORM-MEDIA-002
 describe("detectFileType (VULN-012 content sniffing)", () => {
 	it("recognizes allowed and disallowed formats by magic bytes", () => {
 		expect(detectFileType(Buffer.from(PNG))).toBe("png");
@@ -35,6 +36,7 @@ describe("detectFileType (VULN-012 content sniffing)", () => {
 	});
 });
 
+// @spec PLATFORM-MEDIA-002
 describe("sniffImageMime / sniffDocumentMime allowlists (VULN-012)", () => {
 	it("admits only the explicit image decoder allowlist", () => {
 		expect(sniffImageMime(Buffer.from(PNG))).toBe("image/png");
@@ -56,6 +58,7 @@ describe("sniffImageMime / sniffDocumentMime allowlists (VULN-012)", () => {
 });
 
 describe("storePhotoFiles admission on sniffed content (VULN-012)", () => {
+	// @spec CAPTURE-ADM-004, CAPTURE-ADM-005
 	it("rejects GIF/SVG bytes even when the client MIME claims image/png", async () => {
 		const store = vi.fn(async () => {});
 		const stored = await storePhotoFiles(
@@ -67,6 +70,7 @@ describe("storePhotoFiles admission on sniffed content (VULN-012)", () => {
 		expect(store).not.toHaveBeenCalled();
 	});
 
+	// @spec CAPTURE-ADM-006
 	it("admits real image bytes and hands the store the sniffed MIME", async () => {
 		const seen: string[] = [];
 		const stored = await storePhotoFiles(

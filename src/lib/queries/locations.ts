@@ -39,12 +39,18 @@ export function updateLocation(
 	db.update(location).set(fields).where(eq(location.id, id)).run();
 }
 
+// @spec HOUSEHOLD-LOC-005
 /** Items reference location with onDelete:set null, so deletion is safe. */
 export function deleteLocation(id: number) {
 	db.delete(location).where(eq(location.id, id)).run();
 }
 
-/** Count of active items per location, for the locations overview. */
+// @spec HOUSEHOLD-LOC-007
+/**
+ * Count of items per location for the locations overview — every item recorded
+ * there, regardless of lifecycle status (the list answers "what is in this
+ * room"; coverage and the packet apply the active filter where value matters).
+ */
 export function locationItemCounts(householdId: number) {
 	const rows = db
 		.select({ locationId: item.locationId, id: item.id })

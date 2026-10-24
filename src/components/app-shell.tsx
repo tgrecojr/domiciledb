@@ -6,6 +6,7 @@ import { BottomNav } from "./bottom-nav";
  * Mobile-first shell: a sticky title bar, a scrollable content area, and the
  * bottom navigation. Used by every main app page (capture/items/worklist/etc.).
  */
+// @spec PLATFORM-PWA-001, PLATFORM-PWA-008 (gap)
 export function AppShell({
 	title,
 	back,

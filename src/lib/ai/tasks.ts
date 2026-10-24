@@ -44,6 +44,7 @@ export const TASK_SCHEMAS = {
 		replacementCostUsd: nullableNum,
 		rationale: nullableStr,
 	}),
+	// @spec COVERAGE-DECPAGE-004
 	parse_decpage: z.object({
 		coverageBUsd: nullableNum,
 		coverageAUsd: nullableNum,
@@ -63,6 +64,7 @@ export interface AiTaskDef {
 	needsPhoto: boolean;
 }
 
+// @spec ENRICH-AI-002, ENRICH-AI-015
 export const TASKS: Record<AiTaskKey, AiTaskDef> = {
 	identify: {
 		key: "identify",
@@ -126,6 +128,7 @@ export const TASKS: Record<AiTaskKey, AiTaskDef> = {
  * "toString"/"constructor"/"__proto__" — bypassing the needsPhoto gate and
  * crashing at TASK_SCHEMAS[k].safeParse).
  */
+// @spec ENRICH-AI-019
 export function isTaskKey(v: string): v is AiTaskKey {
 	return Object.hasOwn(TASKS, v);
 }
@@ -137,6 +140,7 @@ export interface ParseResult<T> {
 }
 
 /** Extract the first JSON object from model text and validate it against the task schema. */
+// @spec ENRICH-AI-008
 export function parseTaskResponse(
 	taskKey: AiTaskKey,
 	rawText: string,

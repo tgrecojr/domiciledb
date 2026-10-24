@@ -4,6 +4,7 @@
  * conversion happens, so the rounding rule lives in one tested spot.
  */
 
+// @spec COVERAGE-MONEY-001, COVERAGE-MONEY-002, COVERAGE-MONEY-004
 /**
  * Parse a user-entered dollar string into integer cents.
  * Accepts "$1,234.56", "1234.5", "1,000", " 12 ". Returns null for empty or
@@ -40,11 +41,13 @@ const USD_WHOLE = new Intl.NumberFormat("en-US", {
 	maximumFractionDigits: 0,
 });
 
+// @spec COVERAGE-MONEY-003
 /** Format integer cents as "$1,234.56". */
 export function formatCents(cents: number): string {
 	return USD.format(cents / 100);
 }
 
+// @spec COVERAGE-MONEY-003
 /** Format integer cents with no decimals, e.g. "$1,235" — for summaries. */
 export function formatCentsWhole(cents: number): string {
 	return USD_WHOLE.format(cents / 100);

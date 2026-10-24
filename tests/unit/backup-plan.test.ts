@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { keyForPath, mediaToUpload } from "@/lib/backup/plan";
 
+// @spec RESILIENCE-BACKUP-006
 describe("mediaToUpload", () => {
 	it("returns only keys not already present in S3", () => {
 		const local = ["media/items/1/a.jpg", "media/items/1/b.jpg"];
@@ -20,6 +21,7 @@ describe("mediaToUpload", () => {
 	});
 });
 
+// @spec RESILIENCE-BACKUP-006
 describe("keyForPath", () => {
 	it("maps an absolute path under dataDir to a posix-relative key", () => {
 		expect(keyForPath("/data/media/items/1/a.jpg", "/data")).toBe(

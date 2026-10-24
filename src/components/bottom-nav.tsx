@@ -33,6 +33,7 @@ function isActive(pathname: string, href: string, exact: boolean) {
 	return exact ? pathname === href : pathname.startsWith(href);
 }
 
+// @spec PLATFORM-PWA-001, PLATFORM-PWA-002, COVERAGE-UI-005
 export function BottomNav() {
 	const pathname = usePathname();
 

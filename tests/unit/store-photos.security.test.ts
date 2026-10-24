@@ -53,6 +53,7 @@ async function load() {
 
 afterEach(() => vi.restoreAllMocks());
 
+// @spec CAPTURE-ADM-009
 describe("storePhotoFiles log sanitization (VULN-016)", () => {
 	it("strips CR/LF and control chars from the filename before logging", async () => {
 		const spy = vi.spyOn(console, "error").mockImplementation(() => {});
@@ -91,6 +92,7 @@ describe("storePhotoFiles resource caps (VULN-008)", () => {
 		vi.resetModules();
 	});
 
+	// @spec CAPTURE-ADM-001
 	it("stores at most the per-request file-count cap", async () => {
 		const storePhotoFiles = await load();
 		// Same fresh module registry as the store-photos import, so this is the
@@ -106,6 +108,7 @@ describe("storePhotoFiles resource caps (VULN-008)", () => {
 		expect(stored).toBeGreaterThan(0);
 	});
 
+	// @spec CAPTURE-ADM-003
 	it("rejects a file larger than the per-file byte cap without reading it", async () => {
 		const storePhotoFiles = await load();
 		const huge = fakeFile(2 * 1024 * 1024 * 1024, "huge.png");
@@ -117,6 +120,7 @@ describe("storePhotoFiles resource caps (VULN-008)", () => {
 		expect(read).not.toHaveBeenCalled();
 	});
 
+	// @spec CAPTURE-ADM-007
 	it("stores nothing once the DATA_DIR media quota is exhausted", async () => {
 		vi.stubEnv("MEDIA_MAX_TOTAL_MB", "0");
 		const storePhotoFiles = await load();
@@ -130,6 +134,7 @@ describe("storePhotoFiles resource caps (VULN-008)", () => {
 });
 
 describe("storePhotoFiles content-sniffed admission (VULN-012)", () => {
+	// @spec CAPTURE-ADM-004, CAPTURE-ADM-005
 	it("rejects bytes that are not an allowlisted image, whatever File.type says", async () => {
 		const svg = new File(
 			['<svg xmlns="http://www.w3.org/2000/svg"><rect/></svg>'],
@@ -142,6 +147,7 @@ describe("storePhotoFiles content-sniffed admission (VULN-012)", () => {
 		expect(store).not.toHaveBeenCalled();
 	});
 
+	// @spec CAPTURE-ADM-006
 	it("hands the store callback the sniffed MIME, not the claimed one", async () => {
 		const mislabelled = new File([PNG], "photo.jpg", { type: "image/jpeg" });
 		const store = vi.fn(async () => {});

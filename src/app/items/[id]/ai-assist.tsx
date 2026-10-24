@@ -8,6 +8,7 @@ import {
 	type AiSuggestResult,
 	aiSuggestForItem,
 	applyItemSuggestion,
+	discardSuggestion,
 } from "@/lib/actions/ai";
 import { AI_MAX_PHOTOS, buildManifest } from "@/lib/ai/manifest";
 import { type AiTaskKey, TASKS } from "@/lib/ai/tasks";
@@ -82,6 +83,7 @@ type Phase =
 	| { step: "review"; task: AiTaskKey; result: AiSuggestResult }
 	| { step: "error"; message: string };
 
+// @spec ENRICH-AI-002, ENRICH-AI-003, ENRICH-AI-004, ENRICH-AI-010, ENRICH-AI-013
 export function AiAssist({
 	itemId,
 	photoCount,
@@ -95,6 +97,8 @@ export function AiAssist({
 	const photosSent = Math.min(photoCount, AI_MAX_PHOTOS);
 	const [phase, setPhase] = useState<Phase>({ step: "idle" });
 	const [values, setValues] = useState<Record<string, string>>({});
+	// What the model returned, so Apply can report whether the user edited it.
+	const [original, setOriginal] = useState<Record<string, string>>({});
 	const [pending, startTransition] = useTransition();
 	const router = useRouter();
 
@@ -109,13 +113,23 @@ export function AiAssist({
 			return;
 		}
 		const fields = reviewFields(task, result.suggestion);
-		setValues(Object.fromEntries(fields.map((f) => [f.name, f.value])));
+		const init = Object.fromEntries(fields.map((f) => [f.name, f.value]));
+		setValues(init);
+		setOriginal(init);
 		setPhase({ step: "review", task, result });
 	}
 
 	function apply(interactionId: number | null) {
+		const edited = Object.keys(values).some(
+			(k) => values[k] !== (original[k] ?? ""),
+		);
 		startTransition(async () => {
-			const res = await applyItemSuggestion(itemId, interactionId, values);
+			const res = await applyItemSuggestion(
+				itemId,
+				interactionId,
+				values,
+				edited,
+			);
 			if (res.ok) {
 				setPhase({ step: "idle" });
 				router.refresh();
@@ -123,6 +137,12 @@ export function AiAssist({
 				setPhase({ step: "error", message: res.error ?? "Could not apply." });
 			}
 		});
+	}
+
+	// Audit-only; the panel resets without waiting on the write.
+	function discard(interactionId: number | null) {
+		if (interactionId !== null) void discardSuggestion(itemId, interactionId);
+		setPhase({ step: "idle" });
 	}
 
 	return (
@@ -234,7 +254,7 @@ export function AiAssist({
 						</button>
 						<button
 							type="button"
-							onClick={() => setPhase({ step: "idle" })}
+							onClick={() => discard(phase.result.interactionId ?? null)}
 							className="rounded-lg border border-neutral-300 px-3 py-1.5 text-sm"
 						>
 							Discard

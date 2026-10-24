@@ -37,6 +37,7 @@ describe("findOrCreateCategory bounds (VULN-019)", () => {
 		}
 	});
 
+	// @spec ENRICH-CAT-004
 	it("stops creating categories once the distinct-category cap is reached", async () => {
 		const { findOrCreateCategory, count } = await freshDb("10");
 		const ids: (number | null)[] = [];
@@ -47,6 +48,7 @@ describe("findOrCreateCategory bounds (VULN-019)", () => {
 		expect(ids.filter((id) => id === null).length).toBe(190);
 	});
 
+	// @spec ENRICH-CAT-003
 	it("still resolves an existing category case-insensitively", async () => {
 		const { findOrCreateCategory, count } = await freshDb("10");
 		const first = findOrCreateCategory("Electronics");

@@ -30,6 +30,7 @@ beforeAll(async () => {
 		.all()[0]!.id;
 });
 
+// @spec COVERAGE-POLICY-001
 describe("policy uniqueness invariant (VULN-022)", () => {
 	it("rejects a second policy row for the same household", () => {
 		const ins = sqlite.prepare(

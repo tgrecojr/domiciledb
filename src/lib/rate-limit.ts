@@ -17,6 +17,7 @@ export interface RateLimiter {
 	take(): RateDecision;
 }
 
+// @spec ENRICH-AI-007
 export function createRateLimiter(
 	limit: number,
 	windowMs: number,

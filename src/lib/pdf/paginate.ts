@@ -14,6 +14,7 @@ export interface PageChunk {
 	continued: boolean;
 }
 
+// @spec PACKET-PDF-004
 export function paginateRooms(rooms: ReportRoom[]): PageChunk[] {
 	const chunks: PageChunk[] = [];
 	for (const room of rooms) {

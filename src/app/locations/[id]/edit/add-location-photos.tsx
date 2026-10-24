@@ -5,6 +5,7 @@ import { useRef } from "react";
 
 import { addLocationPhotosAction } from "@/lib/actions/locations";
 
+// @spec HOUSEHOLD-PHOTO-001
 export function AddLocationPhotos({ locationId }: { locationId: number }) {
 	const formRef = useRef<HTMLFormElement>(null);
 

@@ -58,7 +58,15 @@ function Spec({ label, value }: { label: string; value: string | null }) {
 	);
 }
 
-function ItemBlock({ item, images }: { item: ReportItem; images: PdfImage[] }) {
+function ItemBlock({
+	item,
+	images,
+	receipts,
+}: {
+	item: ReportItem;
+	images: PdfImage[];
+	receipts: PdfImage[];
+}) {
 	const agg = itemAggregateCents(item);
 	const perItem =
 		item.replacementCostCents !== null
@@ -106,9 +114,21 @@ function ItemBlock({ item, images }: { item: ReportItem; images: PdfImage[] }) {
 				</View>
 			) : null}
 
+			{receipts.length > 0 ? (
+				<View style={{ marginTop: 6 }}>
+					<Text style={styles.specLabel}>Receipts</Text>
+					<View style={[styles.photoRow, { marginTop: 2 }]}>
+						{receipts.map((img) => (
+							<Image key={img.relPath} src={img.src} style={styles.receipt} />
+						))}
+					</View>
+				</View>
+			) : null}
+
 			{item.documents.length > 0 ? (
 				<Text style={[styles.faint, { marginTop: 4 }]}>
-					Attached: {item.documents.map((d) => d.kind).join(", ")}
+					Attached:{" "}
+					{item.documents.map((d) => `${d.kind} (${d.filename})`).join(", ")}
 				</Text>
 			) : null}
 		</View>
@@ -141,14 +161,17 @@ function CoverageLine({ coverage }: { coverage: ReportPacket["coverage"] }) {
 	);
 }
 
+// @spec PACKET-PDF-001, PACKET-PDF-002, PACKET-PDF-003, PACKET-PDF-004, PACKET-PDF-005, PACKET-PDF-006, PACKET-PDF-008, PACKET-PDF-009, PACKET-PDF-010, PACKET-PDF-012, PACKET-PDF-011
 export function ProofPacketDocument({
 	packet,
 	imagesByItem,
 	imagesByRoom,
+	receiptsByItem,
 }: {
 	packet: ReportPacket;
 	imagesByItem: ImageMap;
 	imagesByRoom: ImageMap;
+	receiptsByItem: ImageMap;
 }) {
 	const chunks = paginateRooms(packet.rooms);
 	return (
@@ -250,6 +273,7 @@ export function ProofPacketDocument({
 									key={it.id}
 									item={it}
 									images={imagesByItem.get(it.id) ?? []}
+									receipts={receiptsByItem.get(it.id) ?? []}
 								/>
 							))}
 							<Footer />

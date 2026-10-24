@@ -26,6 +26,7 @@ beforeAll(async () => {
 	target = config.paths.backupSnapshot;
 });
 
+// @spec RESILIENCE-BACKUP-004
 describe("createSnapshot atomicity (VULN-001)", () => {
 	it("leaves a complete snapshot readable throughout a re-snapshot", () => {
 		// Establish an initial complete snapshot at the canonical path.

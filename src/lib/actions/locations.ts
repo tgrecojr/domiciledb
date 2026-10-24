@@ -36,6 +36,7 @@ const editSchema = schema.extend({
 
 export type LocationFormState = { error?: string; saved?: boolean } | null;
 
+// @spec HOUSEHOLD-LOC-003
 export async function createLocationAction(
 	_prev: LocationFormState,
 	formData: FormData,
@@ -56,6 +57,7 @@ export async function createLocationAction(
 	return null;
 }
 
+// @spec HOUSEHOLD-LOC-005, HOUSEHOLD-LOC-008
 export async function deleteLocationAction(formData: FormData) {
 	const householdId = await getHouseholdId();
 	const id = Number(formData.get("id"));
@@ -70,6 +72,7 @@ export async function deleteLocationAction(formData: FormData) {
 	redirect("/locations");
 }
 
+// @spec HOUSEHOLD-LOC-004, HOUSEHOLD-LOC-008
 /** Edit a location's name / kind / description. */
 export async function updateLocationAction(
 	_prev: LocationFormState,
@@ -106,6 +109,7 @@ export async function updateLocationAction(
 	return { saved: true };
 }
 
+// @spec HOUSEHOLD-PHOTO-001, HOUSEHOLD-LOC-008, CAPTURE-ADM-001
 /** Upload one or more wider room/area photos to a location. */
 export async function addLocationPhotosAction(formData: FormData) {
 	const householdId = await getHouseholdId();
@@ -125,6 +129,7 @@ export async function addLocationPhotosAction(formData: FormData) {
 	redirect(`/locations/${id}/edit`);
 }
 
+// @spec HOUSEHOLD-PHOTO-003, HOUSEHOLD-LOC-008
 /** Remove a single location photo (row + its on-disk variant files). */
 export async function deleteLocationPhotoAction(formData: FormData) {
 	const householdId = await getHouseholdId();

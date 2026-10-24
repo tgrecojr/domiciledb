@@ -6,6 +6,7 @@ import { type AiTaskKey, TASKS } from "./tasks";
  * the cap bounds token cost and latency for items with many photos. Lives here
  * (client-safe) so both the server action and the consent UI share one value.
  */
+// @spec ENRICH-AI-006
 export const AI_MAX_PHOTOS = 6;
 
 /**
@@ -23,6 +24,7 @@ export interface AiManifest {
 	imageNote: string | null;
 }
 
+// @spec ENRICH-AI-003
 export function buildManifest(
 	taskKey: AiTaskKey,
 	opts: { model: string; hasImage: boolean; imageNote?: string | null },

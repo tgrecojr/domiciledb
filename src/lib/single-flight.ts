@@ -27,6 +27,7 @@ export interface SingleFlightGate {
 	readonly inFlight: boolean;
 }
 
+// @spec RESILIENCE-EXPORT-002
 export function createSingleFlightGate(
 	minIntervalMs: number,
 	now: () => number = Date.now,
@@ -72,6 +73,7 @@ export function createSingleFlightGate(
  * flight instead of starting another. Used where a second concurrent run would
  * duplicate remote work (S3 PUT/LIST + egress) and race on shared files.
  */
+// @spec RESILIENCE-BACKUP-008
 export function singleFlight<A extends unknown[], T>(
 	fn: (...args: A) => Promise<T>,
 ): (...args: A) => Promise<T> {

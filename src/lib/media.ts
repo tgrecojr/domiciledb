@@ -39,6 +39,7 @@ export interface StoredImage {
 }
 
 /** Public URL for a stored (DATA_DIR-relative) media path. */
+// @spec PLATFORM-MEDIA-011
 export function mediaUrl(relativePath: string): string {
 	return `/api/${relativePath}`;
 }
@@ -57,6 +58,7 @@ function extFromMime(mime: string): string {
  * the prefix check defeats the sibling-prefix bypass (e.g. `media-evil`). This
  * guard is LEXICAL — the route adds a realpath re-check for symlinks.
  */
+// @spec PLATFORM-MEDIA-007
 export function resolveMediaPath(relativeUnderMedia: string): string | null {
 	if (typeof relativeUnderMedia !== "string") return null;
 	// Reject NUL bytes outright (would otherwise truncate the path at the C layer).
@@ -101,12 +103,14 @@ export async function mediaUsageBytes(
  * Bytes still allowed under the media quota. Shared by every upload path so a
  * single request (or a flood of them) can't fill the operator's volume.
  */
+// @spec PLATFORM-MEDIA-004
 export async function remainingMediaQuotaBytes(): Promise<number> {
 	const used = await mediaUsageBytes();
 	return Math.max(0, config.uploads.maxMediaTotalBytes - used);
 }
 
 /** Whether an absolute path is the media root or strictly inside it. */
+// @spec PLATFORM-MEDIA-007
 export function isInsideMediaRoot(abs: string): boolean {
 	const root = path.resolve(config.paths.mediaDir);
 	return abs === root || abs.startsWith(root + path.sep);
@@ -119,6 +123,7 @@ export function isInsideMediaRoot(abs: string): boolean {
  * address alone can't (the recorded digest is otherwise never re-verified).
  * Returns false on any escape/miss/mismatch.
  */
+// @spec PLATFORM-MEDIA-005
 export async function verifyStoredContent(
 	dataDirRelativePath: string,
 	expectedSha256: string,
@@ -142,6 +147,7 @@ export async function verifyStoredContent(
  * Remove an item's on-disk media (photos + documents). The DB cascades delete
  * the rows, but the files live on the filesystem and must be removed too.
  */
+// @spec PLATFORM-MEDIA-006
 export async function deleteItemMedia(itemId: number): Promise<void> {
 	const dirs = [
 		path.join(config.paths.dataDir, "media", "items", String(itemId)),
@@ -168,6 +174,7 @@ export async function deleteItemMedia(itemId: number): Promise<void> {
  * unreferencedLocationPhotoPaths): only pass paths no other row references, so
  * deleting one photo can't destroy a still-referenced duplicate.
  */
+// @spec PLATFORM-MEDIA-006
 export async function deleteStoredImageFiles(
 	relativePaths: string[],
 ): Promise<void> {
@@ -193,6 +200,7 @@ export async function deleteStoredFile(dataDirRelPath: string): Promise<void> {
 }
 
 /** Remove a location's on-disk photos. The DB cascades the rows; files don't. */
+// @spec PLATFORM-MEDIA-006
 export async function deleteLocationMedia(locationId: number): Promise<void> {
 	const dir = path.join(
 		config.paths.dataDir,
@@ -207,6 +215,7 @@ export async function deleteLocationMedia(locationId: number): Promise<void> {
  * Process + store an image into a DATA_DIR-relative subdir (e.g.
  * "media/items/1" or "media/locations/3"), producing the three variants.
  */
+// @spec PLATFORM-MEDIA-001, PLATFORM-MEDIA-002, PLATFORM-MEDIA-003, PLATFORM-MEDIA-012 (gap)
 export async function processAndStoreImageInDir(
 	relDir: string,
 	buffer: Buffer,

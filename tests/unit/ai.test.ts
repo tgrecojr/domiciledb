@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { AI_MAX_PHOTOS, buildManifest } from "@/lib/ai/manifest";
 import { isTaskKey, parseTaskResponse, TASKS } from "@/lib/ai/tasks";
 
+// @spec ENRICH-AI-003
 describe("buildManifest", () => {
 	it("reflects the literal prompt + model and that an image will be sent", () => {
 		const m = buildManifest("identify", {
@@ -22,6 +23,7 @@ describe("buildManifest", () => {
 	});
 });
 
+// @spec ENRICH-AI-008
 describe("parseTaskResponse", () => {
 	it("parses a clean JSON object", () => {
 		const r = parseTaskResponse(
@@ -81,6 +83,7 @@ describe("parseTaskResponse", () => {
 	});
 });
 
+// @spec ENRICH-AI-019
 describe("isTaskKey own-property guard (VULN-013)", () => {
 	it("rejects prototype-chain keys the `in` operator would admit", () => {
 		// `v in TASKS` walks the prototype chain, so these would pass and then
@@ -97,6 +100,7 @@ describe("isTaskKey own-property guard (VULN-013)", () => {
 	});
 });
 
+// @spec ENRICH-AI-001
 describe("config.ai gating (opt-in)", () => {
 	afterEach(() => {
 		vi.unstubAllEnvs();
@@ -148,6 +152,7 @@ describe("AI spend caps (VULN-003)", () => {
 		vi.resetModules();
 	});
 
+	// @spec ENRICH-AI-007
 	it("rate limits the paid provider call instead of billing every request", async () => {
 		// Pin the ceiling to a small deterministic value via the real env knob so
 		// the assertion targets the EXACT configured bound, not just "fewer than
@@ -172,6 +177,7 @@ describe("AI spend caps (VULN-003)", () => {
 		expect(refused).toBeGreaterThan(0);
 	});
 
+	// @spec ENRICH-AI-006
 	it("refuses more images than the manifest cap, before any paid call", async () => {
 		const runTask = await loadRunTask();
 		const images = Array.from({ length: AI_MAX_PHOTOS + 10 }, () => "AAAA");

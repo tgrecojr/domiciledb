@@ -31,10 +31,10 @@ DomicileDB is a single-user, self-hosted app with **no login** (per spec §1/§3
 map of everything valuable you own and where it is. **You must deploy it behind a trusted network
 boundary** — a VPN and/or a reverse proxy that terminates HTTPS and (optionally) handles auth.
 
-**HTTPS is required** for PWA install ("Add to Home Screen"), offline support, and live camera
-capture. Plain `http://<lan-ip>` still works for basic capture (it uses the native file/camera
-picker) but loses install + offline. Terminate TLS at your reverse proxy (Caddy, Traefik, nginx) or
-use Tailscale / split-DNS with a real cert.
+**HTTPS is required** for PWA install ("Add to Home Screen") and offline support. Capture uses the
+native file/camera picker, so plain `http://<lan-ip>` still captures; it only loses install +
+offline. Terminate TLS at your reverse proxy (Caddy, Traefik, nginx) or use Tailscale / split-DNS
+with a real cert.
 
 ## Tech stack
 
@@ -106,6 +106,7 @@ end-user setting (spec §3). Copy [`env.example`](./env.example) to `.env`. See
 | `BACKUP_CRON`              | `0 3 * * *`                    | Backup schedule                              |
 | `COVERAGE_WARN_PCT`        | `0.80`                         | "Approaching limit" nudge threshold          |
 | `REVALUATION_CADENCE_DAYS` | `90`                           | When a value is considered stale (quarterly) |
+| `AI_MAX_CALLS_PER_HOUR`, `UPLOAD_MAX_*`, `MEDIA_MAX_*`, `EXPORT_MIN_INTERVAL_SECONDS`, `PROOF_PACKET_MAX_ITEMS`, `MAX_CATEGORIES` | see `docs/configuration.md` | Resource limits and spend guards |
 
 If `OPENROUTER_API_KEY` or `S3_BUCKET` is blank, those features are cleanly disabled (no-ops) —
 DomicileDB is fully usable with neither.

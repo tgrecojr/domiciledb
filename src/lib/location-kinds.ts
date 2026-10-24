@@ -1,3 +1,4 @@
+// @spec HOUSEHOLD-LOC-001
 /**
  * Client-safe location kind metadata (no `server-only`, no DB imports) so both
  * server queries and client forms can share it. This is the single source of

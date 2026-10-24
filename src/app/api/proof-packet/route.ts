@@ -12,6 +12,7 @@ function intParam(value: string | null): number | undefined {
 	return Number.isInteger(n) && n > 0 ? n : undefined;
 }
 
+// @spec PACKET-ROUTE-002, PACKET-ROUTE-003, PACKET-ROUTE-004
 export async function GET(req: Request) {
 	const householdId = await getHouseholdId();
 	if (householdId === null) {

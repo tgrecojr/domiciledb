@@ -4,8 +4,12 @@
  * server wrapper (queries/report.ts) fetches rows and calls assembleReport.
  *
  * Only ACTIVE items appear in the packet and totals (sold/disposed don't count).
- * All money is integer CENTS.
+ * All money is integer CENTS, and the per-item value and clamped addition are
+ * the coverage spine's rules, so the packet can never disagree with the
+ * dashboard about the same items.
  */
+
+import { addCents, itemValueCents } from "@/lib/coverage";
 
 export interface ReportPhoto {
 	pathOriginal: string;
@@ -15,6 +19,8 @@ export interface ReportPhoto {
 export interface ReportDocument {
 	kind: string;
 	filename: string;
+	/** DATA_DIR-relative stored path, so receipt images can be embedded. */
+	path: string;
 }
 
 export interface ReportItem {
@@ -62,18 +68,19 @@ export interface ReportData {
 const UNASSIGNED = "Unassigned";
 
 /** Aggregate replacement value of an item line: per-item cost × quantity. */
+// @spec PACKET-DATA-002
 export function itemAggregateCents(item: ReportItem): number | null {
-	if (item.replacementCostCents === null) return null;
-	const qty = Number.isFinite(item.quantity) ? Math.max(0, item.quantity) : 0;
-	return item.replacementCostCents * qty;
+	return itemValueCents(item.replacementCostCents, item.quantity);
 }
 
+// @spec PACKET-DATA-001, PACKET-DATA-003, PACKET-DATA-004, PACKET-DATA-005, PACKET-DATA-006, PACKET-DATA-007
 export function assembleReport(input: {
 	items: ReportItem[];
 	locationNames: Map<number, string>;
 	/** Wider room shots keyed by locationId (optional). */
 	locationPhotos?: Map<number, ReportPhoto[]>;
 }): ReportData {
+	// @spec CURRENT-LIFE-003
 	const active = input.items.filter((i) => i.lifecycleStatus === "active");
 
 	const roomMap = new Map<number | null, ReportRoom>();
@@ -103,10 +110,11 @@ export function assembleReport(input: {
 			excludedCount += 1;
 		} else {
 			countedCount += 1;
-			grandTotalCents += agg;
-			room.totalCents += agg;
+			// @spec PACKET-DATA-012
+			grandTotalCents = addCents(grandTotalCents, agg);
+			room.totalCents = addCents(room.totalCents, agg);
 			const cat = item.categoryName ?? "Uncategorized";
-			categoryMap.set(cat, (categoryMap.get(cat) ?? 0) + agg);
+			categoryMap.set(cat, addCents(categoryMap.get(cat) ?? 0, agg));
 		}
 		roomMap.set(item.locationId, room);
 	}

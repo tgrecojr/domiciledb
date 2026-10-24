@@ -15,6 +15,7 @@ declare global {
 
 declare const self: ServiceWorkerGlobalScope;
 
+// @spec PLATFORM-PWA-005
 const serwist = new Serwist({
 	precacheEntries: self.__SW_MANIFEST,
 	skipWaiting: true,

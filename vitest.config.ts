@@ -17,6 +17,7 @@ export default defineConfig({
 	test: {
 		environment: "node",
 		include: ["tests/unit/**/*.test.ts"],
+		// @spec PLATFORM-OPS-003
 		coverage: {
 			provider: "v8",
 			// CI/CD goes straight to prod, so we ENFORCE coverage on the pure,

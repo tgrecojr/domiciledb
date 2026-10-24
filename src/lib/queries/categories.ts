@@ -6,6 +6,7 @@ import { db } from "@/db";
 import { category } from "@/db/schema";
 import { config } from "@/lib/config";
 
+// @spec ENRICH-CAT-002
 export function listCategories() {
 	return db.select().from(category).orderBy(asc(category.name)).all();
 }
@@ -16,6 +17,7 @@ export function listCategories() {
  * feed this with free-form text, so unbounded creation would let one caller
  * grow the table — and the cost of every lookup over it — without limit.
  */
+// @spec ENRICH-CAT-003, ENRICH-CAT-004
 export function findOrCreateCategory(name: string): number | null {
 	const trimmed = name.trim();
 	if (trimmed.length === 0) return null;

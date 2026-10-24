@@ -33,6 +33,7 @@ const names = new Map<number, string>([
 	[2, "Garage"],
 ]);
 
+// @spec PACKET-DATA-002
 describe("itemAggregateCents", () => {
 	it("multiplies per-item cost by quantity", () => {
 		expect(
@@ -51,7 +52,28 @@ describe("itemAggregateCents", () => {
 	});
 });
 
+// @spec PACKET-DATA-012, PACKET-DATA-011
+describe("assembleReport totals stay within the safe-integer range", () => {
+	it("clamps room, category, and grand totals like the coverage spine", () => {
+		const absurd = item({
+			locationId: 1,
+			categoryName: "Art",
+			replacementCostCents: 100_00,
+			quantity: 1e15,
+		});
+		const data = assembleReport({
+			items: [absurd, { ...absurd, id: 2 }],
+			locationNames: names,
+		});
+		expect(Number.isSafeInteger(data.grandTotalCents)).toBe(true);
+		expect(data.grandTotalCents).toBe(Number.MAX_SAFE_INTEGER);
+		expect(data.rooms[0]!.totalCents).toBe(Number.MAX_SAFE_INTEGER);
+		expect(data.categoryTotals[0]!.cents).toBe(Number.MAX_SAFE_INTEGER);
+	});
+});
+
 describe("assembleReport", () => {
+	// @spec PACKET-DATA-004
 	it("groups by room and totals replacement value (cost × qty)", () => {
 		const data = assembleReport({
 			items: [
@@ -75,6 +97,7 @@ describe("assembleReport", () => {
 		expect(data.itemCount).toBe(3);
 	});
 
+	// @spec PACKET-DATA-003
 	it("excludes items without a replacement cost but keeps them in the room", () => {
 		const data = assembleReport({
 			items: [
@@ -90,6 +113,7 @@ describe("assembleReport", () => {
 		expect(data.countedCount).toBe(1);
 	});
 
+	// @spec PACKET-DATA-001
 	it("ignores non-active items entirely", () => {
 		const data = assembleReport({
 			items: [
@@ -107,6 +131,7 @@ describe("assembleReport", () => {
 		expect(data.grandTotalCents).toBe(100_00);
 	});
 
+	// @spec PACKET-DATA-006
 	it("totals by category, sorted descending", () => {
 		const data = assembleReport({
 			items: [
@@ -132,6 +157,7 @@ describe("assembleReport", () => {
 		]);
 	});
 
+	// @spec PACKET-DATA-005
 	it("places the Unassigned room last and names known rooms", () => {
 		const data = assembleReport({
 			items: [
@@ -148,6 +174,7 @@ describe("assembleReport", () => {
 		]);
 	});
 
+	// @spec PACKET-DATA-005
 	it("sorts Unassigned last even when a known room is added before it", () => {
 		// Insertion order [Garage, Unassigned] exercises the a===Unassigned branch
 		// of the sort comparator (Unassigned becomes the element being placed).
@@ -164,6 +191,7 @@ describe("assembleReport", () => {
 		]);
 	});
 
+	// @spec PACKET-DATA-004
 	it("falls back to Unassigned when a location id has no name", () => {
 		const data = assembleReport({
 			items: [item({ id: 1, locationId: 99, replacementCostCents: 10_00 })],
@@ -172,6 +200,7 @@ describe("assembleReport", () => {
 		expect(data.rooms[0]!.locationName).toBe("Unassigned");
 	});
 
+	// @spec PACKET-DATA-007
 	it("attaches location photos to their room and leaves others empty", () => {
 		const livingShots = [
 			{ pathOriginal: "media/locations/1/a-original.jpg", pathWeb: "a-web" },
@@ -190,6 +219,7 @@ describe("assembleReport", () => {
 		expect(garage.photos).toEqual([]);
 	});
 
+	// @spec PACKET-DATA-007
 	it("never attaches photos to the Unassigned room", () => {
 		const data = assembleReport({
 			items: [item({ id: 1, locationId: null, replacementCostCents: 10_00 })],
