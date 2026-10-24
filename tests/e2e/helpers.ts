@@ -28,6 +28,7 @@ export async function largeJpeg(): Promise<Buffer> {
 		.toBuffer();
 }
 
+// @spec HOUSEHOLD-HH-001, HOUSEHOLD-HH-002
 export async function ensureOnboarded(page: Page) {
 	await page.goto("/");
 	const createBtn = page.getByRole("button", { name: "Create household" });
@@ -59,6 +60,7 @@ export async function withAutoSave(
 }
 
 /** Quick-capture a draft item with a photo + title; returns its detail URL. */
+// @spec CAPTURE-FLOW-008
 export async function captureDraft(page: Page, title: string): Promise<string> {
 	await page.goto("/capture");
 	await page.locator('input[name="photos"]').setInputFiles({

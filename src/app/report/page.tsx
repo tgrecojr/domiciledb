@@ -2,8 +2,10 @@ import { Download, FileText } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import { AppShell } from "@/components/app-shell";
+import { config } from "@/lib/config";
 import { listCategories } from "@/lib/queries/categories";
 import { getHouseholdId } from "@/lib/queries/household";
+import { countActiveItems } from "@/lib/queries/items";
 import { listLocations } from "@/lib/queries/locations";
 
 export const dynamic = "force-dynamic";
@@ -20,12 +22,18 @@ function DownloadRow({ href, label }: { href: string; label: string }) {
 	);
 }
 
+// @spec PACKET-ROUTE-001, PACKET-ROUTE-005
 export default async function ReportPage() {
 	const householdId = await getHouseholdId();
 	if (householdId === null) redirect("/");
 
 	const locations = listLocations(householdId);
 	const categories = listCategories();
+	// The route refuses a packet above this cap (413), so say so here instead of
+	// offering a link that will fail.
+	const activeCount = countActiveItems(householdId);
+	const cap = config.export.maxPacketItems;
+	const overCap = activeCount > cap;
 
 	return (
 		<AppShell title="Proof packet" back={{ href: "/", label: "Home" }}>
@@ -39,13 +47,21 @@ export default async function ReportPage() {
 						A print-ready document organized by location with photos, specs,
 						values, and totals — to hand to an insurer after a loss.
 					</p>
-					<a
-						href="/api/proof-packet"
-						className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white"
-					>
-						<Download className="h-4 w-4" />
-						Download entire household
-					</a>
+					{overCap ? (
+						<p className="bg-coverage-approaching/10 text-coverage-approaching mt-1 rounded-lg px-3 py-2 text-sm">
+							Your household has {activeCount.toLocaleString("en-US")} active
+							items; a single packet is limited to {cap.toLocaleString("en-US")}
+							. Download it by location or category below instead.
+						</p>
+					) : (
+						<a
+							href="/api/proof-packet"
+							className="mt-1 flex items-center justify-center gap-2 rounded-lg bg-neutral-900 px-4 py-2.5 text-sm font-medium text-white"
+						>
+							<Download className="h-4 w-4" />
+							Download entire household
+						</a>
+					)}
 				</section>
 
 				{locations.length > 0 ? (

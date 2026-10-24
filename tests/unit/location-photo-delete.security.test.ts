@@ -65,6 +65,7 @@ beforeAll(async () => {
 		.all()[0]!.id;
 });
 
+// @spec HOUSEHOLD-PHOTO-003
 describe("location photo delete refcount (VULN-017)", () => {
 	it("removes files when no other row references them (no orphan leak)", async () => {
 		const locationId = makeLocation();

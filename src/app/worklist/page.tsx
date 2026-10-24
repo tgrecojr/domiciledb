@@ -10,6 +10,7 @@ import { listLocations } from "@/lib/queries/locations";
 
 export const dynamic = "force-dynamic";
 
+// @spec ENRICH-LIST-006
 export default async function WorklistPage() {
 	const householdId = await getHouseholdId();
 	if (householdId === null) redirect("/");

@@ -27,6 +27,7 @@ const DEFAULT_CATEGORIES = [
 ];
 
 /** Idempotent: insert defaults only if the category table is empty. */
+// @spec ENRICH-CAT-001
 export function seedCategories() {
 	const existing = db.select({ id: category.id }).from(category).limit(1).all();
 	if (existing.length > 0) return;

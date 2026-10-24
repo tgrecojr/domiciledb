@@ -19,6 +19,7 @@ beforeAll(async () => {
 	runMigrations();
 });
 
+// @spec HOUSEHOLD-HH-003
 describe("single-household invariant (VULN-020)", () => {
 	it("createHousehold rejects a second household", async () => {
 		await createHousehold({ name: "First" });

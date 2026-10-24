@@ -18,6 +18,7 @@ export interface PdfImage {
 }
 
 /** Resolve a DATA_DIR-relative media path to an absolute one, refusing escapes. */
+// @spec PLATFORM-MEDIA-013 (gap)
 function resolveUnderMedia(dataDirRelPath: string): string | null {
 	const abs = path.resolve(config.paths.dataDir, dataDirRelPath);
 	const root = path.resolve(config.paths.mediaDir);
@@ -26,6 +27,7 @@ function resolveUnderMedia(dataDirRelPath: string): string | null {
 }
 
 /** Load + downscale a stored photo to a small JPEG for embedding. */
+// @spec PACKET-PDF-007
 export async function loadPdfImage(
 	dataDirRelPath: string,
 	maxPx = 600,

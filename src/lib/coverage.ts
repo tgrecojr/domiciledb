@@ -46,27 +46,48 @@ function isActive(lifecycleStatus: string): boolean {
 	return lifecycleStatus === "active";
 }
 
+/**
+ * The per-item value rule shared by the coverage total and the proof packet:
+ * per-unit replacement cost × quantity, a non-finite or negative quantity
+ * counting as zero, clamped to the safe-integer range.
+ */
+// @spec COVERAGE-CALC-001, COVERAGE-CALC-004, COVERAGE-CALC-005, PACKET-DATA-002
+export function itemValueCents(
+	replacementCostCents: number | null,
+	quantity: number,
+): number | null {
+	if (replacementCostCents === null) return null;
+	const qty = Number.isFinite(quantity) ? Math.max(0, quantity) : 0;
+	return Math.min(Number.MAX_SAFE_INTEGER, replacementCostCents * qty);
+}
+
+/**
+ * Add cents without leaving the safe-integer range. An out-of-range quantity
+ * or value (rejected at the write boundary, but this is the spine — stay
+ * defensive) would otherwise overflow past Number.MAX_SAFE_INTEGER, silently
+ * losing integer precision and corrupting pctUsed/status. A clamped total
+ * still reads honestly as "over".
+ */
+// @spec COVERAGE-CALC-005, PACKET-DATA-012
+export function addCents(a: number, b: number): number {
+	return Math.min(Number.MAX_SAFE_INTEGER, a + b);
+}
+
+// @spec COVERAGE-CALC-001, COVERAGE-CALC-002, COVERAGE-CALC-003, COVERAGE-CALC-004, COVERAGE-CALC-005, COVERAGE-CALC-006, COVERAGE-CALC-007
 export function computeCoverage(input: CoverageInput): CoverageResult {
 	let totalCents = 0;
 	let countedCount = 0;
 	let excludedCount = 0;
 
 	for (const it of input.items) {
+		// @spec CURRENT-LIFE-003
 		if (!isActive(it.lifecycleStatus)) continue;
-		if (it.replacementCostCents === null) {
+		const value = itemValueCents(it.replacementCostCents, it.quantity);
+		if (value === null) {
 			excludedCount += 1;
 			continue;
 		}
-		const qty = Number.isFinite(it.quantity) ? Math.max(0, it.quantity) : 0;
-		// Clamp the running total to the safe-integer range. An out-of-range
-		// quantity or value (should be rejected at the write boundary, but this is
-		// the spine — stay defensive) would otherwise overflow past
-		// Number.MAX_SAFE_INTEGER, silently losing integer precision and corrupting
-		// pctUsed/status. A clamped total still reads honestly as "over".
-		totalCents = Math.min(
-			Number.MAX_SAFE_INTEGER,
-			totalCents + it.replacementCostCents * qty,
-		);
+		totalCents = addCents(totalCents, value);
 		countedCount += 1;
 	}
 
@@ -102,6 +123,7 @@ const STATUS_RANK: Record<CoverageStatus, number> = {
 	over: 2,
 };
 
+// @spec COVERAGE-CALC-009
 /**
  * Decide whether a change ESCALATED coverage risk, for the contextual nudge
  * (feature-spec §7: alert right after the item that crosses a threshold).

@@ -11,7 +11,7 @@ import { runMigrations } from "@/db/migrate";
 import { household, item, photo } from "@/db/schema";
 import { SNAPSHOT_KEY } from "@/lib/backup/plan";
 import { runBackup } from "@/lib/backup/run";
-import { getObject, listKeys } from "@/lib/backup/s3";
+import { getObject, listKeys, putObject } from "@/lib/backup/s3";
 import { config } from "@/lib/config";
 
 // Round-trips against a real S3-compatible store (RustFS). Skipped unless the
@@ -72,6 +72,7 @@ describe.skipIf(!ENABLED)("backup → S3 → restore round-trip", () => {
 		fs.writeFileSync(abs, MEDIA_BYTES);
 	});
 
+	// @spec RESILIENCE-BACKUP-005, RESILIENCE-BACKUP-006, RESILIENCE-BACKUP-009
 	it("uploads a consistent snapshot + media to S3", async () => {
 		const status = await runBackup("2026-06-14T00:00:00.000Z");
 		expect(status.status).toBe("ok");
@@ -83,6 +84,7 @@ describe.skipIf(!ENABLED)("backup → S3 → restore round-trip", () => {
 		expect((await getObject(MEDIA_REL)).equals(MEDIA_BYTES)).toBe(true);
 	});
 
+	// @spec RESILIENCE-BACKUP-004
 	it("snapshot in S3 is a valid db containing the data", async () => {
 		const snapBytes = await getObject(SNAPSHOT_KEY);
 		const tmp = path.join(os.tmpdir(), `snap-check-${process.pid}.db`);
@@ -95,7 +97,13 @@ describe.skipIf(!ENABLED)("backup → S3 → restore round-trip", () => {
 		sdb.close();
 	});
 
-	it("restore.ts reconstructs DATA_DIR from S3", () => {
+	// @spec RESILIENCE-RESTORE-001, RESILIENCE-RESTORE-006, RESILIENCE-RESTORE-007
+	it("restore.ts reconstructs DATA_DIR from S3", async () => {
+		// The bucket is append-only: an object for a long-deleted photo stays
+		// there, and a restore must not bring it back as an orphan file.
+		const ORPHAN_REL = "media/items/999/orphan-web.webp";
+		await putObject(ORPHAN_REL, Buffer.from("orphan-bytes"), "image/webp");
+
 		const restoreDir = fs.mkdtempSync(
 			path.join(os.tmpdir(), "domicile-restore-"),
 		);
@@ -120,8 +128,11 @@ describe.skipIf(!ENABLED)("backup → S3 → restore round-trip", () => {
 		expect(count.c).toBe(1);
 		rdb.close();
 
-		// Restored media matches the original bytes.
+		// Restored media matches the original bytes; the unreferenced object
+		// stays in the bucket and is not written to disk.
 		const restoredMedia = fs.readFileSync(path.join(restoreDir, MEDIA_REL));
 		expect(restoredMedia.equals(MEDIA_BYTES)).toBe(true);
+		expect(fs.existsSync(path.join(restoreDir, ORPHAN_REL))).toBe(false);
+		expect(res.stdout).toMatch(/skipped 1 unreferenced/);
 	});
 });

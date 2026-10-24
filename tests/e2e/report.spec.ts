@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { captureDraft, ensureOnboarded, withAutoSave } from "./helpers";
 
+// @spec PACKET-ROUTE-001, PACKET-ROUTE-004
 test("proof packet downloads as a valid, non-empty PDF with item value embedded", async ({
 	page,
 }) => {

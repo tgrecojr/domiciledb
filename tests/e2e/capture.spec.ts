@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { captureDraft, ensureOnboarded, largeJpeg } from "./helpers";
 
+// @spec CAPTURE-FLOW-003, CAPTURE-FLOW-007, CAPTURE-FLOW-008, CAPTURE-FLOW-010, ENRICH-ITEM-015, ENRICH-LIST-006
 test("capture → draft → worklist → mark complete clears it", async ({
 	page,
 }) => {
@@ -30,6 +31,7 @@ test("capture → draft → worklist → mark complete clears it", async ({
 	await expect(page.getByText(title)).toHaveCount(0);
 });
 
+// @spec ENRICH-ITEM-016, ENRICH-ITEM-017
 test("deletes an item (created by accident) and removes it from the inventory", async ({
 	page,
 }) => {
@@ -47,6 +49,7 @@ test("deletes an item (created by accident) and removes it from the inventory", 
 	await expect(page.getByText(title)).toHaveCount(0);
 });
 
+// @spec CAPTURE-FLOW-011
 test("captures a large (>1MB) photo without hitting the Server Action body limit", async ({
 	page,
 }) => {

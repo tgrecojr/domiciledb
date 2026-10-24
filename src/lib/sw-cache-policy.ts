@@ -44,6 +44,7 @@ export const noStorePlugin: SerwistPlugin = {
 };
 
 /** The service worker's route table: Serwist's defaults, narrowed as above. */
+// @spec PLATFORM-PWA-005
 export function hardenRuntimeCaching(
 	defaults: RuntimeCaching[],
 ): RuntimeCaching[] {

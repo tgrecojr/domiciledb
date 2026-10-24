@@ -9,6 +9,7 @@ import { PolicyForm } from "./policy-form";
 
 export const dynamic = "force-dynamic";
 
+// @spec COVERAGE-POLICY-003, COVERAGE-DECPAGE-001
 export default async function PolicyPage() {
 	const householdId = await getHouseholdId();
 	if (householdId === null) redirect("/");

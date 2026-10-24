@@ -1,3 +1,4 @@
+# @spec PLATFORM-OPS-003
 name: Supply chain scan
 
 on:
@@ -43,6 +44,7 @@ jobs:
           # On pull_request, GITHUB_REF_NAME is "<pr>/merge"; prefer the head ref.
           repo_slug="${GITHUB_REPOSITORY##*/}"
           branch_name="${GITHUB_HEAD_REF:-$GITHUB_REF_NAME}"
+          # @spec PLATFORM-OPS-007 (gap)
           npx -y @socketsecurity/cli@latest scan create \
             --org grecolabs \
             --repo "${repo_slug}" \

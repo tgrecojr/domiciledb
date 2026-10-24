@@ -3,7 +3,9 @@ import "server-only";
 import { and, desc, eq } from "drizzle-orm";
 
 import { db } from "@/db";
-import { item, valuation } from "@/db/schema";
+import { item, type VALUE_SOURCES, valuation } from "@/db/schema";
+
+export type ValuationSource = (typeof VALUE_SOURCES)[number];
 
 function latestRow(itemId: number, kind: "replacement_cost" | "price_paid") {
 	return (
@@ -30,9 +32,17 @@ export interface ValuationInput {
 /**
  * Append valuation history rows only when a value actually changes, and keep
  * the item's denormalized current replacement cost (+ last-valued date, which
- * drives staleness reminders) in sync. Valuations are never mutated.
+ * drives staleness reminders) in sync. The last-valued date moves only when
+ * the amount changes: the editor autosaves on blur of any field, so a save is
+ * not a re-valuation. Valuations are never mutated. `source` says who set the
+ * figure: the user, or an AI suggestion the user applied.
  */
-export function recordValuations(itemId: number, input: ValuationInput) {
+// @spec CURRENT-VAL-002, CURRENT-VAL-003, CURRENT-VAL-005, CURRENT-VAL-009, CURRENT-VAL-010, CURRENT-VAL-007 (gap), CURRENT-VAL-008 (gap)
+export function recordValuations(
+	itemId: number,
+	input: ValuationInput,
+	source: ValuationSource = "user",
+) {
 	const now = new Date().toISOString();
 
 	if (input.replacementCostCents != null) {
@@ -45,19 +55,18 @@ export function recordValuations(itemId: number, input: ValuationInput) {
 					kind: "replacement_cost",
 					amount: input.replacementCostCents,
 					valuedAt: now,
-					source: "user",
+					source,
 				})
 				.run();
+			db.update(item)
+				.set({
+					currentReplacementCost: input.replacementCostCents,
+					currentReplacementValuedAt: now,
+					updatedAt: now,
+				})
+				.where(eq(item.id, itemId))
+				.run();
 		}
-		// Always refresh the denormalized pointer + last-valued date on save.
-		db.update(item)
-			.set({
-				currentReplacementCost: input.replacementCostCents,
-				currentReplacementValuedAt: now,
-				updatedAt: now,
-			})
-			.where(eq(item.id, itemId))
-			.run();
 	}
 
 	if (input.pricePaidCents != null) {
@@ -68,7 +77,7 @@ export function recordValuations(itemId: number, input: ValuationInput) {
 					kind: "price_paid",
 					amount: input.pricePaidCents,
 					valuedAt: input.purchaseDate || now,
-					source: "user",
+					source,
 				})
 				.run();
 		}
@@ -76,6 +85,7 @@ export function recordValuations(itemId: number, input: ValuationInput) {
 }
 
 /** Current price-paid + replacement-cost for an item, for the edit form. */
+// @spec CURRENT-VAL-004, CURRENT-VAL-006
 export function currentValuations(itemId: number) {
 	const pricePaid = latestRow(itemId, "price_paid");
 	return {

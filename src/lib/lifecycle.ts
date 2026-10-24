@@ -3,6 +3,7 @@
  * source of truth for the status list; the DB schema imports it from here.
  * Only "active" items count toward coverage (feature-spec §7).
  */
+// @spec CURRENT-LIFE-001
 export const LIFECYCLE_STATUSES = [
 	"active",
 	"sold",
@@ -14,6 +15,7 @@ export const LIFECYCLE_STATUSES = [
 
 export type LifecycleStatus = (typeof LIFECYCLE_STATUSES)[number];
 
+// @spec CURRENT-LIFE-005
 export const LIFECYCLE_LABELS: Record<LifecycleStatus, string> = {
 	active: "Active (own it now)",
 	sold: "Sold",

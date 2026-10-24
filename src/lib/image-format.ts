@@ -41,6 +41,7 @@ const HEIF_BRANDS = new Set([
 ]);
 
 /** Identify a file by its magic bytes, or null if unrecognized. */
+// @spec PLATFORM-MEDIA-002
 export function detectFileType(buffer: Buffer): DetectedType | null {
 	const b = buffer;
 	if (b.length < 4) return null;

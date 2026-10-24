@@ -8,6 +8,7 @@ import { type AI_OUTCOMES, aiInteraction } from "@/db/schema";
 export type AiOutcome = (typeof AI_OUTCOMES)[number];
 
 /** Record an AI call for the transparency audit trail (feature-spec §6). */
+// @spec ENRICH-AI-009
 export function logInteraction(input: {
 	itemId: number | null;
 	action: string;
@@ -33,7 +34,26 @@ export function logInteraction(input: {
 	return rows[0]!.id;
 }
 
+/**
+ * The interaction's identity, so apply/discard can verify a suggestion was
+ * logged for the item (or, for a dec-page parse, for no item) before recording
+ * an outcome against it.
+ */
+// @spec ENRICH-AI-018
+export function getInteraction(
+	id: number,
+): { id: number; itemId: number | null } | null {
+	return (
+		db
+			.select({ id: aiInteraction.id, itemId: aiInteraction.itemId })
+			.from(aiInteraction)
+			.where(eq(aiInteraction.id, id))
+			.get() ?? null
+	);
+}
+
 /** Mark whether the user accepted, edited, or rejected the suggestion. */
+// @spec ENRICH-AI-012, ENRICH-AI-013
 export function setOutcome(id: number, outcome: AiOutcome) {
 	db.update(aiInteraction)
 		.set({ outcome })

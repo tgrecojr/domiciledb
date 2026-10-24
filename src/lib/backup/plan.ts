@@ -7,10 +7,12 @@
  * snapshot and latest-PDF keys are always re-uploaded (they change).
  */
 
+// @spec RESILIENCE-BACKUP-005
 export const SNAPSHOT_KEY = "backup/domiciledb-snapshot.db";
 export const LATEST_PDF_KEY = "backup/proof-packet-latest.pdf";
 
 /** Which content-addressed media keys still need uploading. */
+// @spec RESILIENCE-BACKUP-006, RESILIENCE-BACKUP-007
 export function mediaToUpload(
 	localKeys: string[],
 	existingKeys: Set<string>,
@@ -19,6 +21,7 @@ export function mediaToUpload(
 }
 
 /** Convert an absolute path under dataDir to its S3 key (POSIX-relative). */
+// @spec RESILIENCE-BACKUP-006
 export function keyForPath(absPath: string, dataDir: string): string {
 	let rel = absPath.startsWith(dataDir)
 		? absPath.slice(dataDir.length)

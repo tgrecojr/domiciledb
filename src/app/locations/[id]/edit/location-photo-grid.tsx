@@ -11,6 +11,7 @@ interface Photo {
 	original: string;
 }
 
+// @spec HOUSEHOLD-PHOTO-002
 export function LocationPhotoGrid({
 	locationId,
 	photos,

@@ -1,4 +1,5 @@
 import path from "node:path";
+import cron from "node-cron";
 import { z } from "zod";
 
 /**
@@ -41,7 +42,15 @@ const envSchema = z.object({
 	S3_BUCKET: z.string().optional().default(""),
 	S3_ACCESS_KEY_ID: z.string().optional().default(""),
 	S3_SECRET_ACCESS_KEY: z.string().optional().default(""),
-	BACKUP_CRON: z.string().min(1).default("0 3 * * *"),
+	// A typo here must stop startup, not silently skip every scheduled backup.
+	// @spec RESILIENCE-BACKUP-003
+	BACKUP_CRON: z
+		.string()
+		.min(1)
+		.default("0 3 * * *")
+		.refine((v) => cron.validate(v), {
+			message: "BACKUP_CRON must be a valid cron expression (e.g. 0 3 * * *)",
+		}),
 
 	// Upload + media-storage ceilings (no auth in front of the capture forms).
 	UPLOAD_MAX_FILE_MB: z.coerce.number().positive().default(25),
@@ -58,7 +67,9 @@ const envSchema = z.object({
 	MAX_CATEGORIES: z.coerce.number().int().positive().default(500),
 
 	// Coverage + valuation tuning.
+	// @spec COVERAGE-CALC-008
 	COVERAGE_WARN_PCT: z.coerce.number().gt(0).lte(1).default(0.8),
+	// @spec CURRENT-REMIND-005
 	REVALUATION_CADENCE_DAYS: z.coerce.number().int().positive().default(90),
 });
 
@@ -68,6 +79,7 @@ const dataDir = parsed.DATA_DIR
 	? path.resolve(parsed.DATA_DIR)
 	: path.join(process.cwd(), "data");
 
+// @spec PLATFORM-CONFIG-001, PLATFORM-CONFIG-002, PLATFORM-CONFIG-003, PLATFORM-CONFIG-004, PLATFORM-CONFIG-005, PLATFORM-CONFIG-007
 export const config = {
 	nodeEnv: parsed.NODE_ENV,
 	isProd: parsed.NODE_ENV === "production",

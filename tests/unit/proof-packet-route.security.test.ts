@@ -29,6 +29,7 @@ async function load() {
 	return GET;
 }
 
+// @spec PACKET-ROUTE-003
 describe("GET /api/proof-packet render cap (VULN-010)", () => {
 	afterEach(() => {
 		vi.unstubAllEnvs();

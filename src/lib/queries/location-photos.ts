@@ -23,6 +23,7 @@ export function addLocationPhoto(locationId: number, stored: StoredImage) {
 	return rows[0]!;
 }
 
+// @spec HOUSEHOLD-PHOTO-002
 export function listLocationPhotos(locationId: number) {
 	return db
 		.select()
@@ -43,6 +44,7 @@ export function deleteLocationPhoto(id: number) {
 	db.delete(locationPhoto).where(eq(locationPhoto.id, id)).run();
 }
 
+// @spec HOUSEHOLD-PHOTO-003
 /**
  * Of the given DATA_DIR-relative media paths, the subset NOT referenced by any
  * remaining location_photo row — i.e. safe to unlink. Media is content-

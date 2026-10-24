@@ -80,6 +80,7 @@ const SENSITIVE_URLS = [
 	"https://app.local/api/media/documents/items/1/policy.pdf",
 ];
 
+// @spec PLATFORM-PWA-005
 describe("VULN-007 service-worker runtime caching", () => {
 	it.each(SENSITIVE_URLS)("never stores %s in Cache Storage", (url) => {
 		const handler = handlerFor(url);

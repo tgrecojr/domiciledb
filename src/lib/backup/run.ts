@@ -94,6 +94,7 @@ function sanitize(raw: unknown): BackupStatus | null {
 	};
 }
 
+// @spec RESILIENCE-BACKUP-011
 export function readBackupStatus(): BackupStatus | null {
 	try {
 		return sanitize(
@@ -173,5 +174,6 @@ async function runBackupOnce(now: string): Promise<BackupStatus> {
  * together, and a second concurrent run would duplicate every S3 LIST/PUT and
  * race on the one snapshot file. Later callers observe the run already going.
  */
+// @spec RESILIENCE-BACKUP-001, RESILIENCE-BACKUP-005, RESILIENCE-BACKUP-006, RESILIENCE-BACKUP-007, RESILIENCE-BACKUP-008, RESILIENCE-BACKUP-009, RESILIENCE-BACKUP-010, RESILIENCE-BACKUP-013
 export const runBackup: (now: string) => Promise<BackupStatus> =
 	singleFlight(runBackupOnce);

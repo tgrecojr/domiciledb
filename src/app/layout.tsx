@@ -20,6 +20,7 @@ export const viewport: Viewport = {
 	themeColor: "#16a34a",
 };
 
+// @spec PLATFORM-PWA-001, PLATFORM-PWA-006
 export default function RootLayout({
 	children,
 }: Readonly<{ children: React.ReactNode }>) {

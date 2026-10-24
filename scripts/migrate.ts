@@ -4,6 +4,7 @@
  * Self-contained (no `@/` path aliases) so it runs under plain tsx without a
  * path-resolver. On app boot, migrations run instead via instrumentation.ts.
  */
+// @spec PLATFORM-BOOT-006
 import fs from "node:fs";
 import path from "node:path";
 import Database from "better-sqlite3";

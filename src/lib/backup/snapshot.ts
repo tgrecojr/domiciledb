@@ -17,6 +17,7 @@ import { config } from "@/lib/config";
  * /api/export) could zip up a snapshot with no database. With an atomic rename
  * a reader always sees either the old or the new complete file.
  */
+// @spec RESILIENCE-BACKUP-004
 export function createSnapshot(): { path: string; bytes: number } {
 	fs.mkdirSync(config.paths.backupDir, { recursive: true });
 	const target = config.paths.backupSnapshot;

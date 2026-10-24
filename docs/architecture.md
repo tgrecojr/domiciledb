@@ -1,7 +1,9 @@
 # DomicileDB — Architecture
 
 This document explains how DomicileDB is built. See [`../feature-spec.md`](../feature-spec.md) for
-_what_ it does and why, and [`./configuration.md`](./configuration.md) for operator configuration.
+_what_ it does and why, [`./configuration.md`](./configuration.md) for operator configuration, and
+[`./high-level-design.md`](./high-level-design.md) plus `docs/intent/<segment>/` for the design
+intent and EARS specs each part of the code answers to.
 
 ## Guiding principle
 
@@ -42,12 +44,13 @@ Drizzle ORM  ──►  better-sqlite3 (WAL)  ──►  $DATA_DIR/domiciledb.db
 
 | Path                            | Responsibility                                                                 |
 | ------------------------------- | ------------------------------------------------------------------------------ |
-| `src/lib/config.ts`             | The ONLY reader of `process.env`; typed, validated operator config             |
+| `src/lib/config.ts`             | The only reader of operator env; typed, Zod-validated at startup (framework vars and the standalone `scripts/*.ts` read `process.env` themselves) |
 | `src/db/schema.ts`              | Single source of truth for the data model (money in integer **cents**)         |
 | `src/db/index.ts`               | Shared WAL connection opened from `DATA_DIR`                                   |
 | `src/db/migrate.ts` / `seed.ts` | `runMigrations()` + default-category seed                                      |
 | `src/instrumentation.ts`        | Migrate + seed on boot, then start the in-process scheduler                    |
-| `src/lib/scheduler.ts`          | node-cron jobs (backup cadence; staleness/warranty scans are stubbed)          |
+| `src/lib/scheduler.ts`          | node-cron registration (backup cadence; the re-valuation/warranty scan slot is reserved, not implemented) |
+| `src/lib/image-format.ts` / `src/lib/actions/store-photos.ts` | Magic-byte admission allowlists; bounded photo intake (count, size, quota) shared by every photo flow |
 | `src/lib/coverage.ts`           | **Insurance spine**: replacement-cost total vs. Coverage B; threshold crossing |
 | `src/lib/money.ts`              | Integer-cents parse/format — the only dollars↔cents conversion                 |
 | `src/lib/report.ts`             | Pure proof-packet assembly: room/category/grand totals                         |
@@ -108,7 +111,7 @@ changed media, and writes a status file surfaced in the UI; it's a clean no-op w
 ## Security model
 
 - **No app auth by design** (single-user, self-hosted). Deploy behind a VPN / reverse proxy;
-  HTTPS is required for PWA + camera.
+  HTTPS is required for PWA install and offline (capture uses the native picker and works on HTTP).
 - **Media serving is the only user-input→file-read surface** and is hardened in
   `src/app/api/media/[...path]/route.ts`:
   - lexical guard (`path.resolve` + root-prefix check) defeats `../`, absolute paths, and the

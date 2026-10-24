@@ -21,6 +21,7 @@ beforeAll(async () => {
 });
 
 describe("content identity (VULN-018)", () => {
+	// @spec ENRICH-DOC-002, ENRICH-DOC-008
 	it("names a stored document with the full 64-hex-char digest", async () => {
 		const bytes = Buffer.from("a receipt");
 		const stored = await storeDocument(1, bytes, "receipt.pdf");
@@ -34,6 +35,7 @@ describe("content identity (VULN-018)", () => {
 		expect(hashPart).toBe(stored.contentHash);
 	});
 
+	// @spec PLATFORM-MEDIA-005
 	it("verifies intact content and detects a tampered read-back", async () => {
 		const stored = await storeDocument(2, Buffer.from("genuine"), "r.pdf");
 		expect(await verifyStoredContent(stored.path, stored.contentHash)).toBe(

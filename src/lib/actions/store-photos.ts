@@ -2,7 +2,8 @@ import "server-only";
 
 import { config } from "@/lib/config";
 import { sniffImageMime } from "@/lib/image-format";
-import { remainingMediaQuotaBytes } from "@/lib/media";
+import { processAndStoreImage, remainingMediaQuotaBytes } from "@/lib/media";
+import { addPhoto } from "@/lib/queries/photos";
 
 /** MIME types we accept for photo capture/upload (UI hint only). */
 export const ACCEPTED_IMAGE = /^image\/(jpe?g|png|webp|heic|heif)$/i;
@@ -12,6 +13,7 @@ export const ACCEPTED_IMAGE = /^image\/(jpe?g|png|webp|heic|heif)$/i;
  * drop CR/LF and control characters (which forge log entries — CWE-117) and
  * bound the length so an oversized name can't flood the log.
  */
+// @spec CAPTURE-ADM-009
 export function sanitizeForLog(value: string, maxLen = 128): string {
 	// Compare code units instead of a control-char regex: same effect, and
 	// nothing for a regex linter to mistake for an accidental literal.
@@ -36,6 +38,7 @@ export function sanitizeForLog(value: string, maxLen = 128): string {
  * three ways: a per-request file count, a per-file byte cap enforced from
  * `size` (before the file is ever buffered), and the DATA_DIR media quota.
  */
+// @spec CAPTURE-ADM-001, CAPTURE-ADM-002, CAPTURE-ADM-003, CAPTURE-ADM-004, CAPTURE-ADM-005, CAPTURE-ADM-006, CAPTURE-ADM-007, CAPTURE-ADM-008, CAPTURE-ADM-009, CAPTURE-ADM-010
 export async function storePhotoFiles(
 	files: File[],
 	context: string,
@@ -83,4 +86,20 @@ export async function storePhotoFiles(
 		}
 	}
 	return stored;
+}
+
+/**
+ * Admit, process, and attach a batch of photos to an item (capture and
+ * add-photos share this). Every photo is stored as kind "general". Returns how
+ * many were stored so the caller can report the shortfall.
+ */
+// @spec CAPTURE-FLOW-007
+export function storeItemPhotos(
+	itemId: number,
+	files: File[],
+): Promise<number> {
+	return storePhotoFiles(files, `item ${itemId}`, async (buffer, mime) => {
+		const image = await processAndStoreImage(itemId, buffer, mime);
+		addPhoto(itemId, image, "general");
+	});
 }

@@ -16,6 +16,7 @@ const active = (
 });
 
 describe("computeCoverage", () => {
+	// @spec COVERAGE-CALC-001
 	it("sums replacement cost × quantity for active, valued items", () => {
 		const r = computeCoverage({
 			items: [active(100_00, 8), active(50_00)],
@@ -28,6 +29,7 @@ describe("computeCoverage", () => {
 		expect(r.excludedCount).toBe(0);
 	});
 
+	// @spec COVERAGE-CALC-002
 	it("excludes active items missing a replacement cost (counts them separately)", () => {
 		const r = computeCoverage({
 			items: [active(200_00), active(null), active(null)],
@@ -39,6 +41,7 @@ describe("computeCoverage", () => {
 		expect(r.excludedCount).toBe(2);
 	});
 
+	// @spec COVERAGE-CALC-003
 	it("ignores non-active items entirely", () => {
 		const r = computeCoverage({
 			items: [
@@ -58,6 +61,7 @@ describe("computeCoverage", () => {
 		expect(r.excludedCount).toBe(0);
 	});
 
+	// @spec COVERAGE-CALC-007
 	it("is 'within' below the warn threshold", () => {
 		const r = computeCoverage({
 			items: [active(799_99)],
@@ -67,6 +71,7 @@ describe("computeCoverage", () => {
 		expect(r.status).toBe("within");
 	});
 
+	// @spec COVERAGE-CALC-007
 	it("is 'approaching' exactly at the 80% threshold (inclusive)", () => {
 		const r = computeCoverage({
 			items: [active(800_00)],
@@ -77,6 +82,7 @@ describe("computeCoverage", () => {
 		expect(r.status).toBe("approaching");
 	});
 
+	// @spec COVERAGE-CALC-007
 	it("is 'approaching' exactly at 100% (inclusive), not 'over'", () => {
 		const r = computeCoverage({
 			items: [active(1_000_00)],
@@ -87,6 +93,7 @@ describe("computeCoverage", () => {
 		expect(r.status).toBe("approaching");
 	});
 
+	// @spec COVERAGE-CALC-007
 	it("is 'over' above 100%", () => {
 		const r = computeCoverage({
 			items: [active(1_000_01)],
@@ -96,6 +103,7 @@ describe("computeCoverage", () => {
 		expect(r.status).toBe("over");
 	});
 
+	// @spec COVERAGE-CALC-007, COVERAGE-CALC-008
 	it("honors a non-default warn threshold", () => {
 		const r = computeCoverage({
 			items: [active(500_00)],
@@ -105,6 +113,7 @@ describe("computeCoverage", () => {
 		expect(r.status).toBe("approaching");
 	});
 
+	// @spec COVERAGE-CALC-006
 	it("returns null status/pct when no policy limit is set", () => {
 		const r = computeCoverage({
 			items: [active(100_00)],
@@ -116,6 +125,7 @@ describe("computeCoverage", () => {
 		expect(r.totalCents).toBe(100_00);
 	});
 
+	// @spec COVERAGE-CALC-006
 	it("treats a zero/negative limit as 'no limit' (null status)", () => {
 		const r = computeCoverage({
 			items: [active(100_00)],
@@ -126,6 +136,7 @@ describe("computeCoverage", () => {
 		expect(r.pctUsed).toBeNull();
 	});
 
+	// @spec COVERAGE-CALC-004
 	it("treats a non-finite quantity as zero (defensive)", () => {
 		const r = computeCoverage({
 			items: [
@@ -147,6 +158,7 @@ describe("computeCoverage", () => {
 	// VULN-021: an out-of-range quantity must not overflow the running total past
 	// Number.MAX_SAFE_INTEGER, which would silently lose integer precision and
 	// corrupt pctUsed/status. The total is clamped to the safe-integer range.
+	// @spec COVERAGE-CALC-005
 	it("keeps the running total a safe integer despite a huge quantity", () => {
 		const r = computeCoverage({
 			items: [
@@ -163,6 +175,7 @@ describe("computeCoverage", () => {
 		expect(Number.isFinite(r.pctUsed ?? 0)).toBe(true);
 	});
 
+	// @spec COVERAGE-CALC-001
 	it("uses integer cents with no float drift on the real dec-page limit", () => {
 		// Coverage B from declarations.md = $456,750.00
 		const r = computeCoverage({
@@ -175,6 +188,7 @@ describe("computeCoverage", () => {
 	});
 });
 
+// @spec COVERAGE-CALC-009
 describe("crossedThreshold", () => {
 	it("fires when escalating up to a new level", () => {
 		expect(crossedThreshold("within", "approaching")).toBe("approaching");

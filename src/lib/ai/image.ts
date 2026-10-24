@@ -16,6 +16,7 @@ export interface EncodedImage {
 	maxPx: number;
 }
 
+// @spec PLATFORM-MEDIA-013 (gap)
 function resolveUnderMedia(dataDirRelPath: string): string | null {
 	const abs = path.resolve(config.paths.dataDir, dataDirRelPath);
 	const root = path.resolve(config.paths.mediaDir);
@@ -39,6 +40,7 @@ async function encode(
 	}
 }
 
+// @spec ENRICH-AI-005
 export async function imageToBase64Jpeg(
 	dataDirRelPath: string,
 	maxPx = 1024,

@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { captureDraft, ensureOnboarded, sampleJpeg } from "./helpers";
 
+// @spec ENRICH-AI-001, ENRICH-AI-002, ENRICH-AI-003, ENRICH-AI-010, ENRICH-AI-011
 test("AI identify: consent shows what's sent, then review applies to the item", async ({
 	page,
 }) => {
@@ -34,6 +35,7 @@ test("AI identify: consent shows what's sent, then review applies to the item", 
 	await expect(page.locator('input[name="manufacturer"]')).toHaveValue("Sony");
 });
 
+// @spec COVERAGE-DECPAGE-001, COVERAGE-DECPAGE-002, COVERAGE-DECPAGE-005
 test("AI dec-page parse pre-fills Coverage B for review", async ({ page }) => {
 	await ensureOnboarded(page);
 

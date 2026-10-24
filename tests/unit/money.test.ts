@@ -6,6 +6,7 @@ import {
 	parseDollarsToCents,
 } from "@/lib/money";
 
+// @spec COVERAGE-MONEY-001, COVERAGE-MONEY-002
 describe("parseDollarsToCents", () => {
 	it("parses plain and decorated dollar strings to cents", () => {
 		expect(parseDollarsToCents("1234.56")).toBe(123456);
@@ -66,6 +67,7 @@ describe("parseDollarsToCents", () => {
 	});
 });
 
+// @spec COVERAGE-MONEY-003
 describe("formatCents", () => {
 	it("formats integer cents as USD", () => {
 		expect(formatCents(123456)).toBe("$1,234.56");
@@ -74,6 +76,7 @@ describe("formatCents", () => {
 	});
 });
 
+// @spec COVERAGE-MONEY-003
 describe("formatCentsWhole", () => {
 	it("formats with no decimals, rounding", () => {
 		expect(formatCentsWhole(123456)).toBe("$1,235");

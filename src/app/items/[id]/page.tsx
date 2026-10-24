@@ -17,7 +17,7 @@ import { currentValuations } from "@/lib/queries/valuations";
 import { AddPhotos } from "./add-photos";
 import { AiAssist } from "./ai-assist";
 import { DeleteItem } from "./delete-item";
-import { AddDocument } from "./documents-section";
+import { AddDocument, DocumentRejectedNotice } from "./documents-section";
 import { ItemEditForm } from "./item-edit-form";
 import { PhotoGallery } from "./photo-gallery";
 
@@ -37,15 +37,24 @@ function missingHints(
 	return hints;
 }
 
+// @spec ENRICH-ITEM-001, ENRICH-ITEM-002, ENRICH-ITEM-015, ENRICH-DOC-005, ENRICH-AI-001
 export default async function ItemDetailPage({
 	params,
+	searchParams,
 }: {
 	params: Promise<{ id: string }>;
+	searchParams: Promise<{ dropped?: string; docError?: string }>;
 }) {
 	const householdId = await getHouseholdId();
 	if (householdId === null) redirect("/");
 
 	const { id } = await params;
+	// `dropped` is set by capture when some submitted photos were not saved;
+	// `docError` by the add-document action when it refused an upload.
+	const { dropped, docError } = await searchParams;
+	const maxFileMb =
+		Math.round((config.uploads.maxFileBytes / (1024 * 1024)) * 10) / 10;
+	const droppedCount = Math.max(0, Number.parseInt(dropped ?? "", 10) || 0);
 	const itemId = Number(id);
 	if (!Number.isInteger(itemId)) notFound();
 
@@ -63,6 +72,14 @@ export default async function ItemDetailPage({
 	return (
 		<AppShell title={item.title} back={{ href: "/items", label: "Items" }}>
 			<div className="flex flex-col gap-5">
+				{droppedCount > 0 ? (
+					// @spec CAPTURE-FLOW-012
+					<p className="bg-coverage-approaching/10 text-coverage-approaching rounded-lg px-3 py-2 text-sm">
+						{droppedCount} photo{droppedCount === 1 ? "" : "s"} could not be
+						saved (too large, an unsupported type, or storage full). Add{" "}
+						{droppedCount === 1 ? "it" : "them"} again below.
+					</p>
+				) : null}
 				{/* Photo gallery (tap to enlarge) + add. */}
 				<div className="flex flex-wrap gap-2">
 					<PhotoGallery
@@ -117,6 +134,7 @@ export default async function ItemDetailPage({
 				{/* Proof documents — receipts/warranties/manuals strengthen a claim. */}
 				<section className="flex flex-col gap-2 border-t pt-4">
 					<h2 className="text-sm font-semibold">Documents</h2>
+					<DocumentRejectedNotice reason={docError} maxFileMb={maxFileMb} />
 					{documents.length > 0 ? (
 						<ul className="flex flex-col gap-2">
 							{documents.map((d) => (

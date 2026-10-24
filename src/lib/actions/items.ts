@@ -6,73 +6,33 @@ import { z } from "zod";
 
 import { LIFECYCLE_STATUSES } from "@/db/schema";
 import { crossedThreshold } from "@/lib/coverage";
-import { deleteItemMedia, processAndStoreImage } from "@/lib/media";
+import { deleteItemMedia } from "@/lib/media";
 import { parseDollarsToCents } from "@/lib/money";
-import { parseId } from "@/lib/parse-id";
-import { getCoverageSummary } from "@/lib/queries/coverage";
-import { getHouseholdId } from "@/lib/queries/household";
 import {
-	createDraftItem,
+	type CoverageSummary,
+	getCoverageSummary,
+} from "@/lib/queries/coverage";
+import {
 	deleteItem,
-	getItem,
 	type ItemPatch,
 	setItemStatus,
 	updateItem,
 } from "@/lib/queries/items";
-import { addPhoto } from "@/lib/queries/photos";
 import { recordValuations } from "@/lib/queries/valuations";
-import { storePhotoFiles } from "./store-photos";
-
-function storeFiles(itemId: number, files: File[]): Promise<number> {
-	return storePhotoFiles(files, `item ${itemId}`, async (buffer, mime) => {
-		const image = await processAndStoreImage(itemId, buffer, mime);
-		addPhoto(itemId, image, "general");
-	});
-}
-
-/** Quick capture: photos (+ optional title/location) -> a new draft item. */
-export async function captureItemAction(formData: FormData) {
-	const householdId = await getHouseholdId();
-	if (householdId === null) redirect("/");
-
-	const files = formData
-		.getAll("photos")
-		.filter((f): f is File => f instanceof File);
-	const realFiles = files.filter((f) => f.size > 0);
-	const title = String(formData.get("title") ?? "").trim();
-	const locationRaw = String(formData.get("locationId") ?? "");
-	const locationId = locationRaw ? Number(locationRaw) : null;
-
-	if (realFiles.length === 0 && title.length === 0) {
-		redirect("/capture?error=empty");
-	}
-
-	const created = createDraftItem({
-		householdId: householdId!,
-		title: title || "Untitled item",
-		locationId,
-	});
-	await storeFiles(created.id, realFiles);
-
-	revalidatePath("/worklist");
-	revalidatePath("/items");
-
-	if (String(formData.get("intent")) === "details") {
-		redirect(`/items/${created.id}`);
-	}
-	redirect("/capture?saved=1");
-}
+import { ownedItemFromForm } from "./owned-item";
+import { storeItemPhotos } from "./store-photos";
 
 /** Add more photos to an existing item (from the detail page). */
+// @spec ENRICH-PHOTO-002, ENRICH-ITEM-018
 export async function addPhotosAction(formData: FormData) {
-	const itemId = parseId(formData.get("itemId"));
-	if (itemId === null) redirect("/items");
+	const item = await ownedItemFromForm(formData.get("itemId"));
+	if (!item) redirect("/items");
 	const files = formData
 		.getAll("photos")
 		.filter((f): f is File => f instanceof File && f.size > 0);
-	await storeFiles(itemId, files);
-	revalidatePath(`/items/${itemId}`);
-	redirect(`/items/${itemId}`);
+	await storeItemPhotos(item.id, files);
+	revalidatePath(`/items/${item.id}`);
+	redirect(`/items/${item.id}`);
 }
 
 // Empty <select>/<input> values arrive as "" — treat them as "not provided".
@@ -85,6 +45,7 @@ const patchSchema = z.object({
 	title: z.string().trim().min(1, "Title is required"),
 	description: z.string().trim().optional(),
 	categoryId: optionalId,
+	// @spec HOUSEHOLD-LOC-009
 	locationId: optionalId,
 	manufacturer: z.string().trim().optional(),
 	modelNumber: z.string().trim().optional(),
@@ -102,43 +63,14 @@ const patchSchema = z.object({
 	purchaseDate: z.string().trim().optional(),
 });
 
+type ParsedPatch = z.infer<typeof patchSchema>;
+
 function emptyToNull(v: string | undefined): string | null {
 	return v && v.length > 0 ? v : null;
 }
 
-export interface CoverageAlert {
-	level: "approaching" | "over";
-	pctUsed: number;
-	totalCents: number;
-	limitCents: number;
-}
-
-export type ItemFormState = {
-	error?: string;
-	saved?: boolean;
-	coverageAlert?: CoverageAlert;
-} | null;
-
-export async function updateItemAction(
-	_prev: ItemFormState,
-	formData: FormData,
-): Promise<ItemFormState> {
-	const itemId = Number(formData.get("itemId"));
-	if (!Number.isInteger(itemId)) return { error: "Unknown item" };
-
-	const existing = getItem(itemId);
-	if (!existing) return { error: "Unknown item" };
-
-	const parsed = patchSchema.safeParse(Object.fromEntries(formData));
-	if (!parsed.success) {
-		return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
-	}
-	const d = parsed.data;
-
-	// Coverage status BEFORE this save, to detect a threshold crossing.
-	const before = getCoverageSummary(existing.householdId);
-
-	const patch: ItemPatch = {
+function toPatch(d: ParsedPatch): ItemPatch {
+	return {
 		title: d.title,
 		description: emptyToNull(d.description),
 		categoryId: d.categoryId ?? null,
@@ -150,29 +82,89 @@ export async function updateItemAction(
 		condition: emptyToNull(d.condition),
 		ageEstimate: emptyToNull(d.ageEstimate),
 		lifecycleStatus: d.lifecycleStatus,
+		// @spec CURRENT-LIFE-002, CURRENT-LIFE-004
 		lifecycleDate:
 			d.lifecycleStatus === "active" ? null : emptyToNull(d.lifecycleDate),
 	};
-	updateItem(itemId, patch);
+}
 
+/**
+ * A blank money field means "no value"; anything else must parse as a
+ * non-negative dollar amount, or the save is refused with this message.
+ */
+// @spec ENRICH-ITEM-012
+function moneyError(raw: string | undefined, label: string): string | null {
+	if (!raw || raw.trim().length === 0) return null;
+	return parseDollarsToCents(raw) === null
+		? `Enter ${label} as a dollar amount`
+		: null;
+}
+
+export interface CoverageAlert {
+	level: "approaching" | "over";
+	pctUsed: number;
+	totalCents: number;
+	limitCents: number;
+}
+
+/** A contextual nudge when a save escalated the household's coverage risk. */
+// @spec ENRICH-ITEM-014, COVERAGE-CALC-009, COVERAGE-UI-006
+function alertIfCrossed(
+	before: CoverageSummary,
+	after: CoverageSummary,
+): CoverageAlert | undefined {
+	const crossed = crossedThreshold(before.status, after.status);
+	return crossed && after.limitCents !== null && after.pctUsed !== null
+		? {
+				level: crossed,
+				pctUsed: after.pctUsed,
+				totalCents: after.totalCents,
+				limitCents: after.limitCents,
+			}
+		: undefined;
+}
+
+export type ItemFormState = {
+	error?: string;
+	saved?: boolean;
+	coverageAlert?: CoverageAlert;
+} | null;
+
+// @spec ENRICH-ITEM-009, ENRICH-ITEM-010, ENRICH-ITEM-011, ENRICH-ITEM-012, ENRICH-ITEM-013, ENRICH-ITEM-018
+export async function updateItemAction(
+	_prev: ItemFormState,
+	formData: FormData,
+): Promise<ItemFormState> {
+	const existing = await ownedItemFromForm(formData.get("itemId"));
+	if (!existing) return { error: "Unknown item" };
+
+	const parsed = patchSchema.safeParse(Object.fromEntries(formData));
+	if (!parsed.success) {
+		return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
+	}
+	const d = parsed.data;
+
+	// Refuse the whole save rather than silently drop a value the user typed.
+	const moneyProblem =
+		moneyError(d.replacementCost, "replacement cost") ??
+		moneyError(d.pricePaid, "price paid");
+	if (moneyProblem) return { error: moneyProblem };
+
+	const itemId = existing.id;
+	// Coverage status BEFORE this save, to detect a threshold crossing.
+	const before = getCoverageSummary(existing.householdId);
+
+	updateItem(itemId, toPatch(d));
 	recordValuations(itemId, {
 		replacementCostCents: parseDollarsToCents(d.replacementCost ?? ""),
 		pricePaidCents: parseDollarsToCents(d.pricePaid ?? ""),
 		purchaseDate: emptyToNull(d.purchaseDate),
 	});
 
-	// Coverage status AFTER — surface a contextual nudge if risk escalated.
-	const after = getCoverageSummary(existing.householdId);
-	const crossed = crossedThreshold(before.status, after.status);
-	const coverageAlert: CoverageAlert | undefined =
-		crossed && after.limitCents !== null && after.pctUsed !== null
-			? {
-					level: crossed,
-					pctUsed: after.pctUsed,
-					totalCents: after.totalCents,
-					limitCents: after.limitCents,
-				}
-			: undefined;
+	const coverageAlert = alertIfCrossed(
+		before,
+		getCoverageSummary(existing.householdId),
+	);
 
 	revalidatePath(`/items/${itemId}`);
 	revalidatePath("/worklist");
@@ -181,17 +173,13 @@ export async function updateItemAction(
 }
 
 /** Permanently delete an item (e.g. created by accident) and its media. */
+// @spec ENRICH-ITEM-017, PLATFORM-DATA-007
 export async function deleteItemAction(formData: FormData) {
-	const householdId = await getHouseholdId();
-	const itemId = Number(formData.get("itemId"));
-	if (!Number.isInteger(itemId)) redirect("/items");
+	const existing = await ownedItemFromForm(formData.get("itemId"));
+	if (!existing) redirect("/items");
 
-	const existing = getItem(itemId);
-	// Only delete an item that belongs to this household.
-	if (existing && existing.householdId === householdId) {
-		deleteItem(itemId);
-		await deleteItemMedia(itemId);
-	}
+	deleteItem(existing.id);
+	await deleteItemMedia(existing.id);
 
 	revalidatePath("/items");
 	revalidatePath("/worklist");
@@ -200,14 +188,15 @@ export async function deleteItemAction(formData: FormData) {
 }
 
 /** Toggle completeness: marking complete clears it from the worklist. */
+// @spec ENRICH-ITEM-015, ENRICH-ITEM-018
 export async function setItemStatusAction(formData: FormData) {
-	const itemId = Number(formData.get("itemId"));
+	const item = await ownedItemFromForm(formData.get("itemId"));
+	if (!item) redirect("/items");
 	const status = String(formData.get("status"));
-	if (!Number.isInteger(itemId)) redirect("/items");
 	if (status === "complete" || status === "draft") {
-		setItemStatus(itemId, status);
+		setItemStatus(item.id, status);
 	}
-	revalidatePath(`/items/${itemId}`);
+	revalidatePath(`/items/${item.id}`);
 	revalidatePath("/worklist");
-	redirect(`/items/${itemId}`);
+	redirect(`/items/${item.id}`);
 }

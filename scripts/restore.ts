@@ -7,6 +7,7 @@
  * Self-contained (no `@/` aliases) so it runs under plain tsx. Downloads the db
  * snapshot to <DATA_DIR>/domiciledb.db and the media tree to <DATA_DIR>/media.
  */
+// @spec RESILIENCE-RESTORE-001, RESILIENCE-RESTORE-003, RESILIENCE-RESTORE-005, RESILIENCE-RESTORE-007
 import fs from "node:fs";
 import path from "node:path";
 import {
@@ -14,7 +15,12 @@ import {
 	ListObjectsV2Command,
 	S3Client,
 } from "@aws-sdk/client-s3";
-import { resolveWithinDataDir } from "./restore-path";
+import Database from "better-sqlite3";
+import {
+	isSqliteDatabase,
+	referencedOnly,
+	resolveWithinDataDir,
+} from "./restore-path";
 
 const SNAPSHOT_KEY = "backup/domiciledb-snapshot.db";
 
@@ -41,13 +47,41 @@ const client = new S3Client({
 		: undefined,
 });
 
-async function download(key: string, dest: string) {
+async function downloadBytes(key: string): Promise<Uint8Array> {
 	const res = await client.send(
 		new GetObjectCommand({ Bucket: bucket, Key: key }),
 	);
+	if (!res.Body) throw new Error(`Empty object body for ${key}`);
+	return res.Body.transformToByteArray();
+}
+
+async function download(key: string, dest: string) {
+	const bytes = await downloadBytes(key);
 	fs.mkdirSync(path.dirname(dest), { recursive: true });
-	const bytes = await res.Body!.transformToByteArray();
 	fs.writeFileSync(dest, Buffer.from(bytes));
+}
+
+/** Every DATA_DIR-relative media path some row in the restored db points at. */
+function readReferencedPaths(dbPath: string): Set<string> {
+	const db = new Database(dbPath, { readonly: true });
+	try {
+		const paths = new Set<string>();
+		const rows = db
+			.prepare(
+				`SELECT path_original AS p FROM photo
+				 UNION ALL SELECT path_web FROM photo
+				 UNION ALL SELECT path_thumb FROM photo
+				 UNION ALL SELECT path_original FROM location_photo
+				 UNION ALL SELECT path_web FROM location_photo
+				 UNION ALL SELECT path_thumb FROM location_photo
+				 UNION ALL SELECT path FROM document`,
+			)
+			.all() as { p: string }[];
+		for (const row of rows) paths.add(row.p);
+		return paths;
+	} finally {
+		db.close();
+	}
 }
 
 async function listKeys(prefix: string): Promise<string[]> {
@@ -71,18 +105,30 @@ async function main() {
 	fs.mkdirSync(dataDir, { recursive: true });
 
 	// 1. Restore the database snapshot to the live db path; clear stale WAL files.
+	// Validate the bytes first: the live db is only replaced by a real SQLite file.
 	const dbPath = path.join(dataDir, "domiciledb.db");
-	await download(SNAPSHOT_KEY, dbPath);
+	const snapshot = await downloadBytes(SNAPSHOT_KEY);
+	if (!isSqliteDatabase(snapshot)) {
+		console.error(
+			`Object ${SNAPSHOT_KEY} is not a SQLite database; leaving ${dbPath} untouched.`,
+		);
+		process.exit(1);
+	}
+	fs.writeFileSync(dbPath, Buffer.from(snapshot));
 	for (const sidecar of [`${dbPath}-wal`, `${dbPath}-shm`]) {
 		if (fs.existsSync(sidecar)) fs.rmSync(sidecar);
 	}
 	console.log(`Restored database -> ${dbPath}`);
 
-	// 2. Restore the media tree (keys are DATA_DIR-relative). S3 keys are
-	// attacker-influenced, so assert each stays inside DATA_DIR before writing.
-	const mediaKeys = await listKeys("media/");
+	// 2. Restore the media tree (keys are DATA_DIR-relative). The bucket is
+	// append-only, so only bring back what the restored db still references.
+	// S3 keys are attacker-influenced, so assert each stays inside DATA_DIR.
+	const { restore, skipped } = referencedOnly(
+		await listKeys("media/"),
+		readReferencedPaths(dbPath),
+	);
 	let restored = 0;
-	for (const key of mediaKeys) {
+	for (const key of restore) {
 		const dest = resolveWithinDataDir(dataDir, key);
 		if (!dest) {
 			console.error(`Refusing key that escapes DATA_DIR: ${key}`);
@@ -91,7 +137,9 @@ async function main() {
 		await download(key, dest);
 		restored += 1;
 	}
-	console.log(`Restored ${restored} media files.`);
+	console.log(
+		`Restored ${restored} media files; skipped ${skipped.length} unreferenced object(s) left in the bucket.`,
+	);
 	console.log("Restore complete. Start the app to resume.");
 }
 

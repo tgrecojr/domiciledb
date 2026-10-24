@@ -1,3 +1,4 @@
+# @spec PLATFORM-OPS-004
 name: Build and Publish Docker Image
 
 on:

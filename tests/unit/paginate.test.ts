@@ -34,6 +34,7 @@ function room(locationId: number, name: string, n: number): ReportRoom {
 	};
 }
 
+// @spec PACKET-PDF-004
 describe("paginateRooms (proof-packet pagination)", () => {
 	it("keeps a small room on a single page", () => {
 		const chunks = paginateRooms([room(1, "Living", ITEMS_PER_PAGE)]);

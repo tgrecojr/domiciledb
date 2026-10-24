@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { parseId } from "@/lib/parse-id";
 
+// @spec PLATFORM-DATA-006
 describe("parseId fails closed (VULN-014)", () => {
 	it("rejects an absent id instead of coercing null to 0", () => {
 		// Number(null) === 0 would pass Number.isInteger and proceed as item 0.

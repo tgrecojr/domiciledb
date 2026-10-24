@@ -10,6 +10,7 @@ const UNASSIGNED = "unassigned";
  * `?location=` search param so the filter is server-rendered and shareable.
  * `value` is the currently active selection ("all", "unassigned", or an id).
  */
+// @spec ENRICH-LIST-003
 export function LocationFilter({
 	locations,
 	value,

@@ -8,7 +8,9 @@
 }
 
 :root {
-	color-scheme: light dark;
+	/* Light-only palette: keep native controls and scrollbars in step with it. */
+	/* @spec PLATFORM-PWA-007 */
+	color-scheme: light;
 }
 
 html,

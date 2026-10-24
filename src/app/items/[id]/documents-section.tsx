@@ -23,6 +23,41 @@ function SubmitButton() {
 	);
 }
 
+/** The `?docError=` reasons the add-document action redirects back with. */
+function rejectionMessage(reason: string, maxFileMb: number): string | null {
+	switch (reason) {
+		case "missing":
+			return "No document was attached. Choose a file, then tap Attach.";
+		case "type":
+			return "That file is not a supported type. Attach a PDF, JPEG, PNG, WebP, or HEIC.";
+		case "size":
+			return `That document is over the ${maxFileMb} MB per-file limit.`;
+		case "quota":
+			return "Media storage is full, so the document could not be stored.";
+		default:
+			return null;
+	}
+}
+
+/** Amber notice naming why the last document upload was refused. */
+// @spec ENRICH-DOC-007
+export function DocumentRejectedNotice({
+	reason,
+	maxFileMb,
+}: {
+	reason?: string;
+	maxFileMb: number;
+}) {
+	const message = reason ? rejectionMessage(reason, maxFileMb) : null;
+	if (!message) return null;
+	return (
+		<p className="bg-coverage-approaching/10 text-coverage-approaching rounded-lg px-3 py-2 text-sm">
+			{message} Nothing was saved.
+		</p>
+	);
+}
+
+// @spec ENRICH-DOC-001
 export function AddDocument({ itemId }: { itemId: number }) {
 	return (
 		<form

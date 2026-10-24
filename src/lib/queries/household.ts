@@ -1,8 +1,11 @@
 import "server-only";
 
+import { eq } from "drizzle-orm";
+
 import { db } from "@/db";
 import { household } from "@/db/schema";
 
+// @spec HOUSEHOLD-HH-001
 /** The v1 app manages a single household; return it if set up, else null. */
 export async function getHousehold() {
 	const rows = db.select().from(household).limit(1).all();
@@ -15,6 +18,7 @@ export async function getHouseholdId(): Promise<number | null> {
 	return rows[0]?.id ?? null;
 }
 
+// @spec HOUSEHOLD-HH-003, HOUSEHOLD-HH-004
 export async function createHousehold(input: {
 	name: string;
 	description?: string;
@@ -36,4 +40,21 @@ export async function createHousehold(input: {
 		.returning()
 		.all();
 	return rows[0]!;
+}
+
+// @spec HOUSEHOLD-HH-006
+/** Edit the household's name, address, and description after onboarding. */
+export function updateHousehold(
+	id: number,
+	input: { name: string; description?: string; address?: string },
+) {
+	db.update(household)
+		.set({
+			name: input.name,
+			description: input.description || null,
+			address: input.address || null,
+			updatedAt: new Date().toISOString(),
+		})
+		.where(eq(household.id, id))
+		.run();
 }

@@ -30,6 +30,7 @@ function notFound() {
 	return new Response("Not found", { status: 404, headers: SECURITY_HEADERS });
 }
 
+// @spec PLATFORM-MEDIA-008, PLATFORM-MEDIA-009, PLATFORM-MEDIA-010
 export async function GET(
 	_req: Request,
 	{ params }: { params: Promise<{ path: string[] }> },

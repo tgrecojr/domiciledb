@@ -9,6 +9,7 @@ interface Photo {
 	original: string;
 }
 
+// @spec ENRICH-PHOTO-003
 export function PhotoGallery({ photos }: { photos: Photo[] }) {
 	const [open, setOpen] = useState<Photo | null>(null);
 

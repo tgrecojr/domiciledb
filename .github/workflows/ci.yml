@@ -1,3 +1,4 @@
+# @spec PLATFORM-OPS-003
 name: CI
 
 on:
@@ -81,6 +82,7 @@ jobs:
       # alternative). Run as a step (not a service) so it can be env-configured.
       - name: Start RustFS (S3-compatible)
         run: |
+          # @spec PLATFORM-OPS-007 (gap)
           docker run -d --name rustfs -p 9000:9000 \
             -e RUSTFS_ACCESS_KEY=rustfsadmin \
             -e RUSTFS_SECRET_KEY=rustfsadmin \

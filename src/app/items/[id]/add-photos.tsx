@@ -5,6 +5,7 @@ import { useRef } from "react";
 
 import { addPhotosAction } from "@/lib/actions/items";
 
+// @spec ENRICH-PHOTO-001
 export function AddPhotos({ itemId }: { itemId: number }) {
 	const formRef = useRef<HTMLFormElement>(null);
 

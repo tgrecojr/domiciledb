@@ -2,6 +2,7 @@ import { expect, test } from "@playwright/test";
 
 import { captureDraft, ensureOnboarded } from "./helpers";
 
+// @spec RESILIENCE-UI-001, RESILIENCE-UI-002, RESILIENCE-BACKUP-001, RESILIENCE-EXPORT-001, RESILIENCE-EXPORT-003
 test("export downloads a valid zip; backup shows disabled (no-op) without S3", async ({
 	page,
 }) => {

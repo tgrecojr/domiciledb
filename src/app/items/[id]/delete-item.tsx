@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import { deleteItemAction } from "@/lib/actions/items";
 
+// @spec ENRICH-ITEM-016
 export function DeleteItem({ itemId }: { itemId: number }) {
 	const [confirming, setConfirming] = useState(false);
 

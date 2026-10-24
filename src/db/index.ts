@@ -22,6 +22,7 @@ function ensureDataDirs() {
 	}
 }
 
+// @spec PLATFORM-BOOT-002, PLATFORM-BOOT-003
 function createConnection() {
 	// During `next build`, page-data collection imports this module from several
 	// parallel workers. A fresh DB file's WAL conversion can throw SQLITE_BUSY

@@ -5,6 +5,7 @@
  * item 0 (writing attacker bytes under .../0/ before an FK-failing insert whose
  * error is swallowed). Require an explicit run of digits and reject zero.
  */
+// @spec PLATFORM-DATA-006
 export function parseId(value: unknown): number | null {
 	if (typeof value !== "string") return null;
 	const s = value.trim();

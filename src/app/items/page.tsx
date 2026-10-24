@@ -10,6 +10,7 @@ import { listLocations } from "@/lib/queries/locations";
 
 export const dynamic = "force-dynamic";
 
+// @spec ENRICH-LIST-001, ENRICH-LIST-002, ENRICH-LIST-003, ENRICH-LIST-005
 export default async function ItemsPage({
 	searchParams,
 }: {
