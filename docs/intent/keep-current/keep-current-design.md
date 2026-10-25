@@ -1,4 +1,5 @@
 ---
+
 parent: high-level-design
 prefix: CURRENT
 ---
@@ -91,22 +92,23 @@ to be built as one change once the eight segments are audited.
 
 ## Decisions & Alternatives
 
-| Decision | Chosen | Alternatives Considered | Rationale |
-|----------|--------|------------------------|-----------|
-| Disposal model | Lifecycle status + date; row stays | Delete; archive flag | Spec §4.4 and §5: history survives, totals exclude; a claim may need to show what was owned at a date. |
-| Which status counts | `active` only | Configurable set | Spec §7: the claim picture is what the owner holds now. |
-| Lifecycle vs. completeness | Two independent columns | One combined state | architecture.md: draft/complete is about data entry, lifecycle is about the object; conflating them would make a sold draft impossible. |
-| Value storage | Append-only history + denormalized current pointer | Columns on the item only; history only | architecture.md: history gives dated provenance; the pointer makes coverage a single-table aggregate and carries the staleness timestamp. |
-| Duplicate suppression | No new row when the amount equals the latest | Row on every save | Autosave would otherwise write a history row on every blur; identical amounts carry no information. |
-| Pointer refresh | Only when the amount changes (a history row is appended) | On every save with a non-null cost; an explicit "still correct" control | The editor autosaves on blur of any field, so a save is not a re-confirmation of the value; moving the date only on change makes the cadence reminder meaningful. An explicit re-confirm control can be added later without changing this rule. |
-| Price-paid date | `valued_at` = purchase date when given | Separate purchase-date column | One timestamp column serves both kinds; the purchase date is the valuation date for price paid. |
-| Reminder cadence | Global, operator env, default 90 days | Per-item; user setting | Spec §4.4 and §11, principle 7. |
-| Reminder kinds | `revaluation`, `warranty_expiry` | Also lifecycle review, backup health | Spec §4.4 and §5 name exactly these two. |
-| Reminder lifetime | Cascade with the item | Survive as audit | A reminder about a deleted item is noise; schema chooses cascade here and set-null for AI interactions. |
+| Decision                   | Chosen                                                   | Alternatives Considered                                                 | Rationale                                                                                                                                                                                                                                       |
+| -------------------------- | -------------------------------------------------------- | ----------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Disposal model             | Lifecycle status + date; row stays                       | Delete; archive flag                                                    | Spec §4.4 and §5: history survives, totals exclude; a claim may need to show what was owned at a date.                                                                                                                                          |
+| Which status counts        | `active` only                                            | Configurable set                                                        | Spec §7: the claim picture is what the owner holds now.                                                                                                                                                                                         |
+| Lifecycle vs. completeness | Two independent columns                                  | One combined state                                                      | architecture.md: draft/complete is about data entry, lifecycle is about the object; conflating them would make a sold draft impossible.                                                                                                         |
+| Value storage              | Append-only history + denormalized current pointer       | Columns on the item only; history only                                  | architecture.md: history gives dated provenance; the pointer makes coverage a single-table aggregate and carries the staleness timestamp.                                                                                                       |
+| Duplicate suppression      | No new row when the amount equals the latest             | Row on every save                                                       | Autosave would otherwise write a history row on every blur; identical amounts carry no information.                                                                                                                                             |
+| Pointer refresh            | Only when the amount changes (a history row is appended) | On every save with a non-null cost; an explicit "still correct" control | The editor autosaves on blur of any field, so a save is not a re-confirmation of the value; moving the date only on change makes the cadence reminder meaningful. An explicit re-confirm control can be added later without changing this rule. |
+| Price-paid date            | `valued_at` = purchase date when given                   | Separate purchase-date column                                           | One timestamp column serves both kinds; the purchase date is the valuation date for price paid.                                                                                                                                                 |
+| Reminder cadence           | Global, operator env, default 90 days                    | Per-item; user setting                                                  | Spec §4.4 and §11, principle 7.                                                                                                                                                                                                                 |
+| Reminder kinds             | `revaluation`, `warranty_expiry`                         | Also lifecycle review, backup health                                    | Spec §4.4 and §5 name exactly these two.                                                                                                                                                                                                        |
+| Reminder lifetime          | Cascade with the item                                    | Survive as audit                                                        | A reminder about a deleted item is noise; schema chooses cascade here and set-null for AI interactions.                                                                                                                                         |
 
 ## Open Questions & Future Decisions
 
 ### Resolved
+
 1. ✅ Re-valuation cadence is global, defaults to quarterly, operator-set (spec §11).
 2. ✅ "Last valued" means last changed: the pointers move only when a replacement-cost row is
    appended (CURRENT-VAL-003).
@@ -114,6 +116,7 @@ to be built as one change once the eight segments are audited.
    segment audits; the warranty lead time and the surface are decided in that change.
 
 ### Deferred
+
 1. **Clearing a value.** There is no way to make a valued item unvalued again.
 2. **Purchase-date-only edits** are dropped when the amount is unchanged.
 3. **Source on valuation rows.** `recordValuations` hardcodes `user`; enrich's AI apply needs to

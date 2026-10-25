@@ -42,23 +42,23 @@ Drizzle ORM  ──►  better-sqlite3 (WAL)  ──►  $DATA_DIR/domiciledb.db
 
 ## Module map
 
-| Path                            | Responsibility                                                                 |
-| ------------------------------- | ------------------------------------------------------------------------------ |
-| `src/lib/config.ts`             | The only reader of operator env; typed, Zod-validated at startup (framework vars and the standalone `scripts/*.ts` read `process.env` themselves) |
-| `src/db/schema.ts`              | Single source of truth for the data model (money in integer **cents**)         |
-| `src/db/index.ts`               | Shared WAL connection opened from `DATA_DIR`                                   |
-| `src/db/migrate.ts` / `seed.ts` | `runMigrations()` + default-category seed                                      |
-| `src/instrumentation.ts`        | Migrate + seed on boot, then start the in-process scheduler                    |
-| `src/lib/scheduler.ts`          | node-cron registration (backup cadence; the re-valuation/warranty scan slot is reserved, not implemented) |
-| `src/lib/image-format.ts` / `src/lib/actions/store-photos.ts` | Magic-byte admission allowlists; bounded photo intake (count, size, quota) shared by every photo flow |
-| `src/lib/coverage.ts`           | **Insurance spine**: replacement-cost total vs. Coverage B; threshold crossing |
-| `src/lib/money.ts`              | Integer-cents parse/format — the only dollars↔cents conversion                 |
-| `src/lib/report.ts`             | Pure proof-packet assembly: room/category/grand totals                         |
-| `src/lib/media.ts`              | Image processing (sharp) + the path-traversal-guarded resolver                 |
-| `src/lib/documents-store.ts`    | Receipt/warranty/manual storage (sanitized filenames)                          |
-| `src/lib/pdf/*`                 | @react-pdf/renderer document, image prep, paginated render                     |
-| `src/lib/backup/*`              | S3 client, `VACUUM INTO` snapshot, content-addressed sync, orchestrator        |
-| `src/lib/ai/*`                  | OpenRouter client, task registry + schemas, transparency manifest              |
+| Path                                                          | Responsibility                                                                                                                                    |
+| ------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/lib/config.ts`                                           | The only reader of operator env; typed, Zod-validated at startup (framework vars and the standalone `scripts/*.ts` read `process.env` themselves) |
+| `src/db/schema.ts`                                            | Single source of truth for the data model (money in integer **cents**)                                                                            |
+| `src/db/index.ts`                                             | Shared WAL connection opened from `DATA_DIR`                                                                                                      |
+| `src/db/migrate.ts` / `seed.ts`                               | `runMigrations()` + default-category seed                                                                                                         |
+| `src/instrumentation.ts`                                      | Migrate + seed on boot, then start the in-process scheduler                                                                                       |
+| `src/lib/scheduler.ts`                                        | node-cron registration (backup cadence; the re-valuation/warranty scan slot is reserved, not implemented)                                         |
+| `src/lib/image-format.ts` / `src/lib/actions/store-photos.ts` | Magic-byte admission allowlists; bounded photo intake (count, size, quota) shared by every photo flow                                             |
+| `src/lib/coverage.ts`                                         | **Insurance spine**: replacement-cost total vs. Coverage B; threshold crossing                                                                    |
+| `src/lib/money.ts`                                            | Integer-cents parse/format — the only dollars↔cents conversion                                                                                    |
+| `src/lib/report.ts`                                           | Pure proof-packet assembly: room/category/grand totals                                                                                            |
+| `src/lib/media.ts`                                            | Image processing (sharp) + the path-traversal-guarded resolver                                                                                    |
+| `src/lib/documents-store.ts`                                  | Receipt/warranty/manual storage (sanitized filenames)                                                                                             |
+| `src/lib/pdf/*`                                               | @react-pdf/renderer document, image prep, paginated render                                                                                        |
+| `src/lib/backup/*`                                            | S3 client, `VACUUM INTO` snapshot, content-addressed sync, orchestrator                                                                           |
+| `src/lib/ai/*`                                                | OpenRouter client, task registry + schemas, transparency manifest                                                                                 |
 
 ## Data model (`src/db/schema.ts`)
 

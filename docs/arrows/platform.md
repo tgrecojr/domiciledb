@@ -14,15 +14,19 @@ test.
 ## References
 
 ### HLD
+
 - docs/high-level-design.md (System Design; Key Design Decisions: stack; Security posture)
 
 ### LLD
+
 - docs/intent/platform/platform-design.md
 
 ### EARS
+
 - docs/intent/platform/platform-specs.md (49 specs: 7 CONFIG, 6 BOOT, 7 DATA, 13 MEDIA, 9 PWA, 7 OPS)
 
 ### Tests
+
 - tests/unit/parse-id.security.test.ts (VULN-014)
 - tests/unit/media.test.ts
 - tests/unit/media-route.security.test.ts (VULN-009, VULN-023)
@@ -34,6 +38,7 @@ test.
 - vitest.config.ts, vitest.integration.config.ts, playwright.config.ts, tests/stubs/empty.ts
 
 ### Code
+
 - src/lib/config.ts
 - src/instrumentation.ts, src/lib/scheduler.ts
 - src/db/index.ts, migrate.ts, schema.ts; drizzle/**; drizzle.config.ts; scripts/migrate.ts
@@ -71,14 +76,14 @@ non-root, signed container built by a gated pipeline.
 
 ## Spec Coverage
 
-| Category | Spec IDs | Implemented | Deferred | Gaps |
-|----------|----------|-------------|----------|------|
-| Configuration | PLATFORM-CONFIG-001 to 007 | 7 | 0 | 0 |
-| Boot and persistence | PLATFORM-BOOT-001 to 006 | 6 | 0 | 0 |
-| Schema conventions | PLATFORM-DATA-001 to 007 | 7 | 0 | 0 |
-| Media store and serving | PLATFORM-MEDIA-001 to 013 | 11 | 0 | 2 |
-| Shell and PWA | PLATFORM-PWA-001 to 010 (009 deleted) | 8 | 0 | 1 |
-| Container and CI | PLATFORM-OPS-001 to 007 | 6 | 0 | 1 |
+| Category                | Spec IDs                              | Implemented | Deferred | Gaps |
+| ----------------------- | ------------------------------------- | ----------- | -------- | ---- |
+| Configuration           | PLATFORM-CONFIG-001 to 007            | 7           | 0        | 0    |
+| Boot and persistence    | PLATFORM-BOOT-001 to 006              | 6           | 0        | 0    |
+| Schema conventions      | PLATFORM-DATA-001 to 007              | 7           | 0        | 0    |
+| Media store and serving | PLATFORM-MEDIA-001 to 013             | 11          | 0        | 2    |
+| Shell and PWA           | PLATFORM-PWA-001 to 010 (009 deleted) | 8           | 0        | 1    |
+| Container and CI        | PLATFORM-OPS-001 to 007               | 6           | 0        | 1    |
 
 **Summary:** 45 of 49 active specs implemented; 4 gaps (PLATFORM-MEDIA-012 original extension
 from sniffed type, PLATFORM-MEDIA-013 one shared media-root guard, PLATFORM-PWA-008 safe-area
@@ -136,14 +141,17 @@ which cannot carry comments, OPS-006, PWA-010) or gaps whose fix lands in anothe
 ## Work Required
 
 ### Must Fix
+
 1. None at the security level; the media route, SW policy, and id parsing are tested.
 
 ### Should Fix
+
 2. Derive the original extension from the sniffed type (PLATFORM-MEDIA-012) and collapse the
    three media-root guards into one with the NUL check (PLATFORM-MEDIA-013).
-4. Pin `rustfs` and the Socket CLI (PLATFORM-OPS-007).
-5. Make `parseId` the only id parser in actions and routes (PLATFORM-DATA-007; files in enrich).
+3. Pin `rustfs` and the Socket CLI (PLATFORM-OPS-007).
+4. Make `parseId` the only id parser in actions and routes (PLATFORM-DATA-007; files in enrich).
 
 ### Nice to Have
+
 6. Pad the header for the notch (PLATFORM-PWA-008).
 7. Fix the `.dockerignore` negation; align `engines` with Node 24; add an Apple touch icon.

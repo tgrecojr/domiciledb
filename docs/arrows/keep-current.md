@@ -15,20 +15,25 @@ scheduled to be built after the segment audits.
 ## References
 
 ### HLD
+
 - docs/high-level-design.md (Tenets: trustworthy means current; Goals)
 
 ### LLD
+
 - docs/intent/keep-current/keep-current-design.md
 
 ### EARS
+
 - docs/intent/keep-current/keep-current-specs.md (24 specs: 5 LIFE, 12 VAL, 7 REMIND)
 
 ### Tests
+
 - tests/integration/db-queries.test.ts (valuation-history and lifecycle → coverage cases)
 - tests/e2e/item-edit.spec.ts (sold → dashboard total drops)
 - No test touches reminders.
 
 ### Code
+
 - src/lib/lifecycle.ts
 - src/lib/queries/valuations.ts
 - src/db/schema.ts (`valuation`, `reminder`, `REMINDER_KINDS`, `item.current_replacement_*`; file owned by platform)
@@ -55,11 +60,11 @@ not the owner's memory, must prompt re-review of aging values and expiring warra
 
 ## Spec Coverage
 
-| Category | Spec IDs | Implemented | Deferred | Gaps |
-|----------|----------|-------------|----------|------|
-| Lifecycle | CURRENT-LIFE-001 to 005 | 5 | 0 | 0 |
-| Valuation history | CURRENT-VAL-001 to 012 | 9 | 1 | 2 |
-| Reminders | CURRENT-REMIND-001 to 007 | 2 | 1 | 4 |
+| Category          | Spec IDs                  | Implemented | Deferred | Gaps |
+| ----------------- | ------------------------- | ----------- | -------- | ---- |
+| Lifecycle         | CURRENT-LIFE-001 to 005   | 5           | 0        | 0    |
+| Valuation history | CURRENT-VAL-001 to 012    | 9           | 1        | 2    |
+| Reminders         | CURRENT-REMIND-001 to 007 | 2           | 1        | 4    |
 
 **Summary:** 16 of 22 active specs implemented; 6 gaps (CURRENT-VAL-007 purchase-date-only
 changes, CURRENT-VAL-008 clearing a replacement cost, and CURRENT-REMIND-001 to 004); 2
@@ -99,14 +104,17 @@ reminder surface exists. Specs with a citing test: LIFE-003, VAL-002, VAL-003, V
 ## Work Required
 
 ### Must Fix
+
 1. Build the reminder scan, surfacing, and dismissal (CURRENT-REMIND-001 to 004) as one change
    after the segment audits. This is the largest intent gap in the repository.
 
 ### Should Fix
+
 3. Allow clearing a replacement cost (CURRENT-VAL-008).
 4. Record purchase-date-only changes (CURRENT-VAL-007).
 5. Carry a `source` through `recordValuations` (CURRENT-VAL-010; pairs with ENRICH-AI-014).
 
 ### Nice to Have
+
 6. Validate lifecycle date as a date.
 7. Unit-test lifecycle statuses other than `sold`.

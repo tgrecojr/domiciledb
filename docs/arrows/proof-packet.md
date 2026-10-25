@@ -15,15 +15,19 @@ active spec is implemented.
 ## References
 
 ### HLD
+
 - docs/high-level-design.md (Goals: the headline output; Non-Goals: structured export)
 
 ### LLD
+
 - docs/intent/proof-packet/proof-packet-design.md
 
 ### EARS
+
 - docs/intent/proof-packet/proof-packet-specs.md (29 specs: 12 DATA, 12 PDF, 5 ROUTE)
 
 ### Tests
+
 - tests/unit/report.test.ts (100% line/function, 90% branch gate)
 - tests/unit/receipts.test.ts
 - tests/unit/report-page.test.ts (item-cap notice)
@@ -33,6 +37,7 @@ active spec is implemented.
 - tests/integration/db-queries.test.ts (location-filtered packet case)
 
 ### Code
+
 - src/lib/report.ts
 - src/lib/queries/report.ts
 - src/lib/pdf/proof-packet.tsx, render.tsx, images.ts, receipts.ts, paginate.ts, styles.ts
@@ -62,11 +67,11 @@ uploads.
 
 ## Spec Coverage
 
-| Category | Spec IDs | Implemented | Deferred | Gaps |
-|----------|----------|-------------|----------|------|
-| Assembly | PACKET-DATA-001 to 012 | 12 | 0 | 0 |
-| Document | PACKET-PDF-001 to 012 | 12 | 0 | 0 |
-| Route and page | PACKET-ROUTE-001 to 005 | 5 | 0 | 0 |
+| Category       | Spec IDs                | Implemented | Deferred | Gaps |
+| -------------- | ----------------------- | ----------- | -------- | ---- |
+| Assembly       | PACKET-DATA-001 to 012  | 12          | 0        | 0    |
+| Document       | PACKET-PDF-001 to 012   | 12          | 0        | 0    |
+| Route and page | PACKET-ROUTE-001 to 005 | 5           | 0        | 0    |
 
 **Summary:** 29 of 29 active specs implemented; 0 gaps; 0 deferred.
 
@@ -110,11 +115,14 @@ end to end). No reverse orphans.
 ## Work Required
 
 ### Must Fix
+
 1. None. Every spec is implemented and annotated; assembly is under the 100% gate.
 
 ### Should Fix
+
 2. None outstanding.
 
 ### Nice to Have
+
 3. Make "latest price paid" compare dates, not strings.
 4. Guard the "Unassigned" label collision; a renderer smoke test on a small packet.

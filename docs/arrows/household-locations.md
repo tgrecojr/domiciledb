@@ -14,16 +14,20 @@ active spec is implemented; the segment is one audit of a committed tree away fr
 ## References
 
 ### HLD
+
 - docs/high-level-design.md (Target Users: one household, one editor; Non-Goals: multiple
   properties, multi-user)
 
 ### LLD
+
 - docs/intent/household-locations/household-locations-design.md
 
 ### EARS
+
 - docs/intent/household-locations/household-locations-specs.md (19 specs: 6 HH, 9 LOC, 4 PHOTO)
 
 ### Tests
+
 - tests/unit/household.security.test.ts (VULN-020)
 - tests/unit/location-photo-delete.security.test.ts (VULN-017)
 - tests/e2e/household-locations.spec.ts (household edit; add, edit, room photo; confirmed delete
@@ -31,6 +35,7 @@ active spec is implemented; the segment is one audit of a committed tree away fr
 - tests/e2e/helpers.ts (`ensureOnboarded`)
 
 ### Code
+
 - src/app/actions.ts (`setupHouseholdAction`, `updateHouseholdAction`)
 - src/app/onboarding-form.tsx
 - src/app/household/page.tsx, household-form.tsx
@@ -62,11 +67,11 @@ specific item.
 
 ## Spec Coverage
 
-| Category | Spec IDs | Implemented | Deferred | Gaps |
-|----------|----------|-------------|----------|------|
-| Household | HOUSEHOLD-HH-001 to 006 | 5 | 1 | 0 |
-| Locations | HOUSEHOLD-LOC-001 to 009 | 9 | 0 | 0 |
-| Room photos | HOUSEHOLD-PHOTO-001 to 004 | 4 | 0 | 0 |
+| Category    | Spec IDs                   | Implemented | Deferred | Gaps |
+| ----------- | -------------------------- | ----------- | -------- | ---- |
+| Household   | HOUSEHOLD-HH-001 to 006    | 5           | 1        | 0    |
+| Locations   | HOUSEHOLD-LOC-001 to 009   | 9           | 0        | 0    |
+| Room photos | HOUSEHOLD-PHOTO-001 to 004 | 4           | 0        | 0    |
 
 **Summary:** 18 of 18 active specs implemented; 0 gaps; 1 deferred (multiple properties).
 
@@ -110,11 +115,14 @@ proof-packet's unit tests). No reverse orphans.
 ## Work Required
 
 ### Must Fix
+
 1. None. Every active spec is implemented and the segment is annotated.
 
 ### Should Fix
+
 2. None outstanding.
 
 ### Nice to Have
+
 3. Replace the personal placeholder text in onboarding.
 4. Allow description on create; decide the camera hint for room photos; write `sort_order`.

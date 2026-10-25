@@ -15,15 +15,19 @@ is implemented.
 ## References
 
 ### HLD
+
 - docs/high-level-design.md (Tenets: the data survives the event; Non-Goals)
 
 ### LLD
+
 - docs/intent/resilience/resilience-design.md
 
 ### EARS
+
 - docs/intent/resilience/resilience-specs.md (28 specs: 13 BACKUP, 4 EXPORT, 7 RESTORE, 4 UI)
 
 ### Tests
+
 - tests/unit/backup-plan.test.ts
 - tests/unit/backup-run.security.test.ts (VULN-006, VULN-011)
 - tests/unit/snapshot.security.test.ts (VULN-001)
@@ -34,6 +38,7 @@ is implemented.
 - tests/e2e/resilience.spec.ts
 
 ### Code
+
 - src/lib/backup/plan.ts, snapshot.ts, s3.ts, run.ts
 - src/lib/single-flight.ts
 - src/lib/actions/backup.ts
@@ -67,12 +72,12 @@ documented script rebuilds the data directory from the bucket.
 
 ## Spec Coverage
 
-| Category | Spec IDs | Implemented | Deferred | Gaps |
-|----------|----------|-------------|----------|------|
-| Backup | RESILIENCE-BACKUP-001 to 013 | 13 | 0 | 0 |
-| Export | RESILIENCE-EXPORT-001 to 004 | 4 | 0 | 0 |
-| Restore | RESILIENCE-RESTORE-001 to 007 | 6 | 1 | 0 |
-| Resilience page | RESILIENCE-UI-001 to 004 | 4 | 0 | 0 |
+| Category        | Spec IDs                      | Implemented | Deferred | Gaps |
+| --------------- | ----------------------------- | ----------- | -------- | ---- |
+| Backup          | RESILIENCE-BACKUP-001 to 013  | 13          | 0        | 0    |
+| Export          | RESILIENCE-EXPORT-001 to 004  | 4           | 0        | 0    |
+| Restore         | RESILIENCE-RESTORE-001 to 007 | 6           | 1        | 0    |
+| Resilience page | RESILIENCE-UI-001 to 004      | 4           | 0        | 0    |
 
 **Summary:** 27 of 27 active specs implemented; 0 gaps; 1 deferred (restoring the PDF).
 
@@ -119,11 +124,14 @@ RESTORE-003, UI-004. No reverse orphans.
 ## Work Required
 
 ### Must Fix
+
 1. None at the data-safety level: snapshot, round trip, and containment are tested.
 
 ### Should Fix
+
 2. None outstanding.
 
 ### Nice to Have
+
 3. Reuse one S3 client; set HEIC content type; stream restore downloads.
 4. Restore the PDF too, or document why not (RESILIENCE-RESTORE-004).

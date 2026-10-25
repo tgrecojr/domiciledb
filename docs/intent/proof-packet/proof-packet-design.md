@@ -1,4 +1,5 @@
 ---
+
 parent: high-level-design
 prefix: PACKET
 ---
@@ -122,27 +123,28 @@ it as `backup/proof-packet-latest.pdf`.
 
 ## Decisions & Alternatives
 
-| Decision | Chosen | Alternatives Considered | Rationale |
-|----------|--------|------------------------|-----------|
-| Output format | Print-ready PDF | HTML print view; spreadsheet; JSON | Spec §8: a polished PDF is the v1 priority; structured export is explicitly later. |
-| Renderer | `@react-pdf/renderer` (pure JS) | Headless Chromium; LaTeX; pdfkit by hand | architecture.md: no browser binary keeps the distroless image slim; React components reuse the team's one language. |
-| Organization | By room, summary first, totals by room and category | By category; flat list | Spec §8: adjusters walk a loss room by room; categories matter because policies think in categories. |
-| Which items | Active only | All with a lifecycle note | Spec §7/§8: the packet is the claim picture; sold items would inflate it. |
-| Unvalued items | Listed, excluded from totals, counted | Omitted; counted at $0 | Spec §7: "at least $X"; principle 6 keeps drafts in the record. |
-| Pagination | Explicit 10-item chunks per room | react-pdf auto-wrap | `paginate.ts:4-7`: auto-pagination is O(n²) and overflowed yoga past ~80 items. |
-| Photos per item / room | First 4 of each | All; 1 | Four thumbnails fit a row at 70 px and bound render time and PDF size; the first photos are the capture shots. |
-| Photo source | Originals, downscaled to 600 px JPEG | Web WebP variants | `images.ts:9-12`: react-pdf does not embed WebP. |
-| Image loading | Sequential, failures skipped | Parallel; fail the packet | `render.tsx:12`: memory control; a missing photo must not block the claim document. |
-| Documents in the packet | Up to two receipt images embedded per item; every document listed as kind (filename) | Kinds only; rasterize PDF receipts too | Spec §8 calls the packet photo-and-receipt-backed, and a receipt image next to the item is the proof an adjuster asks for first. PDF receipts are named, not rendered: rasterizing PDFs needs a renderer the distroless image does not carry. |
-| Size guard | Route refuses above `PROOF_PACKET_MAX_ITEMS` with narrowing guidance; the report page withholds the link above the cap | Render anyway; paginate the download | VULN-010: a giant packet is a memory and CPU denial-of-service on a single-user box; location and category filters already exist, and the page should not offer what the route refuses. |
-| Totalling arithmetic | Consumed from the coverage module (`itemValueCents`, `addCents`) | Own implementation | The packet must never disagree with the dashboard; one owner for the rule. |
-| Photo order | `sort_order` then id, the item page's order | Insertion order | The first photos in the packet should be the ones the owner sees first on the item. |
-| Caching | `no-store`, generated per request | Cache the latest PDF | The packet must reflect the current inventory; the only stored copy is the backup's, which is refreshed on each run. |
-| Serial numbers | Printed in full | Masked | Serials are the proof; masking defeats the document's purpose. The PDF is treated as sensitive (no-store, S3 only under the operator's bucket). |
+| Decision                | Chosen                                                                                                                 | Alternatives Considered                  | Rationale                                                                                                                                                                                                                                     |
+| ----------------------- | ---------------------------------------------------------------------------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Output format           | Print-ready PDF                                                                                                        | HTML print view; spreadsheet; JSON       | Spec §8: a polished PDF is the v1 priority; structured export is explicitly later.                                                                                                                                                            |
+| Renderer                | `@react-pdf/renderer` (pure JS)                                                                                        | Headless Chromium; LaTeX; pdfkit by hand | architecture.md: no browser binary keeps the distroless image slim; React components reuse the team's one language.                                                                                                                           |
+| Organization            | By room, summary first, totals by room and category                                                                    | By category; flat list                   | Spec §8: adjusters walk a loss room by room; categories matter because policies think in categories.                                                                                                                                          |
+| Which items             | Active only                                                                                                            | All with a lifecycle note                | Spec §7/§8: the packet is the claim picture; sold items would inflate it.                                                                                                                                                                     |
+| Unvalued items          | Listed, excluded from totals, counted                                                                                  | Omitted; counted at $0                   | Spec §7: "at least $X"; principle 6 keeps drafts in the record.                                                                                                                                                                               |
+| Pagination              | Explicit 10-item chunks per room                                                                                       | react-pdf auto-wrap                      | `paginate.ts:4-7`: auto-pagination is O(n²) and overflowed yoga past ~80 items.                                                                                                                                                               |
+| Photos per item / room  | First 4 of each                                                                                                        | All; 1                                   | Four thumbnails fit a row at 70 px and bound render time and PDF size; the first photos are the capture shots.                                                                                                                                |
+| Photo source            | Originals, downscaled to 600 px JPEG                                                                                   | Web WebP variants                        | `images.ts:9-12`: react-pdf does not embed WebP.                                                                                                                                                                                              |
+| Image loading           | Sequential, failures skipped                                                                                           | Parallel; fail the packet                | `render.tsx:12`: memory control; a missing photo must not block the claim document.                                                                                                                                                           |
+| Documents in the packet | Up to two receipt images embedded per item; every document listed as kind (filename)                                   | Kinds only; rasterize PDF receipts too   | Spec §8 calls the packet photo-and-receipt-backed, and a receipt image next to the item is the proof an adjuster asks for first. PDF receipts are named, not rendered: rasterizing PDFs needs a renderer the distroless image does not carry. |
+| Size guard              | Route refuses above `PROOF_PACKET_MAX_ITEMS` with narrowing guidance; the report page withholds the link above the cap | Render anyway; paginate the download     | VULN-010: a giant packet is a memory and CPU denial-of-service on a single-user box; location and category filters already exist, and the page should not offer what the route refuses.                                                       |
+| Totalling arithmetic    | Consumed from the coverage module (`itemValueCents`, `addCents`)                                                       | Own implementation                       | The packet must never disagree with the dashboard; one owner for the rule.                                                                                                                                                                    |
+| Photo order             | `sort_order` then id, the item page's order                                                                            | Insertion order                          | The first photos in the packet should be the ones the owner sees first on the item.                                                                                                                                                           |
+| Caching                 | `no-store`, generated per request                                                                                      | Cache the latest PDF                     | The packet must reflect the current inventory; the only stored copy is the backup's, which is refreshed on each run.                                                                                                                          |
+| Serial numbers          | Printed in full                                                                                                        | Masked                                   | Serials are the proof; masking defeats the document's purpose. The PDF is treated as sensitive (no-store, S3 only under the operator's bucket).                                                                                               |
 
 ## Open Questions & Future Decisions
 
 ### Resolved
+
 1. ✅ Structured/spreadsheet export is not v1 (spec §10); the ZIP export in resilience covers
    data portability.
 2. ✅ Receipt images are embedded (two per item); PDF receipts are listed by filename
@@ -153,6 +155,7 @@ it as `backup/proof-packet-latest.pdf`.
 5. ✅ The report page withholds the whole-household link above the item cap (PACKET-ROUTE-005).
 
 ### Deferred
+
 1. **Rasterizing PDF receipts** would need a PDF renderer in the runtime image; revisit if a
    pure-JS option becomes acceptable.
 2. **Latest price paid.** Lexicographic max on `valued_at` mixes `YYYY-MM-DD` purchase dates with

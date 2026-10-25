@@ -16,15 +16,19 @@ is implemented.
 ## References
 
 ### HLD
+
 - docs/high-level-design.md (Approach: progressive enrichment; AI assists, the human confirms)
 
 ### LLD
+
 - docs/intent/enrich/enrich-design.md
 
 ### EARS
+
 - docs/intent/enrich/enrich-specs.md (62 specs: 6 LIST, 19 ITEM, 5 PHOTO, 8 DOC, 5 CAT, 19 AI)
 
 ### Tests
+
 - tests/unit/ai.test.ts
 - tests/unit/ai-apply.test.ts (AI provenance, outcomes, interaction ownership, discard)
 - tests/unit/categories.security.test.ts
@@ -37,6 +41,7 @@ is implemented.
 - tests/integration/db-queries.test.ts (`listItems`, `deleteItem` cases)
 
 ### Code
+
 - src/app/items/page.tsx, src/app/worklist/page.tsx
 - src/app/items/[id]/page.tsx, item-edit-form.tsx, item-edit-fields.tsx, coverage-alert-banner.tsx, add-photos.tsx, photo-gallery.tsx, delete-item.tsx, documents-section.tsx, ai-assist.tsx
 - src/components/item-list.tsx, src/components/location-filter.tsx
@@ -71,14 +76,14 @@ an item complete.
 
 ## Spec Coverage
 
-| Category | Spec IDs | Implemented | Deferred | Gaps |
-|----------|----------|-------------|----------|------|
-| List and worklist | ENRICH-LIST-001 to 006 | 6 | 0 | 0 |
-| Detail and editor | ENRICH-ITEM-001 to 019 | 19 | 0 | 0 |
-| Photos | ENRICH-PHOTO-001 to 005 | 4 | 1 | 0 |
-| Documents | ENRICH-DOC-001 to 008 | 8 | 0 | 0 |
-| Categories | ENRICH-CAT-001 to 005 | 4 | 1 | 0 |
-| AI assist | ENRICH-AI-001 to 019 | 19 | 0 | 0 |
+| Category          | Spec IDs                | Implemented | Deferred | Gaps |
+| ----------------- | ----------------------- | ----------- | -------- | ---- |
+| List and worklist | ENRICH-LIST-001 to 006  | 6           | 0        | 0    |
+| Detail and editor | ENRICH-ITEM-001 to 019  | 19          | 0        | 0    |
+| Photos            | ENRICH-PHOTO-001 to 005 | 4           | 1        | 0    |
+| Documents         | ENRICH-DOC-001 to 008   | 8           | 0        | 0    |
+| Categories        | ENRICH-CAT-001 to 005   | 4           | 1        | 0    |
+| AI assist         | ENRICH-AI-001 to 019    | 19          | 0        | 0    |
 
 **Summary:** 60 of 60 active specs implemented; 0 gaps; 2 deferred (per-photo delete and
 reorder, free-form tags).
@@ -133,12 +138,15 @@ citing test: 32 of 60 (unit `ai.test.ts`, `ai-apply.test.ts`, `item-actions.test
 ## Work Required
 
 ### Must Fix
+
 1. None. Every active spec is implemented and annotated.
 
 ### Should Fix
+
 2. A read surface for `ai_interaction` (the audit log is still write-only).
 3. Transactions around patch + valuation + pointer (Finding 6); AI fetch timeout (Finding 7).
 
 ### Nice to Have
+
 4. Per-photo delete/reorder parity with location photos (ENRICH-PHOTO-005).
 5. Share the input class and lightbox; decide the fate of `tag`/`item_tag` (ENRICH-CAT-005).

@@ -1,4 +1,5 @@
 ---
+
 parent: high-level-design
 prefix: ENRICH
 ---
@@ -138,32 +139,34 @@ function.
 
 ## Decisions & Alternatives
 
-| Decision | Chosen | Alternatives Considered | Rationale |
-|----------|--------|------------------------|-----------|
-| Completeness | User-marked `complete`; only title required | Required-field checklist; auto-complete when fields filled | Product principle 6 and spec §4.3: a half-finished item is always acceptable; the worklist clears only on the user's say-so. |
-| Editor save model | Debounced autosave + blur, no button | Explicit save button; `useActionState` form | Mobile users abandon forms; the comment at `item-edit-form.tsx:341` says "no button to forget". |
-| Money entry | Dollar strings in the form, cents on the server | Cents in the form; number inputs | Convention: cents everywhere, formatting at the edge; `money.ts` is the only conversion point. |
-| Quantity ceiling | 1,000,000 | Unbounded | `items.ts:92-95`: keeps cost × quantity within the safe-integer range (VULN-021). |
-| Where cost is written | Through keep-current's valuation history, never the item row directly | Write `current_replacement_cost` directly | Append-only history with a last-valued pointer is the staleness signal (architecture.md). |
-| Coverage alert placement | Returned from the save and shown inline in the editor | Only on the dashboard | Spec §7: alerts escalate where the user is, "right after adding the item that crossed the threshold". |
-| Item deletion | Hard delete with cascades and in-page confirmation | Soft delete; `window.confirm` | Lifecycle statuses already cover "no longer owned" without losing history; hard delete is for mistakes. In-page confirm avoids blocked dialogs in PWAs. |
-| Photo admission for add-photos | Reuse capture's `storePhotoFiles` | Separate path | One place for the caps and sniffing (VULN-008/012/016). |
-| Document storage | Bytes unchanged, content-addressed, sanitized basename | Re-encode; original filename | Receipts must be evidentially intact; the full sha256 doubles as integrity check (VULN-018); basename stripping blocks traversal. |
-| Category scope | Global table, seeded, AI may create up to a cap | Per-household; fixed list | Single-household app; the cap exists because AI free text would otherwise grow the table without bound (VULN-019). |
-| AI transparency | Manifest shows model, photo count, and the literal prompt before send | Summary only | Product principle 4: the user sees exactly what is sent. |
-| AI payload | Prompt + photos only; no item metadata | Include title/fields for context | Minimizes what leaves the device; the manifest can then be exact. |
-| AI output validation | Strict Zod per task; unknown keys stripped | Trust JSON as returned | Spec §6: the model may not invent sub-limits or fields; a wrong serial is worse than a blank. |
-| AI spend guard | Process-wide rolling-hour cap, refused before send | Per-user quota; none | VULN-003; operator-controlled via `AI_MAX_CALLS_PER_HOUR`. |
-| Audit log | Every call logged to `ai_interaction`, write-only today | No log; log only applied | CLAUDE.md names the audit log; spec §6 requires accountability for AI-derived data. The read side is an open question. |
-| Apply semantics | Only non-empty fields written; never clears | Overwrite all suggested fields | A null suggestion must not erase user-entered data. |
+| Decision                       | Chosen                                                                | Alternatives Considered                                    | Rationale                                                                                                                                               |
+| ------------------------------ | --------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Completeness                   | User-marked `complete`; only title required                           | Required-field checklist; auto-complete when fields filled | Product principle 6 and spec §4.3: a half-finished item is always acceptable; the worklist clears only on the user's say-so.                            |
+| Editor save model              | Debounced autosave + blur, no button                                  | Explicit save button; `useActionState` form                | Mobile users abandon forms; the comment at `item-edit-form.tsx:341` says "no button to forget".                                                         |
+| Money entry                    | Dollar strings in the form, cents on the server                       | Cents in the form; number inputs                           | Convention: cents everywhere, formatting at the edge; `money.ts` is the only conversion point.                                                          |
+| Quantity ceiling               | 1,000,000                                                             | Unbounded                                                  | `items.ts:92-95`: keeps cost × quantity within the safe-integer range (VULN-021).                                                                       |
+| Where cost is written          | Through keep-current's valuation history, never the item row directly | Write `current_replacement_cost` directly                  | Append-only history with a last-valued pointer is the staleness signal (architecture.md).                                                               |
+| Coverage alert placement       | Returned from the save and shown inline in the editor                 | Only on the dashboard                                      | Spec §7: alerts escalate where the user is, "right after adding the item that crossed the threshold".                                                   |
+| Item deletion                  | Hard delete with cascades and in-page confirmation                    | Soft delete; `window.confirm`                              | Lifecycle statuses already cover "no longer owned" without losing history; hard delete is for mistakes. In-page confirm avoids blocked dialogs in PWAs. |
+| Photo admission for add-photos | Reuse capture's `storePhotoFiles`                                     | Separate path                                              | One place for the caps and sniffing (VULN-008/012/016).                                                                                                 |
+| Document storage               | Bytes unchanged, content-addressed, sanitized basename                | Re-encode; original filename                               | Receipts must be evidentially intact; the full sha256 doubles as integrity check (VULN-018); basename stripping blocks traversal.                       |
+| Category scope                 | Global table, seeded, AI may create up to a cap                       | Per-household; fixed list                                  | Single-household app; the cap exists because AI free text would otherwise grow the table without bound (VULN-019).                                      |
+| AI transparency                | Manifest shows model, photo count, and the literal prompt before send | Summary only                                               | Product principle 4: the user sees exactly what is sent.                                                                                                |
+| AI payload                     | Prompt + photos only; no item metadata                                | Include title/fields for context                           | Minimizes what leaves the device; the manifest can then be exact.                                                                                       |
+| AI output validation           | Strict Zod per task; unknown keys stripped                            | Trust JSON as returned                                     | Spec §6: the model may not invent sub-limits or fields; a wrong serial is worse than a blank.                                                           |
+| AI spend guard                 | Process-wide rolling-hour cap, refused before send                    | Per-user quota; none                                       | VULN-003; operator-controlled via `AI_MAX_CALLS_PER_HOUR`.                                                                                              |
+| Audit log                      | Every call logged to `ai_interaction`, write-only today               | No log; log only applied                                   | CLAUDE.md names the audit log; spec §6 requires accountability for AI-derived data. The read side is an open question.                                  |
+| Apply semantics                | Only non-empty fields written; never clears                           | Overwrite all suggested fields                             | A null suggestion must not erase user-entered data.                                                                                                     |
 
 ## Open Questions & Future Decisions
 
 ### Resolved
+
 1. ✅ Dec-page parsing shares the AI core but belongs to coverage; enrich owns the registry and
    client, coverage owns the policy-apply step.
 
 ### Deferred
+
 1. **Ownership checks on write actions.** Only delete verifies `householdId`. Decide whether to
    add the check to update, status, add-photos, and both AI actions (consistency and
    defense-in-depth) now that the household is a DB-enforced singleton.

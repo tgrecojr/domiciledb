@@ -1,4 +1,5 @@
 ---
+
 parent: high-level-design
 prefix: CAPTURE
 ---
@@ -96,23 +97,24 @@ limit for a multi-photo capture and is not derived from the knobs above.
 
 ## Decisions & Alternatives
 
-| Decision | Chosen | Alternatives Considered | Rationale |
-|----------|--------|------------------------|-----------|
-| Required fields on capture | None; photo OR title suffices | Require a title; require a photo | Product principle 6: a half-finished item is always acceptable. Rejecting only the empty capture keeps the loop at one tap. |
-| Camera access | Native file picker with `capture="environment"` | `getUserMedia` live viewfinder | Works without HTTPS and without permission prompts; the comment at `capture-form.tsx:43` cites the HTTPS constraint. Live capture is listed as an HTTPS-only feature in the README. |
-| Save flow | One Server Action creates the draft and stores photos, then redirects | Two-step (create, then upload); client-side upload to a route handler | Keeps capture to one round-trip and lets the server own validation and redirects; consistent with the "mutations are Server Actions" convention. |
-| Post-save navigation | Two explicit intents, `another` (stay) and `details` (go to item) | Always go to the item; always stay | Burst capture needs "stay"; a single important item needs "go finish it now". The two buttons make the choice at submit time rather than after. |
-| Feedback transport | Search params (`?saved=1`, `?error=empty`) | `useActionState` return value | The action always redirects, so state cannot be returned; search params survive the redirect and keep the form a plain `<form action>`. |
-| Admission ownership | One shared helper with a `store` callback | Per-caller admission in each action | The caps and sniffing were added as a security pass (VULN-008, VULN-012, VULN-016) and centralizing them gives one place to test. |
-| Trusting the client MIME | Never; magic-byte sniff decides | Trust `File.type` with an allowlist | VULN-012: a renamed SVG or HTML file must not reach the image pipeline. The `ACCEPTED_IMAGE` regex is a UI hint only. |
-| Order of insert vs. photo storage | Draft row first, then photos | Photos first, then row; transactional | Photo storage needs the item id for the on-disk path (`media/items/<id>/`). SQLite has no transaction here, so a photo failure leaves a photo-less draft rather than an orphaned directory. |
-| Partial-failure reporting | The action compares photos submitted with photos stored and carries the shortfall to the next page as `?dropped=N`; the page says how many photos were not saved | Log only; per-file error list | The owner must know a photo is missing while the item is still in hand to re-shoot; the count is enough, since the reason (too large, unsupported, storage full) is operator territory and already logged. |
-| Location on capture | Positive-integer id of a location in the household, else unassigned | Trust `Number(raw)`; reject the capture | Principle 6: a bad picker value must never block a capture, but it must never attach an item to a location that is not the household's either. Mirrors the editor's rule. |
-| Entry-point module | `src/lib/actions/capture.ts` owns `captureItemAction`; item editing stays in `actions/items.ts` | Keep it in the items action file | One file per segment entry point keeps `@spec` ownership one-to-one with files. |
+| Decision                          | Chosen                                                                                                                                                           | Alternatives Considered                                               | Rationale                                                                                                                                                                                                  |
+| --------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Required fields on capture        | None; photo OR title suffices                                                                                                                                    | Require a title; require a photo                                      | Product principle 6: a half-finished item is always acceptable. Rejecting only the empty capture keeps the loop at one tap.                                                                                |
+| Camera access                     | Native file picker with `capture="environment"`                                                                                                                  | `getUserMedia` live viewfinder                                        | Works without HTTPS and without permission prompts; the comment at `capture-form.tsx:43` cites the HTTPS constraint. Live capture is listed as an HTTPS-only feature in the README.                        |
+| Save flow                         | One Server Action creates the draft and stores photos, then redirects                                                                                            | Two-step (create, then upload); client-side upload to a route handler | Keeps capture to one round-trip and lets the server own validation and redirects; consistent with the "mutations are Server Actions" convention.                                                           |
+| Post-save navigation              | Two explicit intents, `another` (stay) and `details` (go to item)                                                                                                | Always go to the item; always stay                                    | Burst capture needs "stay"; a single important item needs "go finish it now". The two buttons make the choice at submit time rather than after.                                                            |
+| Feedback transport                | Search params (`?saved=1`, `?error=empty`)                                                                                                                       | `useActionState` return value                                         | The action always redirects, so state cannot be returned; search params survive the redirect and keep the form a plain `<form action>`.                                                                    |
+| Admission ownership               | One shared helper with a `store` callback                                                                                                                        | Per-caller admission in each action                                   | The caps and sniffing were added as a security pass (VULN-008, VULN-012, VULN-016) and centralizing them gives one place to test.                                                                          |
+| Trusting the client MIME          | Never; magic-byte sniff decides                                                                                                                                  | Trust `File.type` with an allowlist                                   | VULN-012: a renamed SVG or HTML file must not reach the image pipeline. The `ACCEPTED_IMAGE` regex is a UI hint only.                                                                                      |
+| Order of insert vs. photo storage | Draft row first, then photos                                                                                                                                     | Photos first, then row; transactional                                 | Photo storage needs the item id for the on-disk path (`media/items/<id>/`). SQLite has no transaction here, so a photo failure leaves a photo-less draft rather than an orphaned directory.                |
+| Partial-failure reporting         | The action compares photos submitted with photos stored and carries the shortfall to the next page as `?dropped=N`; the page says how many photos were not saved | Log only; per-file error list                                         | The owner must know a photo is missing while the item is still in hand to re-shoot; the count is enough, since the reason (too large, unsupported, storage full) is operator territory and already logged. |
+| Location on capture               | Positive-integer id of a location in the household, else unassigned                                                                                              | Trust `Number(raw)`; reject the capture                               | Principle 6: a bad picker value must never block a capture, but it must never attach an item to a location that is not the household's either. Mirrors the editor's rule.                                  |
+| Entry-point module                | `src/lib/actions/capture.ts` owns `captureItemAction`; item editing stays in `actions/items.ts`                                                                  | Keep it in the items action file                                      | One file per segment entry point keeps `@spec` ownership one-to-one with files.                                                                                                                            |
 
 ## Open Questions & Future Decisions
 
 ### Resolved
+
 1. ✅ Capture must work over plain HTTP via the native picker; PWA install and offline are
    HTTPS-only (README, env.example).
 
@@ -123,6 +125,7 @@ limit for a multi-photo capture and is not derived from the knobs above.
 5. ✅ `captureItemAction` lives in its own module, `src/lib/actions/capture.ts`.
 
 ### Deferred
+
 1. **Photo kinds.** The schema defines `condition` and `serial_plate` photo kinds (spec §5 names
    serial-plate close-ups) but capture and add-photos always write `general`. Decide whether
    capture should let the user tag a shot, or whether kinds are an enrich concern, or whether the

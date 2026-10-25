@@ -107,7 +107,16 @@ arrows:
     sampled: 2026-10-24
     audited: 2026-10-24
     audited_sha: f74d36b
-    blocks: [capture, enrich, coverage, proof-packet, keep-current, resilience, household-locations]
+    blocks:
+      [
+        capture,
+        enrich,
+        coverage,
+        proof-packet,
+        keep-current,
+        resilience,
+        household-locations,
+      ]
     blockedBy: []
     detail: platform.md
     next: "Close the four gaps: PLATFORM-MEDIA-012/013 (sniffed extension, one media-root guard), PLATFORM-PWA-008 (safe-area header), PLATFORM-OPS-007 (pin rustfs + Socket CLI)."
