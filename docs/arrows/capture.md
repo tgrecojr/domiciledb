@@ -13,15 +13,19 @@ module. Every active spec is implemented.
 ## References
 
 ### HLD
+
 - docs/high-level-design.md (Approach: mobile-first capture; Tenets)
 
 ### LLD
+
 - docs/intent/capture/capture-design.md
 
 ### EARS
+
 - docs/intent/capture/capture-specs.md (30 specs: 7 UI, 13 FLOW, 10 ADM)
 
 ### Tests
+
 - tests/unit/capture-action.test.ts (location validation, dropped-photo count, redirect contract)
 - tests/unit/store-photos.security.test.ts
 - tests/unit/image-format.security.test.ts (the `storePhotoFiles` cases; sniffing itself is platform's)
@@ -29,6 +33,7 @@ module. Every active spec is implemented.
 - tests/e2e/helpers.ts (`captureDraft`)
 
 ### Code
+
 - src/app/capture/page.tsx
 - src/app/capture/capture-form.tsx
 - src/lib/actions/capture.ts (`captureItemAction`)
@@ -59,11 +64,11 @@ details.
 
 ## Spec Coverage
 
-| Category | Spec IDs | Implemented | Deferred | Gaps |
-|----------|----------|-------------|----------|------|
-| Page and form | CAPTURE-UI-001 to 007 | 7 | 0 | 0 |
-| Capture action | CAPTURE-FLOW-001 to 013 | 12 | 1 | 0 |
-| Shared admission | CAPTURE-ADM-001 to 010 | 10 | 0 | 0 |
+| Category         | Spec IDs                | Implemented | Deferred | Gaps |
+| ---------------- | ----------------------- | ----------- | -------- | ---- |
+| Page and form    | CAPTURE-UI-001 to 007   | 7           | 0        | 0    |
+| Capture action   | CAPTURE-FLOW-001 to 013 | 12          | 1        | 0    |
+| Shared admission | CAPTURE-ADM-001 to 010  | 10          | 0        | 0    |
 
 **Summary:** 29 of 29 active specs implemented; 0 gaps; 1 deferred (CAPTURE-FLOW-013 photo
 kinds).
@@ -111,13 +116,16 @@ reverse orphans.
 ## Work Required
 
 ### Must Fix
+
 1. None. Every active spec is implemented and annotated; admission is bounded and sniffed
    (VULN-008, VULN-012, VULN-016 regression tests pass).
 
 ### Should Fix
+
 2. None outstanding. The 50 MB Server Action body limit is documented as fixed (platform
    decision).
 
 ### Nice to Have
+
 3. Revoke preview object URLs on unmount (Finding 9).
 4. Decide photo kinds on capture (CAPTURE-FLOW-013, deferred).

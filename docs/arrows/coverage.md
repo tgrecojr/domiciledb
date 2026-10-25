@@ -16,16 +16,20 @@ Every active spec is implemented.
 ## References
 
 ### HLD
+
 - docs/high-level-design.md (Problem; Key Design Decisions: replacement-cost basis, Coverage B
   only, informational framing)
 
 ### LLD
+
 - docs/intent/coverage/coverage-design.md
 
 ### EARS
+
 - docs/intent/coverage/coverage-specs.md (35 specs: 10 CALC, 4 MONEY, 6 UI, 7 POLICY, 8 DECPAGE)
 
 ### Tests
+
 - tests/unit/coverage.test.ts (100% line/function, 90% branch gate)
 - tests/unit/money.test.ts (same gate)
 - tests/unit/policy.security.test.ts (VULN-022)
@@ -35,6 +39,7 @@ Every active spec is implemented.
 - tests/integration/db-queries.test.ts (coverage-aggregation cases)
 
 ### Code
+
 - src/lib/coverage.ts
 - src/lib/money.ts
 - src/lib/queries/coverage.ts
@@ -67,13 +72,13 @@ unvalued items surfaced as excluded so the total reads "at least").
 
 ## Spec Coverage
 
-| Category | Spec IDs | Implemented | Deferred | Gaps |
-|----------|----------|-------------|----------|------|
-| Computation | COVERAGE-CALC-001 to 010 | 10 | 0 | 0 |
-| Money | COVERAGE-MONEY-001 to 004 | 4 | 0 | 0 |
-| Surfaces | COVERAGE-UI-001 to 006 | 6 | 0 | 0 |
-| Policy record | COVERAGE-POLICY-001 to 007 | 6 | 1 | 0 |
-| Dec-page pre-fill | COVERAGE-DECPAGE-001 to 008 | 7 | 1 | 0 |
+| Category          | Spec IDs                    | Implemented | Deferred | Gaps |
+| ----------------- | --------------------------- | ----------- | -------- | ---- |
+| Computation       | COVERAGE-CALC-001 to 010    | 10          | 0        | 0    |
+| Money             | COVERAGE-MONEY-001 to 004   | 4           | 0        | 0    |
+| Surfaces          | COVERAGE-UI-001 to 006      | 6           | 0        | 0    |
+| Policy record     | COVERAGE-POLICY-001 to 007  | 6           | 1        | 0    |
+| Dec-page pre-fill | COVERAGE-DECPAGE-001 to 008 | 7           | 1        | 0    |
 
 **Summary:** 33 of 33 active specs implemented; 0 gaps; 2 deferred (per-category sub-limits, PDF
 dec pages). The policy saved from a dec-page parse now carries `source: "ai"` and records the
@@ -116,14 +121,17 @@ DECPAGE-003, -004, -006. No reverse orphans.
 ## Work Required
 
 ### Must Fix
+
 1. None. The spine's arithmetic and thresholds are pinned by tests.
 
 ### Should Fix
+
 2. Record provenance when policy values come from a dec-page parse, and record the interaction
    outcome (COVERAGE-DECPAGE-007) — scheduled with enrich's AI provenance change.
 3. Consolidate the two totalling implementations or make their shared rule explicit
    (cross-segment with proof-packet).
 
 ### Nice to Have
+
 4. Accept PDF declarations pages (COVERAGE-DECPAGE-008).
 5. Add the negative-limit unit case.

@@ -96,17 +96,17 @@ All operational config is set by the **operator** via environment variables — 
 end-user setting (spec §3). Copy [`env.example`](./env.example) to `.env`. See
 [`docs/configuration.md`](./docs/configuration.md) for the full reference. Summary:
 
-| Variable                   | Default                        | Purpose                                      |
-| -------------------------- | ------------------------------ | -------------------------------------------- |
-| `DATA_DIR`                 | `./data` (dev) / `/data`       | Where the db, media, and backups live        |
-| `OPENROUTER_API_KEY`       | _(blank → AI disabled)_        | Enables AI Assist                            |
-| `OPENROUTER_MODEL`         | `openai/gpt-4o`                | Vision-capable model id                      |
-| `OPENROUTER_BASE_URL`      | `https://openrouter.ai/api/v1` | Override for an OpenAI-compatible gateway    |
-| `S3_BUCKET` / `S3_*`       | _(blank → backups disabled)_   | Off-site backup target (S3-compatible)       |
-| `BACKUP_CRON`              | `0 3 * * *`                    | Backup schedule                              |
-| `COVERAGE_WARN_PCT`        | `0.80`                         | "Approaching limit" nudge threshold          |
-| `REVALUATION_CADENCE_DAYS` | `90`                           | When a value is considered stale (quarterly) |
-| `AI_MAX_CALLS_PER_HOUR`, `UPLOAD_MAX_*`, `MEDIA_MAX_*`, `EXPORT_MIN_INTERVAL_SECONDS`, `PROOF_PACKET_MAX_ITEMS`, `MAX_CATEGORIES` | see `docs/configuration.md` | Resource limits and spend guards |
+| Variable                                                                                                                          | Default                        | Purpose                                      |
+| --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------ | -------------------------------------------- |
+| `DATA_DIR`                                                                                                                        | `./data` (dev) / `/data`       | Where the db, media, and backups live        |
+| `OPENROUTER_API_KEY`                                                                                                              | _(blank → AI disabled)_        | Enables AI Assist                            |
+| `OPENROUTER_MODEL`                                                                                                                | `openai/gpt-4o`                | Vision-capable model id                      |
+| `OPENROUTER_BASE_URL`                                                                                                             | `https://openrouter.ai/api/v1` | Override for an OpenAI-compatible gateway    |
+| `S3_BUCKET` / `S3_*`                                                                                                              | _(blank → backups disabled)_   | Off-site backup target (S3-compatible)       |
+| `BACKUP_CRON`                                                                                                                     | `0 3 * * *`                    | Backup schedule                              |
+| `COVERAGE_WARN_PCT`                                                                                                               | `0.80`                         | "Approaching limit" nudge threshold          |
+| `REVALUATION_CADENCE_DAYS`                                                                                                        | `90`                           | When a value is considered stale (quarterly) |
+| `AI_MAX_CALLS_PER_HOUR`, `UPLOAD_MAX_*`, `MEDIA_MAX_*`, `EXPORT_MIN_INTERVAL_SECONDS`, `PROOF_PACKET_MAX_ITEMS`, `MAX_CATEGORIES` | see `docs/configuration.md`    | Resource limits and spend guards             |
 
 If `OPENROUTER_API_KEY` or `S3_BUCKET` is blank, those features are cleanly disabled (no-ops) —
 DomicileDB is fully usable with neither.

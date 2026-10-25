@@ -116,6 +116,7 @@ No app-level auth by design — deploy behind a VPN / reverse proxy. HTTPS requi
 and offline; capture uses the native file/camera picker and works over plain HTTP.
 
 ## LID
+
 - Mode: Full
 - Version: 1.3.0
 
@@ -133,17 +134,17 @@ HLD → LLDs → EARS → Tests → Code
 
 Stop after each phase for user review. **Docs carry current intent, written to be read cold** — write each doc as if authored fresh today, from current intent alone: no narration of how it changed, no meaning that needs the conversation that produced it, no rebuttals to questions only a past discussion raised. Rationale, considered alternatives, and constraints a fresh author would independently write stay; record rejected alternatives and why in the LLD's Decisions & Alternatives table, not as asides in body prose.
 
-**Memory vs. intent.** Before saving durable project knowledge to agent or tool memory, test whether it is project *intent* — would a fresh agent, in any tool, next session, need it to build this system correctly? If yes, record it in the arrow (HLD / LLD / EARS / decision doc), which travels and cascades — not in private, per-tool memory, where intent escapes the arrow. Knowledge about the user or how they like to work stays in memory.
+**Memory vs. intent.** Before saving durable project knowledge to agent or tool memory, test whether it is project _intent_ — would a fresh agent, in any tool, next session, need it to build this system correctly? If yes, record it in the arrow (HLD / LLD / EARS / decision doc), which travels and cascades — not in private, per-tool memory, where intent escapes the arrow. Knowledge about the user or how they like to work stays in memory.
 
 ### Navigation
 
-| What you need | Where to look |
-|---|---|
-| High-level design | `docs/high-level-design.md` |
-| Design tree (sub-HLDs, LLDs, their specs) | `docs/intent/` — one folder per node |
-| EARS specs | beside each design doc as `{node}-specs.md` in the node's folder under `docs/intent/` |
-| Decision docs | `docs/decisions/` (project-level) and `docs/intent/<segment>/decisions/` |
-| Arrow of intent overlay | `docs/arrows/index.yaml` and per-segment docs in `docs/arrows/` |
+| What you need                             | Where to look                                                                         |
+| ----------------------------------------- | ------------------------------------------------------------------------------------- |
+| High-level design                         | `docs/high-level-design.md`                                                           |
+| Design tree (sub-HLDs, LLDs, their specs) | `docs/intent/` — one folder per node                                                  |
+| EARS specs                                | beside each design doc as `{node}-specs.md` in the node's folder under `docs/intent/` |
+| Decision docs                             | `docs/decisions/` (project-level) and `docs/intent/<segment>/decisions/`              |
+| Arrow of intent overlay                   | `docs/arrows/index.yaml` and per-segment docs in `docs/arrows/`                       |
 
 ### Terminology
 
@@ -162,4 +163,4 @@ Annotate code and tests with `@spec` comments citing EARS IDs:
 // @spec CAPTURE-FLOW-002, CAPTURE-FLOW-003
 ```
 
-Place the annotation at the *entry point of the behavior's implementation graph* — the topmost function or module owning the specified behavior, not every helper. When a behavior spans multiple subsystems (UI + API + database, for example), annotate at the entry point in each subsystem. Tests follow the same rule: annotate the test that directly exercises the spec, not every inner assertion.
+Place the annotation at the _entry point of the behavior's implementation graph_ — the topmost function or module owning the specified behavior, not every helper. When a behavior spans multiple subsystems (UI + API + database, for example), annotate at the entry point in each subsystem. Tests follow the same rule: annotate the test that directly exercises the spec, not every inner assertion.

@@ -1,4 +1,5 @@
 ---
+
 parent: high-level-design
 prefix: HOUSEHOLD
 ---
@@ -105,24 +106,25 @@ on the room's first page (proof-packet segment).
 
 ## Decisions & Alternatives
 
-| Decision | Chosen | Alternatives Considered | Rationale |
-|----------|--------|------------------------|-----------|
-| Household cardinality | Exactly one, enforced by a unique singleton column | Application check only; allow many | Spec §1 and §10: one property, one editor in v1; VULN-020 found the application check alone let duplicates in. |
-| Second-household attempt | Refused with a message; DB rejects a raw insert | Silently return the existing row | The error names the invariant; a race still fails safely on the index. |
-| Onboarding placement | `/` renders the form until a household exists; other pages redirect there | Dedicated `/setup` route | The first screen a new install shows is the one that needs filling; no empty dashboard to explain. |
-| Location kinds | Fixed enum of seven | Free text; rooms only | Spec §5: the named places (garage, shed, storage, vehicle, safe-deposit, on loan) are exactly those a policy may treat differently; an enum keeps the packet and filters consistent. |
-| One location per item | `item.location_id`, nullable | Many-to-many | Spec §5: "an item belongs to one location at a time and can be moved". |
-| Deleting a location with items | Allowed; items become unassigned | Refuse while items exist; reassign first | A room can stop existing (renovation, move) without its contents vanishing; "Unassigned" is already a first-class room in the packet. The absence of a confirmation step is an open question. |
-| Room photos | Separate table and per-location directory | Reuse `photo` with nullable item | Spec §8: room photos give context and are not evidence for an item; a separate table keeps item photo counts honest. |
-| Room-photo deletion | Per-photo, reference-counted by path | Delete files unconditionally | VULN-017: content-addressed names mean two rows can share files. |
-| Ownership checks | On every location write | Existence only | Written during the hardening pass; defense in depth even under the singleton. |
-| Per-location item count | All items in the location, regardless of lifecycle | Active items only | The list answers "what is in this room", which includes things no longer owned but still recorded there; coverage and the packet already apply the active filter where value matters. |
-| Household edits | Name, address, and description editable after onboarding | Immutable after setup | A typo in the name appears on every proof packet; the record is the owner's to correct. |
-| Location delete | Two-step in-page confirm naming the item count | One click | Mirrors item delete; the count beside the button is exactly the information the confirm should restate. |
+| Decision                       | Chosen                                                                    | Alternatives Considered                  | Rationale                                                                                                                                                                                     |
+| ------------------------------ | ------------------------------------------------------------------------- | ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Household cardinality          | Exactly one, enforced by a unique singleton column                        | Application check only; allow many       | Spec §1 and §10: one property, one editor in v1; VULN-020 found the application check alone let duplicates in.                                                                                |
+| Second-household attempt       | Refused with a message; DB rejects a raw insert                           | Silently return the existing row         | The error names the invariant; a race still fails safely on the index.                                                                                                                        |
+| Onboarding placement           | `/` renders the form until a household exists; other pages redirect there | Dedicated `/setup` route                 | The first screen a new install shows is the one that needs filling; no empty dashboard to explain.                                                                                            |
+| Location kinds                 | Fixed enum of seven                                                       | Free text; rooms only                    | Spec §5: the named places (garage, shed, storage, vehicle, safe-deposit, on loan) are exactly those a policy may treat differently; an enum keeps the packet and filters consistent.          |
+| One location per item          | `item.location_id`, nullable                                              | Many-to-many                             | Spec §5: "an item belongs to one location at a time and can be moved".                                                                                                                        |
+| Deleting a location with items | Allowed; items become unassigned                                          | Refuse while items exist; reassign first | A room can stop existing (renovation, move) without its contents vanishing; "Unassigned" is already a first-class room in the packet. The absence of a confirmation step is an open question. |
+| Room photos                    | Separate table and per-location directory                                 | Reuse `photo` with nullable item         | Spec §8: room photos give context and are not evidence for an item; a separate table keeps item photo counts honest.                                                                          |
+| Room-photo deletion            | Per-photo, reference-counted by path                                      | Delete files unconditionally             | VULN-017: content-addressed names mean two rows can share files.                                                                                                                              |
+| Ownership checks               | On every location write                                                   | Existence only                           | Written during the hardening pass; defense in depth even under the singleton.                                                                                                                 |
+| Per-location item count        | All items in the location, regardless of lifecycle                        | Active items only                        | The list answers "what is in this room", which includes things no longer owned but still recorded there; coverage and the packet already apply the active filter where value matters.         |
+| Household edits                | Name, address, and description editable after onboarding                  | Immutable after setup                    | A typo in the name appears on every proof packet; the record is the owner's to correct.                                                                                                       |
+| Location delete                | Two-step in-page confirm naming the item count                            | One click                                | Mirrors item delete; the count beside the button is exactly the information the confirm should restate.                                                                                       |
 
 ## Open Questions & Future Decisions
 
 ### Resolved
+
 1. ✅ One household and one editor in v1; multiple properties and multi-user are out of scope
    (spec §10).
 2. ✅ The per-location item count includes every item in the location regardless of lifecycle
@@ -131,6 +133,7 @@ on the room's first page (proof-packet segment).
    an in-page confirm (HOUSEHOLD-LOC-006); both are built with a Locations e2e journey.
 
 ### Deferred
+
 1. **Description on create** is impossible; only the edit form has the field.
 2. **Camera hint for room photos.** Items use `capture="environment"`; locations do not. Decide
    whether in-situ room shots should default to the camera.

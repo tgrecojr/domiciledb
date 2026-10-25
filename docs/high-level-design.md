@@ -129,16 +129,16 @@ sharp writes original, web, and thumbnail variants to `DATA_DIR/media`; `@react-
 builds the packet in-process; the AWS S3 client syncs to any S3-compatible bucket; OpenRouter is
 called with `fetch` so the exact payload is known and shown.
 
-| Segment | Owns | Design doc |
-|---|---|---|
-| capture | Snap-to-draft loop; shared upload admission | `docs/intent/capture/capture-design.md` |
-| enrich | List, worklist, editor, photos, documents, categories, AI core | `docs/intent/enrich/enrich-design.md` |
-| coverage | Replacement-cost total vs. Coverage B; money; policy record; dec-page pre-fill | `docs/intent/coverage/coverage-design.md` |
-| proof-packet | Assembly and PDF of the claim document | `docs/intent/proof-packet/proof-packet-design.md` |
-| keep-current | Lifecycle, valuation history, reminders | `docs/intent/keep-current/keep-current-design.md` |
-| resilience | Backup, export, restore, single-flight guards | `docs/intent/resilience/resilience-design.md` |
-| household-locations | Single household, onboarding, locations, room photos | `docs/intent/household-locations/household-locations-design.md` |
-| platform | Config, boot, schema, media store and serving, PWA shell, container and CI | `docs/intent/platform/platform-design.md` |
+| Segment             | Owns                                                                           | Design doc                                                      |
+| ------------------- | ------------------------------------------------------------------------------ | --------------------------------------------------------------- |
+| capture             | Snap-to-draft loop; shared upload admission                                    | `docs/intent/capture/capture-design.md`                         |
+| enrich              | List, worklist, editor, photos, documents, categories, AI core                 | `docs/intent/enrich/enrich-design.md`                           |
+| coverage            | Replacement-cost total vs. Coverage B; money; policy record; dec-page pre-fill | `docs/intent/coverage/coverage-design.md`                       |
+| proof-packet        | Assembly and PDF of the claim document                                         | `docs/intent/proof-packet/proof-packet-design.md`               |
+| keep-current        | Lifecycle, valuation history, reminders                                        | `docs/intent/keep-current/keep-current-design.md`               |
+| resilience          | Backup, export, restore, single-flight guards                                  | `docs/intent/resilience/resilience-design.md`                   |
+| household-locations | Single household, onboarding, locations, room photos                           | `docs/intent/household-locations/household-locations-design.md` |
+| platform            | Config, boot, schema, media store and serving, PWA shell, container and CI     | `docs/intent/platform/platform-design.md`                       |
 
 The arrow overlay (`docs/arrows/index.yaml`, one doc per segment) tracks each segment's mapping
 and audit state.
