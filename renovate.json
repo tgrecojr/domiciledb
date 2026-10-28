@@ -36,8 +36,15 @@
 			"pinDigests": true
 		},
 		{
-			"description": "Keep the Docker builder Node (node:<major>) and the distroless runtime Node (nodejs<major>) in lockstep — one PR, never desynced.",
+			"description": "Keep the Docker builder Node (node:<major>) and the distroless runtime Node (nodejs<major>) in one PR. Renovate proposes; it does not guarantee: the regex manager's node-version lookup waits for the first LTS-flagged release while the docker and github-releases lookups flip on the schedule date, so this group can open with the runtime missing. tests/unit/node-lockstep.test.ts and the Docker smoke are the gate.",
 			"matchDepNames": ["node"],
+			"groupName": "node base images",
+			"groupSlug": "node-base-images"
+		},
+		{
+			"description": "PLATFORM-OPS-005: @types/node majors ride in the node base images PR, because the types major may never exceed the runtime major (tests/unit/node-lockstep.test.ts) and a lone @types/node major PR would be red until the runtime moved.",
+			"matchPackageNames": ["@types/node"],
+			"matchUpdateTypes": ["major"],
 			"groupName": "node base images",
 			"groupSlug": "node-base-images"
 		},

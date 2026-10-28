@@ -1,4 +1,4 @@
-# @spec PLATFORM-OPS-004
+# @spec PLATFORM-OPS-004, PLATFORM-OPS-008, PLATFORM-OPS-009
 name: Build and Publish Docker Image
 
 on:
@@ -56,16 +56,64 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v4
 
-      - name: Build and push Docker image
-        id: build
+      # Build once into the runner's Docker (single-platform image) so the
+      # smoke below runs the exact bytes that would be published. Nothing is
+      # pushed yet.
+      - name: Build Docker image
         uses: docker/build-push-action@v7
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: ${{ steps.meta.outputs.tags }}
+          load: true
+          push: false
+          tags: domiciledb:smoke
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+      # @spec PLATFORM-OPS-008
+      # Boot the image as shipped: empty /data, no env beyond the image's own.
+      # /api/health never touches the database, so the dashboard request is
+      # the one that proves better-sqlite3 loads on this runtime (a builder /
+      # runtime Node mismatch or a stale runtime digest fails here, not in prod).
+      - name: Smoke-boot the image
+        run: |
+          docker run -d --name smoke -p 3000:3000 domiciledb:smoke
+          deadline=$((SECONDS + 90))
+          health=000; root=000
+          while [ "$SECONDS" -lt "$deadline" ]; do
+            health=$(curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/api/health || true)
+            if [ "$health" = "200" ]; then
+              root=$(curl -sL -o /dev/null -w '%{http_code}' http://127.0.0.1:3000/ || true)
+              if [ "$root" = "200" ]; then
+                echo "smoke ok: /api/health=$health /=$root after ${SECONDS}s"
+                exit 0
+              fi
+            fi
+            sleep 3
+          done
+          echo "::error::smoke failed after 90s: /api/health=$health /=$root"
+          exit 1
+
+      # @spec PLATFORM-OPS-009
+      - name: Smoke logs and cleanup
+        if: always()
+        run: |
+          docker logs smoke 2>&1 || true
+          docker rm -f smoke >/dev/null 2>&1 || true
+
+      # Same context and cache as the smoke build, so this is a cache hit that
+      # only exports the layers to GHCR and yields the registry digest the
+      # signature and attestations below are bound to.
+      - name: Push Docker image
+        id: build
+        if: github.event_name != 'pull_request'
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
 
       - name: Install cosign
         if: github.event_name != 'pull_request'
