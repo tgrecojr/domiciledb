@@ -134,7 +134,7 @@ which cannot carry comments, OPS-006, PWA-010) or gaps whose fix lands in anothe
 12. **Body limit vs. upload knobs**: `bodySizeLimit: "50mb"` is the binding per-request cap and
     is not derived from `UPLOAD_MAX_FILE_MB × UPLOAD_MAX_FILES_PER_REQUEST`.
 13. **Dormant schema**: `tag`/`item_tag` have no code path (enrich's call); `engines.node >=22`
-    while every runtime is Node 24; `declarations.md` holds a real policy number in git.
+    while every runtime is Node 26; `declarations.md` holds a real policy number in git.
 14. **Boot skips during `next build`** and uses an empty in-memory DB so build workers never
     race on the SQLite file (`instrumentation.ts:16`; `db/index.ts:31-33`).
 
@@ -154,4 +154,4 @@ which cannot carry comments, OPS-006, PWA-010) or gaps whose fix lands in anothe
 ### Nice to Have
 
 6. Pad the header for the notch (PLATFORM-PWA-008).
-7. Fix the `.dockerignore` negation; align `engines` with Node 24; add an Apple touch icon.
+7. Fix the `.dockerignore` negation; align `engines` with Node 26; add an Apple touch icon.

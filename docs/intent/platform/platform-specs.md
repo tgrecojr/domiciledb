@@ -66,7 +66,7 @@ Markers: `[x]` observed working in current code · `[ ]` specified, not yet impl
 
 ## Container and CI
 
-- [x] **PLATFORM-OPS-001**: The container shall be built in two stages (Node 24 Debian builder, distroless Node 24 runtime on the same Debian release, both digest-pinned), shall run as uid 65532, shall expose `/data` as a volume, and shall declare a health check against `/api/health`.
+- [x] **PLATFORM-OPS-001**: The container shall be built in two stages (Node 26 Debian builder, distroless Node 26 runtime on the same Debian release, both digest-pinned), shall run as uid 65532, shall expose `/data` as a volume, and shall declare a health check against `/api/health`.
 - [x] **PLATFORM-OPS-002**: The runtime image shall include the `drizzle/` migrations and the complete sharp and libvips trees, and shall never include user data, environment files, tests, or docs.
 - [x] **PLATFORM-OPS-003**: Continuous integration shall gate every push and pull request on lint, typecheck, unit tests with 100% statement, line, and function coverage and 90% branch coverage on `coverage.ts`, `money.ts`, and `report.ts`, a production build, end-to-end tests, an integration round trip against an S3-compatible store, and a supply-chain scan (npm audit signatures, Socket when its secret is present, OSV in diff mode on pull requests and absolute mode on main and weekly).
 - [x] **PLATFORM-OPS-004**: On push to main or a `v*` tag, the image shall be published to GHCR only after the supply-chain scan passes, signed with cosign keyless, and attested with an SPDX SBOM and build provenance; retention shall keep `latest` and the five most recent tagged versions.
