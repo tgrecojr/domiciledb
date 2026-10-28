@@ -5,7 +5,7 @@
 # Debian trixie = glibc, matching the distroless runtime below. Both stages
 # must stay on the same Debian release so the native addons compiled here
 # (better-sqlite3, sharp/libvips) link against the runtime's glibc.
-FROM node:24-trixie-slim@sha256:43b9ba1142b8dcf33fa8f922ca1be85714adc444e0586c7cf7726daaeabc1bea AS builder
+FROM node:26-trixie-slim@sha256:94816674c62774da0d099a947bf4613b9e1972a2733abd0d0cd80e795f8411d0 AS builder
 WORKDIR /app
 
 # Toolchain for node-gyp (better-sqlite3 compiles from source).
@@ -26,7 +26,7 @@ RUN npm run build
 RUN mkdir -p /data && chown 65532:65532 /data
 
 # ─── Stage 2: runtime (distroless, non-root) ──────────────────────────────────
-FROM gcr.io/distroless/nodejs24-debian13@sha256:206cfbab1a64af20b63645150e3aa61b7babc17869e0254914947732963d6f07 AS runner
+FROM gcr.io/distroless/nodejs26-debian13@sha256:e6ffd0e0ddbbcad0231684befb2c421591c2be46baa71da7d9065294c17efc0d AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production \

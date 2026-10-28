@@ -184,8 +184,8 @@ capture through the native picker, which is the only camera path.
 
 ## Container and CI
 
-`Dockerfile`: `node:24-trixie-slim` builder (`npm ci`, `next build --webpack`, standalone output)
-and `gcr.io/distroless/nodejs24-debian13` runtime on the same Debian release so native addons
+`Dockerfile`: `node:26-trixie-slim` builder (`npm ci`, `next build --webpack`, standalone output)
+and `gcr.io/distroless/nodejs26-debian13` runtime on the same Debian release so native addons
 (better-sqlite3, sharp/libvips) link; both digest-pinned. The runtime copies `.next/standalone`,
 `.next/static`, `public`, the full `sharp` and `@img` trees (the standalone tracer misses libvips
 `.so` files), and `drizzle/`; pre-creates `/data` for uid 65532; `USER 65532:65532`; `VOLUME
@@ -257,7 +257,7 @@ proxy) is the security boundary. Secrets are env-only and never reach the client
 4. **Safe-area** top padding missing on the sticky header; no Apple touch icon PNG.
 5. **Unpinned CI inputs**: `rustfs/rustfs:latest`, `@socketsecurity/cli@latest`.
 6. **`.dockerignore`** negates a dotted `.env.example` that does not exist; `engines.node >=22`
-   vs. Node 24 everywhere; `next.config.ts` comment says "Next 15".
+   vs. Node 26 everywhere; `next.config.ts` comment says "Next 15".
 7. **`declarations.md`** carries a real policy number in git (excluded from the image).
 8. **Dormant `tag`/`item_tag`** tables and never-written enum values (`acv`, `condition`,
    `serial_plate`, `edited`, `rejected`) are each tracked by their owning segment; platform
