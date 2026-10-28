@@ -23,7 +23,7 @@ test.
 
 ### EARS
 
-- docs/intent/platform/platform-specs.md (49 specs: 7 CONFIG, 6 BOOT, 7 DATA, 13 MEDIA, 9 PWA, 7 OPS)
+- docs/intent/platform/platform-specs.md (52 specs: 7 CONFIG, 6 BOOT, 7 DATA, 13 MEDIA, 9 PWA, 10 OPS)
 
 ### Tests
 
@@ -33,6 +33,7 @@ test.
 - tests/unit/content-integrity.security.test.ts (VULN-018)
 - tests/unit/image-format.security.test.ts (VULN-012, sniffing cases)
 - tests/unit/sw-cache-policy.security.test.ts (VULN-007)
+- tests/unit/node-lockstep.test.ts (PLATFORM-OPS-010)
 - tests/integration/media-process.test.ts
 - tests/e2e/smoke.spec.ts, tests/e2e/security.spec.ts
 - vitest.config.ts, vitest.integration.config.ts, playwright.config.ts, tests/stubs/empty.ts
@@ -83,9 +84,9 @@ non-root, signed container built by a gated pipeline.
 | Schema conventions      | PLATFORM-DATA-001 to 007              | 7           | 0        | 0    |
 | Media store and serving | PLATFORM-MEDIA-001 to 013             | 11          | 0        | 2    |
 | Shell and PWA           | PLATFORM-PWA-001 to 010 (009 deleted) | 8           | 0        | 1    |
-| Container and CI        | PLATFORM-OPS-001 to 007               | 6           | 0        | 1    |
+| Container and CI        | PLATFORM-OPS-001 to 010               | 9           | 0        | 1    |
 
-**Summary:** 45 of 49 active specs implemented; 4 gaps (PLATFORM-MEDIA-012 original extension
+**Summary:** 48 of 52 active specs implemented; 4 gaps (PLATFORM-MEDIA-012 original extension
 from sniffed type, PLATFORM-MEDIA-013 one shared media-root guard, PLATFORM-PWA-008 safe-area
 header, PLATFORM-OPS-007 pinned CI inputs); 0 deferred. Fail-closed id parsing is now uniform
 across every action (PLATFORM-DATA-007, built with enrich's hardening change).
