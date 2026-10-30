@@ -26,7 +26,7 @@ RUN npm run build
 RUN mkdir -p /data && chown 65532:65532 /data
 
 # ─── Stage 2: runtime (distroless, non-root) ──────────────────────────────────
-FROM gcr.io/distroless/nodejs26-debian13@sha256:e6ffd0e0ddbbcad0231684befb2c421591c2be46baa71da7d9065294c17efc0d AS runner
+FROM gcr.io/distroless/nodejs26-debian13@sha256:05ac5fead194ecb788387bd5f89b826f9ced2068db3a0b04759e003da6472d97 AS runner
 WORKDIR /app
 
 ENV NODE_ENV=production \
