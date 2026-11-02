@@ -225,7 +225,23 @@ ships, while the docker and github-releases lookups for the other two pins flip 
 date, so a grouped major PR can open with the runtime left behind; and a name bump leaves the
 `@sha256` digest pointing at the old major until a later digest-only PR.
 
-`package.json` `overrides` are range floors with GHSA reasons, never exact pins.
+`package.json` `overrides` exist for transitive dependencies whose dependents still allow a
+vulnerable version. Each override is either a caret range that starts at the first fixed release, so
+lock maintenance keeps moving the tree, or a `$name` alias that binds a transitive copy to the direct
+dependency's own range. An override is never an exact pin: a pin holds the tree on a version after its
+successor ships and keeps the scan red until a hand bump. JSON carries no comments, so the advisory
+behind every floor is recorded here, and a floor whose dependents have caught up is removed.
+`tests/unit/overrides-policy.test.ts` checks the shape of each override and that this table names it.
+
+| Override                  | Floor     | Why                                                                                                    |
+| ------------------------- | --------- | ------------------------------------------------------------------------------------------------------ |
+| `esbuild`                 | `^0.28.1` | GHSA-g7r4-m6w7-qqqr (dev-server file read); pulled by drizzle-kit, tsx, and vite                       |
+| `browserslist`            | `^4.28.7` | GHSA-73wf-gq98-2v4g, GHSA-c83g-rgw3-j3cx; `@serwist/next` pinned 4.28.6                                |
+| `brace-expansion@5`       | `^5.0.9`  | GHSA-rgw5-rvv9-x895 and the earlier 5.x DoS advisories; the 1.x copies left with ESLint                |
+| `nanoid`                  | `^6.0.1`  | GHSA-2v37-7h3g-55p8 lineage; postcss's copy, floored on the line postcss now requires `[inferred]`     |
+| `glob`                    | `^14.0.2` | GHSA-3g3m-2fjr-6pw4 (abort-signal bypass); `@serwist/next` and `@serwist/build` pin 13.0.6             |
+| `minimatch`               | `^11.0.1` | GHSA-g3hv-75wg-m249 (pattern amplification); glob 13 and `readdir-glob` allow only 10.x                |
+| `postcss`, `sharp`, `zod` | `$name`   | transitive copies follow the direct dependency, which carries its own floor (zod: GHSA-mrhx-c7xc-m3w5) |
 
 Security posture: no application authentication by design; the network boundary (VPN or reverse
 proxy) is the security boundary. Secrets are env-only and never reach the client or logs.
@@ -289,6 +305,8 @@ proxy) is the security boundary. Secrets are env-only and never reach the client
    `serial_plate`, `edited`, `rejected`) are each tracked by their owning segment; platform
    keeps the columns until those decisions land.
 9. **Draft count** on the dashboard filters the full item list in memory rather than counting.
+10. **Stale override floors** have no detector: when a dependent catches up (Serwist moving to
+    glob 14, `readdir-glob` to minimatch 11) nothing flags the override as dead; removal is by hand.
 
 ## References
 

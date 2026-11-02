@@ -23,7 +23,7 @@ test.
 
 ### EARS
 
-- docs/intent/platform/platform-specs.md (52 specs: 7 CONFIG, 6 BOOT, 7 DATA, 13 MEDIA, 9 PWA, 10 OPS)
+- docs/intent/platform/platform-specs.md (53 specs: 7 CONFIG, 6 BOOT, 7 DATA, 13 MEDIA, 9 PWA, 11 OPS)
 
 ### Tests
 
@@ -34,6 +34,7 @@ test.
 - tests/unit/image-format.security.test.ts (VULN-012, sniffing cases)
 - tests/unit/sw-cache-policy.security.test.ts (VULN-007)
 - tests/unit/node-lockstep.test.ts (PLATFORM-OPS-010)
+- tests/unit/overrides-policy.test.ts (PLATFORM-OPS-011)
 - tests/integration/media-process.test.ts
 - tests/e2e/smoke.spec.ts, tests/e2e/security.spec.ts
 - vitest.config.ts, vitest.integration.config.ts, playwright.config.ts, tests/stubs/empty.ts
