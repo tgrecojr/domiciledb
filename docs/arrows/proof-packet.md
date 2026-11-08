@@ -54,6 +54,7 @@ It is print-ready PDF, generated on demand, never stored except as the latest co
 uploads.
 
 **Key Components:**
+
 1. `assembleReport` (`src/lib/report.ts`) — pure: active items into rooms, room and grand
    totals, category totals, excluded count, deterministic ordering.
 2. `getReportPacket` (`src/lib/queries/report.ts`) — batched reads of items, categories, photos,

@@ -64,6 +64,7 @@ width shell with a service worker that caches the app but never the inventory; a
 non-root, signed container built by a gated pipeline.
 
 **Key Components:**
+
 1. `config.ts` — Zod-validated env, frozen `config` object, feature gates for AI and backup.
 2. Boot — `instrumentation.ts` runs migrations, seeds categories, starts the scheduler on the
    Node runtime only; `db/index.ts` holds the single WAL connection.

@@ -21,14 +21,14 @@
 		"restore": "tsx scripts/restore.ts"
 	},
 	"dependencies": {
-		"@aws-sdk/client-s3": "^3.700.0",
-		"@aws-sdk/lib-storage": "^3.700.0",
+		"@aws-sdk/client-s3": "^3.1162.0",
+		"@aws-sdk/lib-storage": "^3.1162.0",
 		"@react-pdf/renderer": "^4.1.5",
 		"archiver": "^8.0.0",
 		"better-sqlite3": "^13.0.0",
 		"drizzle-orm": "^0.45.2",
-		"lucide-react": "^1.0.0",
-		"next": "^16.3.6",
+		"lucide-react": "^1.68.0",
+		"next": "^16.4.5",
 		"node-cron": "^4.2.1",
 		"react": "^19.2.8",
 		"react-dom": "^19.2.8",
@@ -36,10 +36,10 @@
 		"zod": "^4.6.6"
 	},
 	"devDependencies": {
-		"@biomejs/biome": "^2.6.3",
+		"@biomejs/biome": "^2.6.5",
 		"@playwright/test": "^1.49.1",
 		"@serwist/next": "^9.0.11",
-		"@tailwindcss/postcss": "^4.3.1",
+		"@tailwindcss/postcss": "^4.3.4",
 		"@types/archiver": "^8.0.0",
 		"@types/better-sqlite3": "^9.0.0",
 		"@types/node": "^26.0.0",
@@ -47,14 +47,14 @@
 		"@types/react": "^19.0.2",
 		"@types/react-dom": "^19.0.2",
 		"@vitejs/plugin-react": "^6.0.0",
-		"@vitest/coverage-v8": "^5.0.0",
+		"@vitest/coverage-v8": "^5.1.0",
 		"drizzle-kit": "^0.31.1",
 		"postcss": "^8.5.10",
 		"serwist": "^9.0.11",
-		"tailwindcss": "^4.3.1",
+		"tailwindcss": "^4.3.4",
 		"tsx": "^4.19.2",
 		"typescript": "^7.0.2",
-		"vitest": "^5.0.0"
+		"vitest": "^5.1.0"
 	},
 	"engines": {
 		"node": ">=22"

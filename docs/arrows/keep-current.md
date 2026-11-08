@@ -50,6 +50,7 @@ or replaced must stop counting; values must carry the date they were last set; a
 not the owner's memory, must prompt re-review of aging values and expiring warranties.
 
 **Key Components:**
+
 1. **Lifecycle** (`src/lib/lifecycle.ts`) — six statuses with labels; `active` is the only one
    that counts for coverage and the packet; a lifecycle date accompanies the others.
 2. **Valuation history** (`src/lib/queries/valuations.ts`) — append-only rows per item and kind,

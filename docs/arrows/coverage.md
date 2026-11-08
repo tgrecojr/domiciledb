@@ -60,6 +60,7 @@ is ambient (a dashboard card and a nudge right after the item that crossed a lin
 unvalued items surfaced as excluded so the total reads "at least").
 
 **Key Components:**
+
 1. `computeCoverage` / `crossedThreshold` (`src/lib/coverage.ts`) — pure: total, percentage,
    status, excluded count, escalation detection.
 2. `getCoverageSummary` (`src/lib/queries/coverage.ts`) — feeds every item's denormalized
