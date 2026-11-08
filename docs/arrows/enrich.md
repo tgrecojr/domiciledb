@@ -60,6 +60,7 @@ is user-determined: the worklist nudges, the detail page hints, and the user dec
 an item complete.
 
 **Key Components:**
+
 1. **Surfaces** — `/items` (all items, URL-driven location filter), `/worklist` (drafts only),
    `/items/[id]` (gallery, hints, AI panel, editor, documents, status toggle, delete).
 2. **Autosave editor** — `ItemEditForm` debounces 800 ms and saves on blur; `updateItemAction`

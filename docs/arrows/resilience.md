@@ -57,6 +57,7 @@ without the owner doing anything; the owner can also pull a complete ZIP at any 
 documented script rebuilds the data directory from the bucket.
 
 **Key Components:**
+
 1. `createSnapshot` (`src/lib/backup/snapshot.ts`) — WAL checkpoint, `VACUUM INTO` a unique temp
    file, atomic rename; the canonical snapshot is never missing mid-run.
 2. `runBackup` (`src/lib/backup/run.ts`) — single-flighted: snapshot → latest proof packet →

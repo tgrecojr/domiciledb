@@ -51,6 +51,7 @@ with `general` photos, and the user is returned to capture the next thing or sen
 details.
 
 **Key Components:**
+
 1. `CaptureForm` (`src/app/capture/capture-form.tsx`) — native file picker with rear-camera
    hint, local previews, two submit intents ("Save & add another" / "Save & finish details").
 2. `captureItemAction` (`src/lib/actions/capture.ts`) — the entry point: requires a photo or a

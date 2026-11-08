@@ -86,6 +86,14 @@ grounds the insurance model (Coverage B – Personal Property = $456,750).
   must download that tarball to fill them in, and Mend's hosted npm runs with
   `allow-remote` disabled, so the `renovate/artifacts` step fails with
   `EALLOWREMOTE` on every npm PR until the committed lock carries the entries.
+  **Tailwind bumps fail that step anyway.** Whenever `@tailwindcss/oxide` changes
+  version, npm re-places its wasm child and lock-only mode must open the new
+  tarball to read its bundled deps, so `renovate/artifacts` fails on every
+  Tailwind release regardless of what the committed lock carries (the wasm
+  package has bundled deps in every published version, and pinning it with an
+  override does not help). Take the Renovate PR over by hand: apply its bumps
+  on a branch off `main`, regenerate the lock with this convention, open a PR;
+  once it merges Renovate rebases its own PR to empty and closes it.
 - **Then always run `npm ci` locally before pushing.** A clean regen is necessary
   but not sufficient: npm's lockfile writer and its `npm ci` validator can
   disagree about **optional peer dependencies**, so `npm install` will happily

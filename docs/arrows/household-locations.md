@@ -56,6 +56,7 @@ item can be in, one at a time. Room photos are context for the adjuster, not evi
 specific item.
 
 **Key Components:**
+
 1. **Onboarding** — `/` renders a create-household form until a household exists; every other
    page redirects to `/`.
 2. **Singleton invariant** — `household.singleton` is `NOT NULL DEFAULT 1 UNIQUE`; the query
