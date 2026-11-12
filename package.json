@@ -2,6 +2,7 @@
 	"name": "domiciledb",
 	"version": "0.1.0",
 	"private": true,
+	"license": "MIT",
 	"description": "Self-hosted home inventory built to prove what you owned and get paid after a disaster.",
 	"type": "module",
 	"scripts": {

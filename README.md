@@ -154,6 +154,10 @@ Socket + `npm audit signatures`). A cosign-signed image with SBOM + build-proven
 published to GHCR; Renovate keeps dependencies current. See
 [`docs/architecture.md`](./docs/architecture.md) for the CI shape.
 
+## Contributing
+
+Issues and pull requests are welcome. Please read [CONTRIBUTING.md](CONTRIBUTING.md) first.
+
 ## License
 
-Private project. All rights reserved.
+Released under the [MIT License](LICENSE).
