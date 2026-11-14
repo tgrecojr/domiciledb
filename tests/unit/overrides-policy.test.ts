@@ -10,6 +10,21 @@ import { describe, expect, it } from "vitest";
  * a reason can live, since JSON carries no comments).
  */
 
+type RenovateConfig = {
+	packageRules?: { matchDepTypes?: string[]; rangeStrategy?: string }[];
+};
+
+/**
+ * PLATFORM-OPS-012: Renovate must not attempt a lock-only update of an
+ * overridden package (npm refuses it with EOVERRIDE and the whole group's lock
+ * update fails), so `overrides` entries use the `replace` range strategy.
+ */
+export function overrideRangeStrategies(config: RenovateConfig): string[] {
+	return (config.packageRules ?? [])
+		.filter((rule) => rule.matchDepTypes?.includes("overrides"))
+		.map((rule) => rule.rangeStrategy ?? "(default)");
+}
+
 type PackageJson = {
 	dependencies?: Record<string, string>;
 	devDependencies?: Record<string, string>;
@@ -94,5 +109,26 @@ describe("override policy", () => {
 		const doc = fs.readFileSync(path.join(root, DESIGN_DOC), "utf8");
 		expect(Object.keys(pkg.overrides ?? {}).length).toBeGreaterThan(0);
 		expect(overrideProblems(pkg, doc)).toEqual([]);
+	});
+
+	// @spec PLATFORM-OPS-012
+	it("reports the range strategy of each rule that targets overrides", () => {
+		const config = {
+			packageRules: [
+				{ matchDepTypes: ["overrides"], rangeStrategy: "replace" },
+				{ matchDepTypes: ["devDependencies"], rangeStrategy: "bump" },
+				{ matchDepTypes: ["overrides", "dependencies"] },
+			],
+		};
+		expect(overrideRangeStrategies(config)).toEqual(["replace", "(default)"]);
+		expect(overrideRangeStrategies({})).toEqual([]);
+	});
+
+	// @spec PLATFORM-OPS-012
+	it("holds for this repository's renovate.json", () => {
+		const config = JSON.parse(
+			fs.readFileSync(path.join(process.cwd(), "renovate.json"), "utf8"),
+		) as RenovateConfig;
+		expect(overrideRangeStrategies(config)).toEqual(["replace"]);
 	});
 });

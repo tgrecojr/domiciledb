@@ -63,6 +63,11 @@
 			"automerge": true
 		},
 		{
+			"description": "PLATFORM-OPS-012: package.json overrides are caret security floors. Renovate's default in-range update names the package on the npm command line, which npm refuses with EOVERRIDE, failing the lock update for the whole group. With replace, Renovate touches an override only when a release falls outside its range; in-range releases arrive through lock maintenance.",
+			"matchDepTypes": ["overrides"],
+			"rangeStrategy": "replace"
+		},
+		{
 			"description": "Disable auto-merge for major updates - need review",
 			"matchUpdateTypes": ["major"],
 			"automerge": false,
